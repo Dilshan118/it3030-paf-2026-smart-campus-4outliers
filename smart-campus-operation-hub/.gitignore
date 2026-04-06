@@ -1,10 +1,32 @@
+# --- OS Generated Files ---
+# Mac
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+ehthumbs_vista.db
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+desktop.ini
+$RECYCLE.BIN/
+
+# --- IDE Files ---
 .idea/
 *.iws
 *.iml
 *.ipr
 .vscode/
 
-# Ensure frontend and backend target/deps are fully ignored in case someone runs it at the root accidentally
+# --- Build & Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Accidental Root Execution Ignores ---
 node_modules/
 backend/target/
