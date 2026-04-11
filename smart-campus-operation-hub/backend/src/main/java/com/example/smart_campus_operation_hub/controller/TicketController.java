@@ -23,7 +23,22 @@ public class TicketController {
 
     // TODO: GET    /                          → List tickets (own for USER, all for ADMIN)
     // TODO: GET    /{id}                      → Get ticket with comments & attachments
-    // TODO: POST   /                          → Create ticket
+    /**
+     * Create a new ticket.
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse<Object>> createTicket(
+            @jakarta.validation.Valid @RequestBody com.example.smart_campus_operation_hub.dto.request.TicketRequest request) {
+
+        // TODO: Replace with actual logged-in user ID from SecurityContext
+        Long userId = 1L;
+
+        com.example.smart_campus_operation_hub.dto.response.TicketResponse response =
+                ticketService.createTicket(request, userId);
+
+        return ResponseEntity.status(201).body(ApiResponse.success(response));
+    }
+
     // TODO: PUT    /{id}                      → Update ticket (owner only, while OPEN)
     // TODO: PATCH  /{id}/status               → Update ticket status (TECHNICIAN, ADMIN)
     // TODO: PATCH  /{id}/assign               → Assign technician (ADMIN)
