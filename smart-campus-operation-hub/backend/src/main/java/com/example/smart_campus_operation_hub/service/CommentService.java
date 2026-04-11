@@ -55,9 +55,52 @@ public class CommentService {
         return mapToResponse(saved);
     }
 
-    // TODO: getCommentsByTicketId
-    // TODO: editComment
-    // TODO: deleteComment
+    /**
+     * Get all comments for a ticket.
+     */
+    public List<CommentResponse> getCommentsByTicketId(Long ticketId) {
+        // Enforce that the ticket exists first
+        if (!ticketRepository.existsById(ticketId)) {
+            throw new ResourceNotFoundException("Ticket", ticketId);
+        }
+
+        return commentRepository.findByTicketIdOrderByCreatedAtAsc(ticketId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+    /**
+     * Edit a comment. Only the author can edit their comment.
+     */
+    public CommentResponse editComment(Long commentId, String content, Long userId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment", commentId));
+
+        if (!comment.getAuthor().getId().equals(userId)) {
+            throw new UnauthorizedException("You can only edit your own comments");
+        }
+
+        comment.setContent(content);
+        Comment saved = commentRepository.save(comment);
+
+        return mapToResponse(saved);
+    }
+    /**
+     * Delete a comment. Author can delete their own; ADMIN can delete any.
+     */
+    public void deleteComment(Long commentId, Long userId, String userRole) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment", commentId));
+
+        boolean isAuthor = comment.getAuthor().getId().equals(userId);
+        boolean isAdmin = "ADMIN".equals(userRole);
+
+        if (!isAuthor && !isAdmin) {
+            throw new UnauthorizedException("You do not have permission to delete this comment");
+        }
+
+        commentRepository.delete(comment);
+    }
 
     // ─── Private Helpers ──────────────────────────────────────────
 
