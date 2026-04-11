@@ -21,8 +21,29 @@ public class TicketController {
         this.ticketService = ticketService;
     }
 
-    // TODO: GET    /                          → List tickets (own for USER, all for ADMIN)
-    // TODO: GET    /{id}                      → Get ticket with comments & attachments
+    /**
+     * Get all tickets. Role-based filtering handled by service.
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<Object>> getAllTickets(org.springframework.data.domain.Pageable pageable) {
+        // TODO: Replace with actual logged-in user details
+        Long userId = 1L;
+        String role = "USER";
+
+        org.springframework.data.domain.Page<com.example.smart_campus_operation_hub.dto.response.TicketResponse> response =
+                ticketService.getAllTickets(userId, role, pageable);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * Get a specific ticket by ID.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Object>> getTicketById(@PathVariable Long id) {
+        com.example.smart_campus_operation_hub.dto.response.TicketResponse response = ticketService.getTicketById(id);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
     /**
      * Create a new ticket.
      */
