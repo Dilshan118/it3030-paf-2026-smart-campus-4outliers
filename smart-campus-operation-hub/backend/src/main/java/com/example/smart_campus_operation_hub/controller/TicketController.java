@@ -157,5 +157,28 @@ public class TicketController {
 
         return ResponseEntity.status(201).body(ApiResponse.success(response));
     }
-    // TODO: DELETE /{id}/attachments/{aid}     → Remove attachment
+    /**
+     * Delete an attachment from a ticket.
+     */
+    @DeleteMapping("/{id}/attachments/{aid}")
+    public ResponseEntity<ApiResponse<Object>> deleteAttachment(
+            @PathVariable Long id,
+            @PathVariable Long aid) {
+
+        com.example.smart_campus_operation_hub.model.Attachment attachment = attachmentRepository.findById(aid)
+                .orElseThrow(() -> new com.example.smart_campus_operation_hub.exception.ResourceNotFoundException("Attachment", aid));
+
+        // Ensure attachment belongs to the ticket to prevent cross-ticket deletions
+        if (!attachment.getTicket().getId().equals(id)) {
+            throw new com.example.smart_campus_operation_hub.exception.BadRequestException("Attachment does not belong to the specified ticket");
+        }
+
+        // Delete from disk
+        fileStorageService.deleteFile(attachment.getFileUrl());
+
+        // Delete from database
+        attachmentRepository.delete(attachment);
+
+        return ResponseEntity.noContent().build();
+    }
 }
