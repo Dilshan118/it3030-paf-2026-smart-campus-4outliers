@@ -1,8 +1,12 @@
 package com.example.smart_campus_operation_hub.service;
 
 import com.example.smart_campus_operation_hub.dto.request.TicketRequest;
+import com.example.smart_campus_operation_hub.dto.response.AttachmentResponse;
+import com.example.smart_campus_operation_hub.dto.response.CommentResponse;
 import com.example.smart_campus_operation_hub.dto.response.TicketResponse;
 import com.example.smart_campus_operation_hub.exception.ResourceNotFoundException;
+import com.example.smart_campus_operation_hub.model.Attachment;
+import com.example.smart_campus_operation_hub.model.Comment;
 import com.example.smart_campus_operation_hub.model.Resource;
 import com.example.smart_campus_operation_hub.model.Ticket;
 import com.example.smart_campus_operation_hub.model.User;
@@ -71,7 +75,36 @@ public class TicketService {
         return mapToResponse(saved);
     }
 
-    // TODO: getTicketById(Long id) — include comments & attachments
+    /**
+     * Get a single ticket by ID, including its comments and attachments.
+     *
+     * @param id ticket ID
+     * @return ticket details with nested comments and attachments
+     * @throws ResourceNotFoundException if ticket does not exist
+     */
+    public TicketResponse getTicketById(Long id) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
+
+        TicketResponse response = mapToResponse(ticket);
+
+        // Map comments list
+        response.setComments(
+                ticket.getComments().stream()
+                        .map(this::mapCommentToResponse)
+                        .toList()
+        );
+
+        // Map attachments list
+        response.setAttachments(
+                ticket.getAttachments().stream()
+                        .map(this::mapAttachmentToResponse)
+                        .toList()
+        );
+
+        return response;
+    }
+
     // TODO: getAllTickets(Long userId, String role, Pageable pageable)
     // TODO: updateTicket(Long id, TicketRequest request, Long userId)
     // TODO: updateTicketStatus(Long id, TicketStatus newStatus, String resolutionNotes)
@@ -93,7 +126,7 @@ public class TicketService {
     }
 
     /**
-     * Convert Ticket entity → TicketResponse DTO.
+     * Convert Ticket entity to TicketResponse DTO.
      * Flattens related entity names so the frontend gets everything in one call.
      */
     private TicketResponse mapToResponse(Ticket ticket) {
@@ -126,6 +159,35 @@ public class TicketService {
             response.setAssignedToName(ticket.getAssignedTo().getName());
         }
 
+        return response;
+    }
+
+    /**
+     * Convert Comment entity to CommentResponse DTO.
+     */
+    private CommentResponse mapCommentToResponse(Comment comment) {
+        CommentResponse response = new CommentResponse();
+        response.setId(comment.getId());
+        response.setAuthorId(comment.getAuthor().getId());
+        response.setAuthorName(comment.getAuthor().getName());
+        response.setAuthorAvatarUrl(comment.getAuthor().getAvatarUrl());
+        response.setContent(comment.getContent());
+        response.setCreatedAt(comment.getCreatedAt());
+        response.setUpdatedAt(comment.getUpdatedAt());
+        return response;
+    }
+
+    /**
+     * Convert Attachment entity to AttachmentResponse DTO.
+     */
+    private AttachmentResponse mapAttachmentToResponse(Attachment attachment) {
+        AttachmentResponse response = new AttachmentResponse();
+        response.setId(attachment.getId());
+        response.setFileUrl(attachment.getFileUrl());
+        response.setFileName(attachment.getFileName());
+        response.setFileSize(attachment.getFileSize());
+        response.setContentType(attachment.getContentType());
+        response.setCreatedAt(attachment.getCreatedAt());
         return response;
     }
 }
