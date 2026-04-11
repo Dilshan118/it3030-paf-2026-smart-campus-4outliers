@@ -4,6 +4,7 @@ import com.example.smart_campus_operation_hub.service.TicketService;
 import com.example.smart_campus_operation_hub.util.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * MEMBER 3: Ticket Controller
@@ -16,9 +17,18 @@ import org.springframework.web.bind.annotation.*;
 public class TicketController {
 
     private final TicketService ticketService;
+    private final com.example.smart_campus_operation_hub.service.FileStorageService fileStorageService;
+    private final com.example.smart_campus_operation_hub.repository.TicketRepository ticketRepository;
+    private final com.example.smart_campus_operation_hub.repository.AttachmentRepository attachmentRepository;
 
-    public TicketController(TicketService ticketService) {
+    public TicketController(TicketService ticketService,
+                            com.example.smart_campus_operation_hub.service.FileStorageService fileStorageService,
+                            com.example.smart_campus_operation_hub.repository.TicketRepository ticketRepository,
+                            com.example.smart_campus_operation_hub.repository.AttachmentRepository attachmentRepository) {
         this.ticketService = ticketService;
+        this.fileStorageService = fileStorageService;
+        this.ticketRepository = ticketRepository;
+        this.attachmentRepository = attachmentRepository;
     }
 
     /**
@@ -109,6 +119,43 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // TODO: POST   /{id}/attachments          → Upload images (max 3)
+    /**
+     * Upload an image attachment. Max 3 per ticket.
+     */
+    @PostMapping("/{id}/attachments")
+    public ResponseEntity<ApiResponse<Object>> uploadAttachment(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+
+        com.example.smart_campus_operation_hub.model.Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new com.example.smart_campus_operation_hub.exception.ResourceNotFoundException("Ticket", id));
+
+        // Enforce max 3 limit
+        if (ticket.getAttachments().size() >= 3) {
+            throw new com.example.smart_campus_operation_hub.exception.BadRequestException("Maximum of 3 attachments allowed per ticket");
+        }
+
+        fileStorageService.validateFile(file);
+        String fileUrl = fileStorageService.storeFile(file);
+
+        com.example.smart_campus_operation_hub.model.Attachment attachment = new com.example.smart_campus_operation_hub.model.Attachment();
+        attachment.setTicket(ticket);
+        attachment.setFileName(file.getOriginalFilename());
+        attachment.setFileUrl(fileUrl);
+        attachment.setFileSize(file.getSize());
+        attachment.setContentType(file.getContentType());
+
+        com.example.smart_campus_operation_hub.model.Attachment saved = attachmentRepository.save(attachment);
+
+        com.example.smart_campus_operation_hub.dto.response.AttachmentResponse response = new com.example.smart_campus_operation_hub.dto.response.AttachmentResponse();
+        response.setId(saved.getId());
+        response.setFileName(saved.getFileName());
+        response.setFileUrl(saved.getFileUrl());
+        response.setFileSize(saved.getFileSize());
+        response.setContentType(saved.getContentType());
+        response.setCreatedAt(saved.getCreatedAt());
+
+        return ResponseEntity.status(201).body(ApiResponse.success(response));
+    }
     // TODO: DELETE /{id}/attachments/{aid}     → Remove attachment
 }
