@@ -60,8 +60,39 @@ public class TicketController {
         return ResponseEntity.status(201).body(ApiResponse.success(response));
     }
 
-    // TODO: PUT    /{id}                      → Update ticket (owner only, while OPEN)
-    // TODO: PATCH  /{id}/status               → Update ticket status (TECHNICIAN, ADMIN)
+    /**
+     * Update an existing ticket.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<Object>> updateTicket(
+            @PathVariable Long id,
+            @jakarta.validation.Valid @RequestBody com.example.smart_campus_operation_hub.dto.request.TicketRequest request) {
+
+        // TODO: Replace with actual logged-in user ID
+        Long userId = 1L;
+
+        com.example.smart_campus_operation_hub.dto.response.TicketResponse response =
+                ticketService.updateTicket(id, request, userId);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * Update ticket status.
+     * Note: Expects resolutionNotes and rejectionReason optionally as request params.
+     */
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<Object>> updateTicketStatus(
+            @PathVariable Long id,
+            @RequestParam com.example.smart_campus_operation_hub.enums.TicketStatus status,
+            @RequestParam(required = false) String resolutionNotes,
+            @RequestParam(required = false) String rejectionReason) {
+
+        com.example.smart_campus_operation_hub.dto.response.TicketResponse response =
+                ticketService.updateTicketStatus(id, status, resolutionNotes, rejectionReason);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
     // TODO: PATCH  /{id}/assign               → Assign technician (ADMIN)
     // TODO: POST   /{id}/attachments          → Upload images (max 3)
     // TODO: DELETE /{id}/attachments/{aid}     → Remove attachment
