@@ -15,6 +15,8 @@ import com.example.smart_campus_operation_hub.enums.TicketStatus;
 import com.example.smart_campus_operation_hub.repository.ResourceRepository;
 import com.example.smart_campus_operation_hub.repository.TicketRepository;
 import com.example.smart_campus_operation_hub.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -104,11 +106,156 @@ public class TicketService {
 
         return response;
     }
+    /**
+     * Get all tickets with role-based filtering.
+     * - USER: sees only their own tickets
+     * - TECHNICIAN: sees tickets assigned to them
+     * - ADMIN/MANAGER: sees all tickets
+     *
+     * @param userId   current user's ID
+     * @param role     current user's role (as string)
+     * @param pageable pagination params (page, size, sort)
+     * @return paginated list of tickets
+     */
+    public Page<TicketResponse> getAllTickets(Long userId, String role, Pageable pageable) {
+        Page<Ticket> tickets;
 
-    // TODO: getAllTickets(Long userId, String role, Pageable pageable)
-    // TODO: updateTicket(Long id, TicketRequest request, Long userId)
-    // TODO: updateTicketStatus(Long id, TicketStatus newStatus, String resolutionNotes)
-    // TODO: assignTechnician(Long ticketId, Long technicianId)
+        switch (role) {
+            case "ADMIN", "MANAGER" -> tickets = ticketRepository.findAll(pageable);
+            case "TECHNICIAN" -> tickets = ticketRepository.findByAssignedToId(userId, pageable);
+            default -> tickets = ticketRepository.findByUserId(userId, pageable);
+        }
+
+        return tickets.map(this::mapToResponse);
+    }
+    /**
+     * Update a ticket. Only the ticket owner can update, and only while status is OPEN.
+     *
+     * @param id      ticket ID
+     * @param request updated ticket data
+     * @param userId  the user attempting the edit
+     * @return updated ticket
+     */
+    public TicketResponse updateTicket(Long id, TicketRequest request, Long userId) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
+
+        // Only the owner can edit
+        if (!ticket.getUser().getId().equals(userId)) {
+            throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
+                    "You can only edit your own tickets");
+        }
+
+        // Can only edit while OPEN
+        if (ticket.getStatus() != TicketStatus.OPEN) {
+            throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+                    "Cannot edit ticket with status: " + ticket.getStatus());
+        }
+
+        // Update fields
+        ticket.setCategory(request.getCategory());
+        ticket.setDescription(request.getDescription());
+        ticket.setPriority(request.getPriority());
+        ticket.setContactInfo(request.getContactInfo());
+
+        // Recalculate SLA if priority changed
+        ticket.setSlaDeadline(calculateSlaDeadline(request.getPriority()));
+
+        // Update resource if changed
+        if (request.getResourceId() != null) {
+            Resource resource = resourceRepository.findById(request.getResourceId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Resource", request.getResourceId()));
+            ticket.setResource(resource);
+        }
+
+        Ticket saved = ticketRepository.save(ticket);
+        return mapToResponse(saved);
+    }
+
+    /**
+     * Update ticket status with lifecycle validation.
+     * Allowed transitions:
+     *   OPEN → IN_PROGRESS, REJECTED
+     *   IN_PROGRESS → RESOLVED (requires resolution notes)
+     *   RESOLVED → CLOSED
+     */
+    public TicketResponse updateTicketStatus(Long id, TicketStatus newStatus,
+                                              String resolutionNotes, String rejectionReason) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
+
+        TicketStatus current = ticket.getStatus();
+
+        // Validate transition
+        boolean valid = switch (current) {
+            case OPEN -> newStatus == TicketStatus.IN_PROGRESS || newStatus == TicketStatus.REJECTED;
+            case IN_PROGRESS -> newStatus == TicketStatus.RESOLVED;
+            case RESOLVED -> newStatus == TicketStatus.CLOSED;
+            default -> false;
+        };
+
+        if (!valid) {
+            throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+                    "Cannot transition from " + current + " to " + newStatus);
+        }
+
+        // Track first response time
+        if (ticket.getFirstResponseAt() == null) {
+            ticket.setFirstResponseAt(LocalDateTime.now());
+        }
+
+        // Handle RESOLVED — require resolution notes
+        if (newStatus == TicketStatus.RESOLVED) {
+            if (resolutionNotes == null || resolutionNotes.isBlank()) {
+                throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+                        "Resolution notes are required when resolving a ticket");
+            }
+            ticket.setResolutionNotes(resolutionNotes);
+            ticket.setResolvedAt(LocalDateTime.now());
+        }
+
+        // Handle REJECTED — require rejection reason
+        if (newStatus == TicketStatus.REJECTED) {
+            if (rejectionReason == null || rejectionReason.isBlank()) {
+                throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+                        "Rejection reason is required");
+            }
+            ticket.setRejectionReason(rejectionReason);
+        }
+
+        ticket.setStatus(newStatus);
+        Ticket saved = ticketRepository.save(ticket);
+        return mapToResponse(saved);
+    }
+
+    /**
+     * Assign a technician to a ticket. Admin only.
+     * Automatically moves status to IN_PROGRESS.
+     */
+    public TicketResponse assignTechnician(Long ticketId, Long technicianId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", ticketId));
+
+        User technician = userRepository.findById(technicianId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", technicianId));
+
+        // Verify the user has TECHNICIAN role
+        if (technician.getRole() != com.example.smart_campus_operation_hub.enums.Role.TECHNICIAN) {
+            throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+                    "User " + technician.getName() + " is not a technician");
+        }
+
+        ticket.setAssignedTo(technician);
+        ticket.setStatus(TicketStatus.IN_PROGRESS);
+
+        // Track first response time
+        if (ticket.getFirstResponseAt() == null) {
+            ticket.setFirstResponseAt(LocalDateTime.now());
+        }
+
+        Ticket saved = ticketRepository.save(ticket);
+        return mapToResponse(saved);
+    }
 
     // ─── Private Helpers ──────────────────────────────────────────
 
