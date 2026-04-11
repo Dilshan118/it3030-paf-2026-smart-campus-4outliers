@@ -93,7 +93,22 @@ public class TicketController {
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-    // TODO: PATCH  /{id}/assign               → Assign technician (ADMIN)
+
+    /**
+     * Assign a technician to a ticket. (Admin only)
+     */
+    @PatchMapping("/{id}/assign")
+    public ResponseEntity<ApiResponse<Object>> assignTechnician(
+            @PathVariable Long id,
+            @RequestParam Long technicianId) {
+
+        // TODO: Enforce ADMIN role check via Security/PreAuthorize annotations
+        com.example.smart_campus_operation_hub.dto.response.TicketResponse response =
+                ticketService.assignTechnician(id, technicianId);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     // TODO: POST   /{id}/attachments          → Upload images (max 3)
     // TODO: DELETE /{id}/attachments/{aid}     → Remove attachment
 }
