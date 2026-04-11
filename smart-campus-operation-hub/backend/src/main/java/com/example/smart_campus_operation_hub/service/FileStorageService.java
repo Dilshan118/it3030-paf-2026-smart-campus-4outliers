@@ -65,5 +65,20 @@ public class FileStorageService {
         }
     }
 
-    // TODO: deleteFile
+    /**
+     * Delete file from disk.
+     */
+    public void deleteFile(String fileUrl) {
+        if (fileUrl == null || !fileUrl.startsWith("/uploads/")) {
+            return;
+        }
+        
+        try {
+            String filename = fileUrl.replace("/uploads/", "");
+            java.nio.file.Path filePath = java.nio.file.Paths.get(uploadDir).resolve(filename).normalize();
+            java.nio.file.Files.deleteIfExists(filePath);
+        } catch (java.io.IOException ex) {
+            throw new RuntimeException("Could not delete file " + fileUrl, ex);
+        }
+    }
 }
