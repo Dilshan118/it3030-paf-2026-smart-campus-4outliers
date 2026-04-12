@@ -1,25 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createTicket } from '../../api/ticketApi';
 import TicketForm from '../../components/tickets/TicketForm';
 
-/**
- * MEMBER 3: Ticket Create Page
- * Provides the wrapper page context for the Ticket form.
- */
 export default function TicketCreatePage() {
-    return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                        Report an Issue
-                    </h1>
-                    <p className="mt-2 text-sm text-gray-600">
-                        Please provide details about the campus issue so our operations team can resolve it quickly.
-                    </p>
-                </div>
-                
-                <TicketForm />
-            </div>
-        </div>
-    );
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (data) => {
+    try {
+      await createTicket(data);
+      navigate('/tickets');
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+      <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Create New Ticket</h2>
+      {error && <div style={{ color: 'white', backgroundColor: 'red', padding: '10px', marginBottom: '20px', borderRadius: '4px' }}>Error: {error}</div>}
+      <TicketForm onSubmit={handleSubmit} onCancel={() => navigate('/tickets')} />
+    </div>
+  );
 }
