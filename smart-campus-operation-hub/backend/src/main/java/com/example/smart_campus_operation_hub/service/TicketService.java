@@ -173,6 +173,29 @@ public class TicketService {
     }
 
     /**
+     * Delete a ticket. Only the ticket owner can delete, and only while status is OPEN.
+     *
+     * @param id     ticket ID
+     * @param userId the user attempting the delete
+     */
+    public void deleteTicket(Long id, Long userId) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
+
+        if (!ticket.getUser().getId().equals(userId)) {
+            throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
+                    "You can only delete your own tickets");
+        }
+
+        if (ticket.getStatus() != TicketStatus.OPEN) {
+            throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+                    "Cannot delete ticket with status: " + ticket.getStatus());
+        }
+
+        ticketRepository.delete(ticket);
+    }
+
+    /**
      * Update ticket status with lifecycle validation.
      * Allowed transitions:
      *   OPEN → IN_PROGRESS, REJECTED
