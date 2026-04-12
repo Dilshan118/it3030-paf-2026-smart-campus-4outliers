@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
 import { ArrowLeft, Edit2, AlertCircle, Clock, FileWarning } from 'lucide-react';
 import CommentThread from '../../components/tickets/CommentThread';
 import SlaTimer from '../../components/tickets/SlaTimer';
+import { getTicketById, updateTicketStatus } from '../../api/ticketApi';
 
 export default function TicketDetailPage() {
   const { id } = useParams();
@@ -16,8 +16,8 @@ export default function TicketDetailPage() {
 
   const fetchTicket = async () => {
     try {
-      const resp = await axios.get(`http://localhost:8080/api/tickets/${id}`);
-      setTicket(resp.data);
+      const resp = await getTicketById(id);
+      setTicket(resp.data); // getTicketById returns res.data which contains {success, data}
     } catch (err) {
       console.error(err);
     } finally {
@@ -27,7 +27,7 @@ export default function TicketDetailPage() {
 
   const handleUpdateStatus = async (newStatus) => {
     try {
-      await axios.put(`http://localhost:8080/api/tickets/${id}/status?status=${newStatus}`);
+      await updateTicketStatus(id, newStatus);
       fetchTicket();
     } catch (err) {
       alert("Failed to update status");
@@ -50,7 +50,7 @@ export default function TicketDetailPage() {
           <div className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
               <div>
-                <h1 className="h1">{ticket.title}</h1>
+                <h1 className="h1">{ticket.title || `Ticket #${ticket.id} (${ticket.category.replace('_', ' ')})`}</h1>
                 <p style={{ color: 'var(--on-surface-variant)', marginTop: '8px', fontSize: '15px' }}>
                   #{ticket.id} • Created by User {ticket.creatorId}
                 </p>
@@ -80,9 +80,9 @@ export default function TicketDetailPage() {
               )}
             </div>
 
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', borderRadius: '8px' }}>
+            <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '8px' }}>
               <h3 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--on-surface-variant)', marginBottom: '16px', fontWeight: '600' }}>Description</h3>
-              <p style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', color: 'var(--on-surface)' }}>{ticket.description}</p>
+              <p style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', color: 'var(--on-surface)', margin: 0 }}>{ticket.description}</p>
             </div>
           </div>
 
@@ -98,7 +98,7 @@ export default function TicketDetailPage() {
              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
                    <p style={{ fontSize: '13px', color: 'var(--on-surface-variant)', marginBottom: '8px' }}>Resolution Deadline</p>
-                   {ticket.slaDeadline ? <SlaTimer deadline={ticket.slaDeadline} status={ticket.status} /> : <span style={{ color: 'var(--on-surface-variant)', fontSize: '14px' }}>Not Set</span>}
+                   {ticket.slaDeadline ? <SlaTimer deadline={ticket.slaDeadline} status={ticket.status} /> : <span style={{ color: 'var(--on-surface-variant)', fontSize: '14px', fontStyle: 'italic' }}>Not Set</span>}
                 </div>
              </div>
           </div>
@@ -118,7 +118,7 @@ export default function TicketDetailPage() {
                 </button>
               )}
               {ticket.status !== 'CLOSED' && (
-                <button className="btn-outline" onClick={() => handleUpdateStatus('CLOSED')} style={{ width: '100%', justifyContent: 'center' }}>
+                <button className="btn-secondary" onClick={() => handleUpdateStatus('CLOSED')} style={{ width: '100%', justifyContent: 'center' }}>
                   Close Ticket
                 </button>
               )}
