@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Timer } from 'lucide-react';
 
 export default function SlaTimer({ deadline, status }) {
   const [timeLeft, setTimeLeft] = useState('');
@@ -16,7 +17,7 @@ export default function SlaTimer({ deadline, status }) {
       const diff = target - now;
 
       if (diff <= 0) {
-        setTimeLeft('SLA Breached!');
+        setTimeLeft('SLA Breached');
         setIsBreached(true);
         return;
       }
@@ -34,15 +35,18 @@ export default function SlaTimer({ deadline, status }) {
 
   return (
     <div style={{
-      display: 'inline-block',
-      padding: '4px 8px',
-      borderRadius: '4px',
-      fontWeight: 'bold',
-      backgroundColor: isBreached ? '#ffeded' : '#edfff5',
-      color: isBreached ? '#cc0000' : '#00994d',
-      border: `1px solid ${isBreached ? '#ffcccc' : '#b3ffd1'}`
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '6px 12px',
+      borderRadius: '99px',
+      fontWeight: '600',
+      fontSize: '13px',
+      backgroundColor: isBreached ? '#fee2e2' : 'var(--surface-container-low)',
+      color: isBreached ? '#991b1b' : 'var(--on-surface)'
     }}>
-      ⏱ {timeLeft}
+      <Timer size={16} strokeWidth={2} />
+      {timeLeft}
     </div>
   );
 }
