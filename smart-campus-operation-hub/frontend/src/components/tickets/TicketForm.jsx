@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
-    category: initialData.category || 'IT_SUPPORT',
+    category: initialData.category || 'IT_ISSUE',
     description: initialData.description || '',
     priority: initialData.priority || 'LOW',
     contactInfo: initialData.contactInfo || '',
@@ -25,10 +25,11 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
       <label>
         <span style={{ fontWeight: 'bold' }}>Category:</span>
         <select name="category" value={formData.category} onChange={handleChange} required style={{ width: '100%', padding: '8px', marginTop: '4px' }}>
-          <option value="IT_SUPPORT">IT Support</option>
-          <option value="MAINTENANCE">Maintenance</option>
+          <option value="IT_ISSUE">IT Issue</option>
+          <option value="SAFETY">Safety</option>
           <option value="CLEANING">Cleaning</option>
-          <option value="SECURITY">Security</option>
+          <option value="FACILITY_DAMAGE">Facility Damage</option>
+          <option value="EQUIPMENT_MALFUNCTION">Equipment Malfunction</option>
           <option value="OTHER">Other</option>
         </select>
       </label>
