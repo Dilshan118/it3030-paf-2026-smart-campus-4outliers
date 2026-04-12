@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { uploadAttachment, deleteAttachment } from '../../api/ticketApi';
+import { ImagePlus, X } from 'lucide-react';
 
 export default function ImageUpload({ ticketId, attachments = [], onUploadSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,6 @@ export default function ImageUpload({ ticketId, attachments = [], onUploadSucces
   };
 
   const handleDelete = async (aid) => {
-    if (!window.confirm('Delete attachment?')) return;
     try {
       setLoading(true);
       await deleteAttachment(ticketId, aid);
@@ -42,20 +42,39 @@ export default function ImageUpload({ ticketId, attachments = [], onUploadSucces
   };
 
   return (
-    <div style={{ marginTop: '20px', textAlign: 'left' }}>
-      <h3>Attachments ({attachments.length}/3)</h3>
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+    <div style={{ marginTop: '40px', textAlign: 'left' }} className="card">
+      <h3 style={{ margin: '0 0 16px 0' }}>Attachments <span style={{ opacity: 0.5, fontWeight: 'normal' }}>({attachments.length}/3)</span></h3>
+      
+      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
         {attachments.map(att => (
-          <div key={att.id} style={{ border: '1px solid #ccc', padding: '4px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--code-bg)' }}>
-            <a href={att.fileUrl} target="_blank" rel="noreferrer" style={{ fontSize: '12px' }}>{att.fileName}</a>
-            <button onClick={() => handleDelete(att.id)} disabled={loading} style={{ background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', padding: '2px 6px', fontSize: '10px' }}>x</button>
+          <div key={att.id} style={{ 
+            backgroundColor: 'var(--surface-container-low)', 
+            padding: '8px 12px', 
+            borderRadius: '6px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px' 
+          }}>
+            <a href={att.fileUrl} target="_blank" rel="noreferrer" style={{ fontSize: '13px', textDecoration: 'none', color: 'var(--primary)', fontWeight: '500' }}>
+              {att.fileName}
+            </a>
+            <button 
+              onClick={() => handleDelete(att.id)} 
+              disabled={loading} 
+              style={{ display: 'flex', alignItems: 'center', color: '#be123c', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', opacity: 0.7 }}
+            >
+              <X size={16} strokeWidth={2} />
+            </button>
           </div>
         ))}
       </div>
+      
       {attachments.length < 3 && (
-        <div>
-          <input type="file" onChange={handleUpload} disabled={loading} accept="image/jpeg,image/png,application/pdf" style={{ fontSize: '12px' }} />
-        </div>
+        <label className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', opacity: loading ? 0.5 : 1 }}>
+          <ImagePlus size={18} strokeWidth={1.5} />
+          Upload Image/PDF
+          <input type="file" onChange={handleUpload} disabled={loading} accept="image/jpeg,image/png,application/pdf" style={{ display: 'none' }} />
+        </label>
       )}
     </div>
   );
