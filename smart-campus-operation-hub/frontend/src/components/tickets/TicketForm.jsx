@@ -20,11 +20,11 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
+    <form onSubmit={handleSubmit} className="card" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
       
       <label>
-        <span style={{ fontWeight: 'bold' }}>Category:</span>
-        <select name="category" value={formData.category} onChange={handleChange} required style={{ width: '100%', padding: '8px', marginTop: '4px' }}>
+        <span className="label-text">Category</span>
+        <select name="category" value={formData.category} onChange={handleChange} required className="input-field">
           <option value="IT_ISSUE">IT Issue</option>
           <option value="SAFETY">Safety</option>
           <option value="CLEANING">Cleaning</option>
@@ -35,8 +35,8 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
       </label>
 
       <label>
-        <span style={{ fontWeight: 'bold' }}>Priority:</span>
-        <select name="priority" value={formData.priority} onChange={handleChange} required style={{ width: '100%', padding: '8px', marginTop: '4px' }}>
+        <span className="label-text">Priority</span>
+        <select name="priority" value={formData.priority} onChange={handleChange} required className="input-field">
           <option value="LOW">Low</option>
           <option value="MEDIUM">Medium</option>
           <option value="HIGH">High</option>
@@ -45,25 +45,25 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
       </label>
 
       <label>
-        <span style={{ fontWeight: 'bold' }}>Description:</span>
-        <textarea name="description" value={formData.description} onChange={handleChange} required style={{ width: '100%', padding: '8px', marginTop: '4px', minHeight: '100px' }} />
+        <span className="label-text">Description</span>
+        <textarea name="description" value={formData.description} onChange={handleChange} required className="input-field" style={{ minHeight: '120px', resize: 'vertical' }} />
       </label>
 
       <label>
-        <span style={{ fontWeight: 'bold' }}>Contact Info:</span>
-        <input type="text" name="contactInfo" value={formData.contactInfo} onChange={handleChange} required style={{ width: '100%', padding: '8px', marginTop: '4px' }} placeholder="Phone number or email" />
+        <span className="label-text">Contact Info</span>
+        <input type="text" name="contactInfo" value={formData.contactInfo} onChange={handleChange} required className="input-field" placeholder="Phone directory \# or email" />
       </label>
 
       <label>
-        <span style={{ fontWeight: 'bold' }}>Resource ID (Optional):</span>
-        <input type="number" name="resourceId" value={formData.resourceId} onChange={handleChange} style={{ width: '100%', padding: '8px', marginTop: '4px' }} placeholder="e.g. Printer #32" />
+        <span className="label-text">Resource ID (Optional)</span>
+        <input type="number" name="resourceId" value={formData.resourceId} onChange={handleChange} className="input-field" placeholder="e.g. 4567" />
       </label>
 
-      <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
-        <button type="submit" style={{ padding: '8px 16px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', flex: 1 }}>
+      <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+        <button type="submit" className="btn-primary" style={{ flex: 1 }}>
           {initialData.id ? 'Update Ticket' : 'Create Ticket'}
         </button>
-        <button type="button" onClick={onCancel} style={{ padding: '8px 16px', backgroundColor: '#e5e4e7', color: 'black', border: 'none', borderRadius: '4px', cursor: 'pointer', flex: 1 }}>
+        <button type="button" onClick={onCancel} className="btn-secondary" style={{ flex: 1 }}>
           Cancel
         </button>
       </div>
