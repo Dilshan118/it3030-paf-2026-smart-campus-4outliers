@@ -16,7 +16,12 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    const normalized = {
+      ...formData,
+      resourceId: formData.resourceId === '' ? null : Number(formData.resourceId),
+    };
+
+    onSubmit(normalized);
   };
 
   return (
@@ -46,7 +51,7 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
 
       <label>
         <span className="label-text">Description</span>
-        <textarea name="description" value={formData.description} onChange={handleChange} required className="input-field" style={{ minHeight: '120px', resize: 'vertical' }} />
+        <textarea name="description" value={formData.description} onChange={handleChange} required minLength={10} className="input-field" style={{ minHeight: '120px', resize: 'vertical' }} />
       </label>
 
       <label>
