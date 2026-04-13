@@ -81,7 +81,7 @@ export default function CommentThread({ ticketId, initialComments = [], onCommen
           onChange={e => setNewComment(e.target.value)}
           placeholder="Add an update or note..."
           className="input-field"
-          style={{ flex: 1, backgroundColor: 'var(--surface-container-low)' }}
+          style={{ flex: 1 }}
           disabled={loading}
         />
         <button type="submit" disabled={loading} className="btn-primary" style={{ padding: '0 24px' }}>
