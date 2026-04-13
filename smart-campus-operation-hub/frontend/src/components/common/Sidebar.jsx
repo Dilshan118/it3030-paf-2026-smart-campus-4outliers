@@ -11,7 +11,7 @@ export default function Sidebar() {
 
   return (
     <nav className="sidebar">
-      <h2>The Curator</h2>
+      <h2>Smart Campus</h2>
 
       <NavLink to="/" end className={navClassName}>
         <LayoutDashboard size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
