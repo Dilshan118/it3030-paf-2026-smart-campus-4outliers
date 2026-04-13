@@ -12,7 +12,6 @@ import TicketListPage from './pages/tickets/TicketListPage';
 import TicketCreatePage from './pages/tickets/TicketCreatePage';
 import TicketDetailPage from './pages/tickets/TicketDetailPage';
 import TicketManagePage from './pages/tickets/TicketManagePage';
-import './App.css';
 
 function DashboardLayout({ children }) {
   return (
