@@ -2,36 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { Timer } from 'lucide-react';
 
 export default function SlaTimer({ deadline, status }) {
-  const [timeLeft, setTimeLeft] = useState('');
-  const [isBreached, setIsBreached] = useState(false);
+  const [now, setNow] = useState(() => new Date());
+  const isStopped = status === 'RESOLVED' || status === 'CLOSED' || status === 'REJECTED';
 
   useEffect(() => {
-    if (status === 'RESOLVED' || status === 'CLOSED' || status === 'REJECTED') {
-      setTimeLeft('Timer Stopped');
+    if (isStopped) {
       return;
     }
 
-    const calculateTime = () => {
-      const now = new Date();
-      const target = new Date(deadline);
-      const diff = target - now;
-
-      if (diff <= 0) {
-        setTimeLeft('SLA Breached');
-        setIsBreached(true);
-        return;
-      }
-
-      setIsBreached(false);
-      const h = Math.floor(diff / (1000 * 60 * 60));
-      const m = Math.floor((diff / (1000 * 60)) % 60);
-      setTimeLeft(`${h}h ${m}m remaining`);
-    };
-
-    calculateTime();
-    const interval = setInterval(calculateTime, 60000);
+    const interval = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(interval);
-  }, [deadline, status]);
+  }, [isStopped]);
+
+  const target = new Date(deadline);
+  const diff = target - now;
+  const isBreached = !isStopped && diff <= 0;
+
+  const timeLeft = (() => {
+    if (isStopped) return 'Timer Stopped';
+    if (Number.isNaN(target.getTime())) return 'Invalid Deadline';
+    if (isBreached) return 'SLA Breached';
+    const h = Math.floor(diff / (1000 * 60 * 60));
+    const m = Math.floor((diff / (1000 * 60)) % 60);
+    return `${h}h ${m}m remaining`;
+  })();
 
   return (
     <div style={{
