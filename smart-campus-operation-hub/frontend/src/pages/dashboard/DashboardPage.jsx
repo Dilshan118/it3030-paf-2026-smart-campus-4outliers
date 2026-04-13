@@ -1,12 +1,15 @@
-import React from 'react';
-import { Ticket, CalendarDays, Box, Activity } from 'lucide-react';
+import React, { useContext } from 'react';
+import { Ticket, CalendarDays, Box, Activity, Bell } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 
 export default function DashboardPage() {
+  const { user } = useContext(AuthContext);
+
   return (
     <div className="page-container" style={{ paddingBottom: '60px' }}>
       <div style={{ marginBottom: '24px' }}>
-        <h1 className="h1" style={{ marginBottom: '8px' }}>Operation Scope</h1>
+        <h1 className="h1" style={{ marginBottom: '8px' }}>Welcome back, {user?.name || 'User'}</h1>
         <p style={{ color: 'var(--on-surface-variant)', fontSize: '1rem' }}>
           Live metrics and pending integrations across your domain.
         </p>

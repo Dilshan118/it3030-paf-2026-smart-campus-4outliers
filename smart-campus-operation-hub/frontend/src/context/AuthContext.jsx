@@ -7,16 +7,22 @@ import { createContext, useContext, useState, useEffect } from 'react';
  * Usage in any component:
  *   const { user, isAuthenticated, login, logout } = useAuth();
  */
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Check if token exists in localStorage
-    // TODO: If yes, fetch /users/me to get current user
-    // TODO: If no, set loading = false
+    // TEMPORARY: For development/testing, set a mock user
+    // TODO: Replace with actual token validation and user fetching
+    const mockUser = {
+      id: 1,
+      name: 'Test User',
+      email: 'test@example.com',
+      role: 'STUDENT'
+    };
+    setUser(mockUser);
     setLoading(false);
   }, []);
 

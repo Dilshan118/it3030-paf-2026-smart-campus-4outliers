@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Ticket, CalendarDays, Box } from 'lucide-react';
+import { LayoutDashboard, Ticket, CalendarDays, Box, Bell, Users, Settings } from 'lucide-react';
+import { AuthContext } from '../../context/AuthContext';
 
 export default function Sidebar() {
+  const { user } = useContext(AuthContext);
+  const isAdmin = user?.role === 'ADMIN';
+
   const navClassName = ({ isActive }) => (isActive ? 'active' : '');
 
   return (
@@ -19,6 +23,11 @@ export default function Sidebar() {
         Tickets
       </NavLink>
 
+      <NavLink to="/notifications" className={navClassName}>
+        <Bell size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
+        Notifications
+      </NavLink>
+
       <div style={{ opacity: 0.5, padding: '12px 16px', display: 'flex', alignItems: 'center', color: '#fff', fontWeight: 500, cursor: 'not-allowed', marginBottom: '8px' }}>
         <CalendarDays size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
         Bookings 
@@ -30,6 +39,20 @@ export default function Sidebar() {
         Resources
         <span className="badge" style={{ marginLeft: 'auto', backgroundColor: 'rgba(255,255,255,0.1)' }}>Soon</span>
       </div>
+
+      {isAdmin && (
+        <div style={{ marginTop: '24px' }}>
+          <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', padding: '0 16px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Admin</h3>
+          <NavLink to="/admin/users" className={navClassName}>
+            <Users size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
+            Users
+          </NavLink>
+          <NavLink to="/admin/analytics" className={navClassName}>
+            <Settings size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
+            Analytics
+          </NavLink>
+        </div>
+      )}
     </nav>
   );
 }
