@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
       id: 1,
       name: 'Test User',
       email: 'test@example.com',
-      role: 'STUDENT'
+      role: 'ADMIN'
     };
     setUser(mockUser);
     setLoading(false);

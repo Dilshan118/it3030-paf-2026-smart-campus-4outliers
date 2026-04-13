@@ -12,37 +12,47 @@ export default function LoginPage() {
       id: 1,
       name: 'Test User',
       email: 'test@example.com',
-      role: 'STUDENT'
+      role: 'ADMIN'
     };
     login('mock-token', mockUser);
     navigate('/');
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'var(--surface)',
+    }}>
+      <div style={{ maxWidth: '380px', width: '100%', padding: '0 24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <h2 style={{
+            fontSize: '1.75rem',
+            fontWeight: 600,
+            color: 'var(--on-surface-variant)',
+            letterSpacing: '-0.02em',
+            marginBottom: '8px',
+          }}>
             Smart Campus Hub
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to access the notification system
+          <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.9rem', opacity: 0.7 }}>
+            Sign in to access the operations system
           </p>
         </div>
-        <div className="mt-8 space-y-6">
-          <div>
-            <button
-              onClick={handleMockLogin}
-              className="btn btn-primary w-full"
-            >
-              Mock Login (Development)
-            </button>
-          </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-500">
-              This is a temporary login for testing the notification system.
-            </p>
-          </div>
+
+        <div className="card" style={{ padding: '32px', textAlign: 'center' }}>
+          <button
+            onClick={handleMockLogin}
+            className="btn-primary"
+            style={{ width: '100%', padding: '12px 16px', fontSize: '0.95rem' }}
+          >
+            Mock Login (Development)
+          </button>
+          <p style={{ marginTop: '16px', fontSize: '0.8rem', color: 'var(--on-surface-variant)', opacity: 0.5 }}>
+            This is a temporary login for testing.
+          </p>
         </div>
       </div>
     </div>
