@@ -1,5 +1,5 @@
-import { useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LogOut, User } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import NotificationBell from '../notifications/NotificationBell';
@@ -14,50 +14,25 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          {/* Logo/Brand */}
-          <div className="flex items-center">
-            <Link to="/" className="text-xl font-bold text-gray-900">
-              Smart Campus Hub
-            </Link>
-          </div>
+    <header style={{ padding: '24px 32px 0', display: 'flex', justifyContent: 'flex-end', position: 'sticky', top: 0, zIndex: 50, gap: '16px' }}>
+      
+      <NotificationBell />
 
-          {/* Right side - User menu and notifications */}
-          <div className="flex items-center space-x-4">
-            {/* Notification Bell */}
-            <NotificationBell />
-
-            {/* User Menu */}
-            <div className="relative flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <User size={16} className="text-white" />
-                </div>
-                <div className="hidden md:block">
-                  <div className="text-sm font-medium text-gray-900">
-                    {user?.name || 'User'}
-                  </div>
-                  <div className="text-xs text-gray-500 capitalize">
-                    {user?.role || 'Student'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Logout Button */}
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-                title="Logout"
-              >
-                <LogOut size={16} />
-                <span className="hidden md:inline">Logout</span>
-              </button>
-            </div>
-          </div>
+      {/* Floating Glass Header */}
+      <div className="glass-chip" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#dcfce7', boxShadow: '0 0 0 3px #bbf7d0' }}></div>
+          <span style={{ color: 'var(--on-surface-variant)', fontWeight: 600 }}>{user?.name || 'User'}</span>
         </div>
+
+        <button
+          onClick={handleLogout}
+          style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', color: 'var(--on-surface-variant)', cursor: 'pointer', padding: 0 }}
+          title="Logout"
+        >
+          <LogOut size={16} strokeWidth={2} style={{ opacity: 0.7 }} />
+        </button>
       </div>
-    </nav>
+    </header>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Check, Trash2, Clock } from 'lucide-react';
+import { X, Check, Trash2, Clock, Bell } from 'lucide-react';
 import { getNotifications, markAsRead, markAllAsRead, deleteNotification } from '../../api/notificationApi';
 import { Link } from 'react-router-dom';
 
@@ -11,7 +11,6 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
   useEffect(() => {
     fetchNotifications();
 
-    // Close dropdown when clicking outside
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         onClose();
@@ -25,7 +24,7 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await getNotifications(0, 5); // Get first 5 notifications
+      const response = await getNotifications(0, 5);
       setNotifications(response.data.data.content || []);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -93,43 +92,59 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
   return (
     <div
       ref={dropdownRef}
-      className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+      style={{
+        position: 'absolute',
+        right: 0,
+        marginTop: '8px',
+        width: '360px',
+        backgroundColor: 'var(--surface-container-lowest)',
+        borderRadius: '12px',
+        boxShadow: 'var(--ambient-shadow), 0 8px 32px rgba(25, 28, 30, 0.12)',
+        zIndex: 50,
+        overflow: 'hidden',
+      }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
-        <div className="flex items-center space-x-2">
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '16px 20px',
+        backgroundColor: 'var(--surface-container-low)',
+      }}>
+        <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--on-surface)' }}>Notifications</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {notifications.some(n => !n.isRead) && (
             <button
               onClick={handleMarkAllAsRead}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 500, padding: 0 }}
             >
               Mark all read
             </button>
           )}
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', display: 'flex', padding: 0, opacity: 0.6 }}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-h-96 overflow-y-auto">
+      <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
         {loading ? (
-          <div className="p-4 text-center text-gray-500">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2">Loading...</p>
+          <div style={{ padding: '32px 0', textAlign: 'center' }}>
+            <div className="animate-spin" style={{ width: 20, height: 20, border: '2px solid var(--surface-container-highest)', borderTopColor: 'var(--primary)', borderRadius: '50%', margin: '0 auto' }} />
+            <p style={{ marginTop: '12px', color: 'var(--on-surface-variant)', fontSize: '0.8rem' }}>Loading...</p>
           </div>
         ) : notifications.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <Bell className="mx-auto h-12 w-12 text-gray-300" />
-            <p className="mt-2">No notifications yet</p>
+          <div style={{ padding: '40px 24px', textAlign: 'center' }}>
+            <Bell size={32} strokeWidth={1} style={{ color: 'var(--on-surface-variant)', opacity: 0.2, margin: '0 auto 12px' }} />
+            <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.85rem' }}>No notifications yet</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div>
             {notifications.map((notification) => {
               const link = getNotificationLink(notification);
               const NotificationWrapper = link ? Link : 'div';
@@ -139,52 +154,62 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
                   key={notification.id}
                   to={link}
                   onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
-                  className={`block p-4 hover:bg-gray-50 transition-colors ${
-                    !notification.isRead ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                  }`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    padding: '14px 20px',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    transition: 'background-color 0.15s',
+                    cursor: 'pointer',
+                    ...(
+                      !notification.isRead
+                        ? { backgroundColor: 'rgba(42, 20, 180, 0.04)', borderLeft: '3px solid var(--primary)' }
+                        : {}
+                    ),
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? 'var(--surface-container-low)' : 'rgba(42, 20, 180, 0.06)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? '' : 'rgba(42, 20, 180, 0.04)'}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium text-gray-900 truncate ${
-                        !notification.isRead ? 'font-semibold' : ''
-                      }`}>
-                        {notification.title}
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                        {notification.message}
-                      </p>
-                      <div className="flex items-center mt-2 text-xs text-gray-500">
-                        <Clock size={12} className="mr-1" />
-                        {formatTimeAgo(notification.createdAt)}
-                      </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontSize: '0.85rem',
+                      fontWeight: notification.isRead ? 500 : 600,
+                      color: 'var(--on-surface)',
+                      margin: '0 0 4px 0',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {notification.title}
+                    </p>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', margin: '0 0 6px 0', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {notification.message}
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--on-surface-variant)', opacity: 0.6 }}>
+                      <Clock size={11} />
+                      {formatTimeAgo(notification.createdAt)}
                     </div>
+                  </div>
 
-                    <div className="flex items-center space-x-1 ml-2">
-                      {!notification.isRead && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleMarkAsRead(notification.id);
-                          }}
-                          className="text-blue-600 hover:text-blue-800 p-1"
-                          title="Mark as read"
-                        >
-                          <Check size={14} />
-                        </button>
-                      )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginLeft: '8px', flexShrink: 0 }}>
+                    {!notification.isRead && (
                       <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleDelete(notification.id);
-                        }}
-                        className="text-red-600 hover:text-red-800 p-1"
-                        title="Delete"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMarkAsRead(notification.id); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: '4px', display: 'flex' }}
+                        title="Mark as read"
                       >
-                        <Trash2 size={14} />
+                        <Check size={14} />
                       </button>
-                    </div>
+                    )}
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(notification.id); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--error)', padding: '4px', display: 'flex', opacity: 0.5 }}
+                      title="Delete"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </NotificationWrapper>
               );
@@ -195,11 +220,11 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
 
       {/* Footer */}
       {notifications.length > 0 && (
-        <div className="border-t border-gray-200 p-3">
+        <div style={{ padding: '12px 20px', backgroundColor: 'var(--surface-container-low)', textAlign: 'center' }}>
           <Link
             to="/notifications"
             onClick={onClose}
-            className="block w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium"
+            style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 500, textDecoration: 'none' }}
           >
             View all notifications
           </Link>

@@ -1,104 +1,83 @@
-import { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Ticket, CalendarDays, Box, Activity, Bell } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { Bell, Calendar, Ticket, BookOpen } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = useContext(AuthContext);
 
-  const quickActions = [
-    {
-      name: 'View Notifications',
-      href: '/notifications',
-      icon: Bell,
-      description: 'Check your recent notifications'
-    },
-    {
-      name: 'Book Resources',
-      href: '/bookings',
-      icon: Calendar,
-      description: 'Schedule resource bookings'
-    },
-    {
-      name: 'Submit Tickets',
-      href: '/tickets',
-      icon: Ticket,
-      description: 'Report issues and get support'
-    },
-    {
-      name: 'Browse Resources',
-      href: '/resources',
-      icon: BookOpen,
-      description: 'Find available campus resources'
-    }
-  ];
-
   return (
-    <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user?.name || 'User'}!
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Here's what's happening in your Smart Campus Hub.
+    <div className="page-container" style={{ paddingBottom: '60px' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 className="h1" style={{ marginBottom: '8px' }}>Welcome back, {user?.name || 'User'}</h1>
+        <p style={{ color: 'var(--on-surface-variant)', fontSize: '1rem' }}>
+          Live metrics and pending integrations across your domain.
         </p>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {quickActions.map((action) => (
-            <Link
-              key={action.name}
-              to={action.href}
-              className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors"
-            >
-              <div className="flex items-center space-x-3">
-                <action.icon className="h-8 w-8 text-blue-600" />
-                <div>
-                  <h3 className="font-medium text-gray-900">{action.name}</h3>
-                  <p className="text-sm text-gray-500">{action.description}</p>
-                </div>
-              </div>
-            </Link>
-          ))}
+      <div className="dashboard-grid">
+        {/* Live Ticket Metric */}
+        <div className="metric-card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <span className="label-text" style={{ margin: 0 }}>Active Tickets</span>
+            <div style={{ padding: '8px', backgroundColor: '#e0e7ff', borderRadius: '8px', color: 'var(--primary)' }}>
+              <Ticket size={24} strokeWidth={1.5} />
+            </div>
+          </div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '16px', letterSpacing: '-0.02em' }}>
+            Live
+          </div>
+          <NavLink to="/tickets" style={{ textDecoration: 'none', color: 'var(--primary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Manage Queue <span aria-hidden="true">&rarr;</span>
+          </NavLink>
         </div>
-      </div>
 
-      {/* Notification System Status */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">System Status</h2>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-700">Notification System</span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              ✅ Active
-            </span>
+        {/* Global SLA Health */}
+        <div className="metric-card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <span className="label-text" style={{ margin: 0 }}>SLA Health</span>
+            <div style={{ padding: '8px', backgroundColor: '#ecfdf5', borderRadius: '8px', color: '#059669' }}>
+              <Activity size={24} strokeWidth={1.5} />
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-700">Backend API</span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              ✅ Connected
-            </span>
+          <div style={{ fontSize: '2.5rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px', letterSpacing: '-0.02em', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            Active <span style={{ fontSize: '1rem', color: '#059669', fontWeight: 500 }}>Targeting 100%</span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-700">Real-time Updates</span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-              🔄 Polling
-            </span>
+          <div style={{ marginTop: 'auto', fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>
+            Based on active resolution timers.
           </div>
         </div>
-      </div>
 
-      {/* Recent Activity Placeholder */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
-        <div className="text-center text-gray-500 py-8">
-          <Bell className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-          <p>No recent activity yet.</p>
-          <p className="text-sm mt-2">Activity will appear here when you start using the system.</p>
+        {/* Pending Module: Bookings */}
+        <div className="metric-card-muted" style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <span className="label-text" style={{ margin: 0 }}>Facility Bookings</span>
+            <div style={{ padding: '8px', backgroundColor: 'var(--surface-container-high)', borderRadius: '8px', color: 'var(--on-surface-variant)' }}>
+              <CalendarDays size={24} strokeWidth={1.5} />
+            </div>
+          </div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '16px', opacity: 0.7 }}>
+            Awaiting Deployment
+          </div>
+          <div style={{ marginTop: 'auto', fontSize: '0.875rem', color: 'var(--on-surface-variant)', fontStyle: 'italic' }}>
+            Module configuration pending.
+          </div>
+        </div>
+
+        {/* Pending Module: Resources */}
+        <div className="metric-card-muted" style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <span className="label-text" style={{ margin: 0 }}>Resource Sync</span>
+            <div style={{ padding: '8px', backgroundColor: 'var(--surface-container-high)', borderRadius: '8px', color: 'var(--on-surface-variant)' }}>
+              <Box size={24} strokeWidth={1.5} />
+            </div>
+          </div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '16px', opacity: 0.7 }}>
+            Awaiting Deployment
+          </div>
+          <div style={{ marginTop: 'auto', fontSize: '0.875rem', color: 'var(--on-surface-variant)', fontStyle: 'italic' }}>
+            Hardware node detection pending.
+          </div>
         </div>
       </div>
     </div>

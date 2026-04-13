@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, Trash2, Clock, Filter, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, Trash2, Clock, Filter, Search, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
 import { getNotifications, markAsRead, markAllAsRead, deleteNotification } from '../../api/notificationApi';
 import { Link } from 'react-router-dom';
 
@@ -9,7 +9,7 @@ export default function NotificationHistoryPage() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [filter, setFilter] = useState('ALL'); // ALL, READ, UNREAD
+  const [filter, setFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNotifications, setSelectedNotifications] = useState([]);
 
@@ -123,100 +123,95 @@ export default function NotificationHistoryPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="page-container">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Notification History</h1>
-        <p className="text-gray-600 mt-2">View and manage all your notifications</p>
+      <div>
+        <h1 className="h1" style={{ marginBottom: '4px' }}>Notification History</h1>
+        <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
+          View and manage all your notifications
+        </p>
       </div>
 
-      {/* Controls */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          {/* Search */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search notifications..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Filter */}
-          <div className="flex items-center space-x-2">
-            <Filter size={20} className="text-gray-400" />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="ALL">All Notifications</option>
-              <option value="UNREAD">Unread Only</option>
-              <option value="READ">Read Only</option>
-            </select>
-          </div>
-
-          {/* Bulk Actions */}
-          {selectedNotifications.length > 0 && (
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={handleBulkDelete}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              >
-                <Trash2 size={16} />
-                <span>Delete Selected ({selectedNotifications.length})</span>
-              </button>
-            </div>
-          )}
-
-          {/* Mark All Read */}
-          {notifications.some(n => !n.isRead) && (
-            <button
-              onClick={handleMarkAllAsRead}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              <Check size={16} />
-              <span>Mark All Read</span>
-            </button>
-          )}
+      {/* Controls Bar */}
+      <div className="card" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', padding: '16px 24px' }}>
+        {/* Search */}
+        <div style={{ position: 'relative', flex: '1 1 240px', maxWidth: '360px' }}>
+          <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--on-surface-variant)', opacity: 0.5 }} />
+          <input
+            type="text"
+            placeholder="Search notifications..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input-field"
+            style={{ paddingLeft: '40px', margin: 0 }}
+          />
         </div>
+
+        {/* Filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Filter size={16} style={{ color: 'var(--on-surface-variant)', opacity: 0.5 }} />
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="input-field"
+            style={{ width: 'auto', minWidth: '160px', margin: 0 }}
+          >
+            <option value="ALL">All Notifications</option>
+            <option value="UNREAD">Unread Only</option>
+            <option value="READ">Read Only</option>
+          </select>
+        </div>
+
+        {/* Spacer */}
+        <div style={{ flex: '1 1 0' }} />
+
+        {/* Bulk Actions */}
+        {selectedNotifications.length > 0 && (
+          <button onClick={handleBulkDelete} className="btn-danger">
+            <Trash2 size={14} />
+            Delete ({selectedNotifications.length})
+          </button>
+        )}
+
+        {/* Mark All Read */}
+        {notifications.some(n => !n.isRead) && (
+          <button onClick={handleMarkAllAsRead} className="btn-primary">
+            <Check size={14} />
+            Mark All Read
+          </button>
+        )}
       </div>
 
       {/* Notifications List */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-500">Loading notifications...</p>
+          <div style={{ padding: '48px 0', textAlign: 'center' }}>
+            <div className="animate-spin" style={{ width: 24, height: 24, border: '2px solid var(--surface-container-highest)', borderTopColor: 'var(--primary)', borderRadius: '50%', margin: '0 auto' }} />
+            <p style={{ marginTop: '16px', color: 'var(--on-surface-variant)', fontSize: '0.875rem' }}>Loading notifications...</p>
           </div>
         ) : filteredNotifications.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <Bell className="mx-auto h-16 w-16 text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications found</h3>
-            <p>Try adjusting your search or filter criteria.</p>
+          <div style={{ padding: '64px 24px', textAlign: 'center' }}>
+            <Bell size={40} strokeWidth={1} style={{ color: 'var(--on-surface-variant)', opacity: 0.25, margin: '0 auto 16px' }} />
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '4px' }}>No notifications found</h3>
+            <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem' }}>Try adjusting your search or filter criteria.</p>
           </div>
         ) : (
           <>
-            {/* Select All Checkbox */}
-            <div className="p-4 border-b border-gray-200">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={selectedNotifications.length === notifications.length && notifications.length > 0}
-                  onChange={handleSelectAll}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">
-                  Select all ({notifications.length} notifications)
-                </span>
-              </label>
+            {/* Select All */}
+            <div style={{ padding: '12px 24px', backgroundColor: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <input
+                type="checkbox"
+                checked={selectedNotifications.length === notifications.length && notifications.length > 0}
+                onChange={handleSelectAll}
+                style={{ accentColor: 'var(--primary)', width: 16, height: 16 }}
+              />
+              <span style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 500 }}>
+                Select all ({notifications.length} notifications)
+              </span>
             </div>
 
-            {/* Notifications */}
-            <div className="divide-y divide-gray-200">
+            {/* Notification Items */}
+            <div>
               {filteredNotifications.map((notification) => {
                 const link = getNotificationLink(notification);
                 const NotificationWrapper = link ? Link : 'div';
@@ -224,69 +219,76 @@ export default function NotificationHistoryPage() {
                 return (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 transition-colors ${
-                      !notification.isRead ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                    }`}
+                    className="notification-item"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '14px',
+                      padding: '16px 24px',
+                      ...(
+                        !notification.isRead
+                          ? { backgroundColor: 'rgba(42, 20, 180, 0.04)', borderLeft: '3px solid var(--primary)' }
+                          : {}
+                      ),
+                    }}
                   >
-                    <div className="flex items-start space-x-4">
-                      {/* Checkbox */}
-                      <input
-                        type="checkbox"
-                        checked={selectedNotifications.includes(notification.id)}
-                        onChange={() => handleSelectNotification(notification.id)}
-                        className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
+                    {/* Checkbox */}
+                    <input
+                      type="checkbox"
+                      checked={selectedNotifications.includes(notification.id)}
+                      onChange={() => handleSelectNotification(notification.id)}
+                      style={{ accentColor: 'var(--primary)', width: 16, height: 16, marginTop: '3px', flexShrink: 0 }}
+                    />
 
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <NotificationWrapper
-                          to={link}
-                          onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
-                          className="block"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className={`text-sm font-medium text-gray-900 ${
-                                !notification.isRead ? 'font-semibold' : ''
-                              }`}>
-                                {notification.title}
-                              </h3>
-                              <p className="text-sm text-gray-600 mt-1">
-                                {notification.message}
-                              </p>
-                              <div className="flex items-center mt-2 text-xs text-gray-500">
-                                <Clock size={12} className="mr-1" />
-                                {formatTimeAgo(notification.createdAt)}
-                                {notification.referenceType && (
-                                  <span className="ml-2 px-2 py-1 bg-gray-100 rounded-full">
-                                    {notification.referenceType}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </NotificationWrapper>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center space-x-2">
-                        {!notification.isRead && (
-                          <button
-                            onClick={() => handleMarkAsRead(notification.id)}
-                            className="text-blue-600 hover:text-blue-800 p-1"
-                            title="Mark as read"
-                          >
-                            <Check size={16} />
-                          </button>
+                    {/* Content */}
+                    <NotificationWrapper
+                      to={link}
+                      onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
+                      style={{ flex: 1, textDecoration: 'none', color: 'inherit', minWidth: 0 }}
+                    >
+                      <h4 style={{
+                        fontSize: '0.9rem',
+                        fontWeight: notification.isRead ? 500 : 600,
+                        color: 'var(--on-surface)',
+                        margin: '0 0 4px 0',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>
+                        {notification.title}
+                      </h4>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', margin: '0 0 8px 0', lineHeight: 1.45 }}>
+                        {notification.message}
+                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: 'var(--on-surface-variant)', opacity: 0.7 }}>
+                        <Clock size={12} />
+                        {formatTimeAgo(notification.createdAt)}
+                        {notification.referenceType && (
+                          <span className="badge" style={{ backgroundColor: 'var(--surface-container-highest)', color: 'var(--on-surface-variant)', marginLeft: '4px' }}>
+                            {notification.referenceType}
+                          </span>
                         )}
-                        <button
-                          onClick={() => handleDelete(notification.id)}
-                          className="text-red-600 hover:text-red-800 p-1"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
                       </div>
+                    </NotificationWrapper>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                      {!notification.isRead && (
+                        <button
+                          onClick={() => handleMarkAsRead(notification.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: '4px', display: 'flex' }}
+                          title="Mark as read"
+                        >
+                          <Check size={16} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDelete(notification.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--error)', padding: '4px', display: 'flex', opacity: 0.6 }}
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
                 );
@@ -295,25 +297,27 @@ export default function NotificationHistoryPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, totalElements)} of {totalElements} notifications
-                </div>
-                <div className="flex items-center space-x-2">
+              <div style={{ padding: '16px 24px', backgroundColor: 'var(--surface-container-low)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>
+                  Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, totalElements)} of {totalElements}
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button
                     onClick={() => setPage(prev => Math.max(0, prev - 1))}
                     disabled={page === 0}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="btn-secondary"
+                    style={{ padding: '6px 10px', opacity: page === 0 ? 0.4 : 1, cursor: page === 0 ? 'not-allowed' : 'pointer' }}
                   >
                     <ChevronLeft size={16} />
                   </button>
-                  <span className="text-sm text-gray-700">
+                  <span style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 500 }}>
                     Page {page + 1} of {totalPages}
                   </span>
                   <button
                     onClick={() => setPage(prev => Math.min(totalPages - 1, prev + 1))}
                     disabled={page === totalPages - 1}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="btn-secondary"
+                    style={{ padding: '6px 10px', opacity: page === totalPages - 1 ? 0.4 : 1, cursor: page === totalPages - 1 ? 'not-allowed' : 'pointer' }}
                   >
                     <ChevronRight size={16} />
                   </button>

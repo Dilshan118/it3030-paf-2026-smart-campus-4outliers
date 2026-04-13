@@ -33,20 +33,46 @@ export default function NotificationBell() {
   };
 
   const handleNotificationRead = () => {
-    // Refresh count when notifications are marked as read
     fetchUnreadCount();
   };
 
   return (
-    <div className="relative">
+    <div style={{ position: 'relative' }}>
       <button
         onClick={handleBellClick}
-        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
+        style={{
+          position: 'relative',
+          padding: '8px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--on-surface-variant)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '8px',
+          transition: 'background-color 0.2s',
+        }}
         aria-label="Notifications"
       >
-        <Bell size={20} />
+        <Bell size={20} strokeWidth={1.5} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
+          <span style={{
+            position: 'absolute',
+            top: '2px',
+            right: '2px',
+            backgroundColor: 'var(--error)',
+            color: '#ffffff',
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            borderRadius: '999px',
+            minWidth: '18px',
+            height: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0 4px',
+          }}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
