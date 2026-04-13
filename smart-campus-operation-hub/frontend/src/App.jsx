@@ -11,6 +11,7 @@ import NotificationHistoryPage from './pages/notifications/NotificationHistoryPa
 import TicketListPage from './pages/tickets/TicketListPage';
 import TicketCreatePage from './pages/tickets/TicketCreatePage';
 import TicketDetailPage from './pages/tickets/TicketDetailPage';
+import TicketManagePage from './pages/tickets/TicketManagePage';
 import './App.css';
 
 function DashboardLayout({ children }) {
@@ -43,6 +44,7 @@ function App() {
           {/* Ticket Routes */}
           <Route path="/tickets" element={<ProtectedRoute><DashboardLayout><TicketListPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/tickets/new" element={<ProtectedRoute><DashboardLayout><TicketCreatePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/tickets/manage" element={<ProtectedRoute><DashboardLayout><TicketManagePage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute><DashboardLayout><TicketDetailPage /></DashboardLayout></ProtectedRoute>} />
 
           {/* Placeholders for Other Modules */}
