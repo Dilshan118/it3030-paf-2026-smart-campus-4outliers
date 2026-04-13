@@ -62,7 +62,7 @@ public class CommentController {
         Long userId = 1L;
 
         com.example.smart_campus_operation_hub.dto.response.CommentResponse response =
-                commentService.editComment(commentId, request.getContent(), userId);
+            commentService.editComment(ticketId, commentId, request.getContent(), userId);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -79,7 +79,7 @@ public class CommentController {
         Long userId = 1L;
         String role = "USER";
 
-        commentService.deleteComment(commentId, userId, role);
+        commentService.deleteComment(ticketId, commentId, userId, role);
 
         return ResponseEntity.noContent().build();
     }
