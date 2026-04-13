@@ -43,7 +43,7 @@ export default function TicketListPage() {
       )}
 
       {!loading && !error && tickets.length > 0 && (
-        <div className="card" style={{ padding: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {tickets.map(t => (
             <TicketCard key={t.id} ticket={t} />
           ))}

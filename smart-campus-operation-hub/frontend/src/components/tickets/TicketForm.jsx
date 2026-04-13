@@ -60,7 +60,7 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
       </div>
 
       <div>
-        <label className="label-text" style={{ marginTop: 0, marginBottom: '8px' }}>Resource ID (Optional)</label>
+        <label className="label-text" style={{ marginTop: 0, marginBottom: '8px' }}>Resource ID <span style={{opacity: 0.5, fontWeight: 400}}>(Numeric Only, Optional)</span></label>
         <input type="number" name="resourceId" value={formData.resourceId} onChange={handleChange} className="input-field" placeholder="e.g. 4567" style={{ backgroundColor: 'var(--surface-container-highest)', borderRadius: '6px' }} />
       </div>
 
