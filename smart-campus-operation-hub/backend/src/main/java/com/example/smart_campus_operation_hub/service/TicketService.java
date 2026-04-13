@@ -166,6 +166,8 @@ public class TicketService {
             Resource resource = resourceRepository.findById(request.getResourceId())
                     .orElseThrow(() -> new ResourceNotFoundException("Resource", request.getResourceId()));
             ticket.setResource(resource);
+        } else {
+            ticket.setResource(null);
         }
 
         Ticket saved = ticketRepository.save(ticket);
