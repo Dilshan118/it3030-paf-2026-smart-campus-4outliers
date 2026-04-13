@@ -1,13 +1,16 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, AlertCircle, FileWarning } from 'lucide-react';
 import CommentThread from '../../components/tickets/CommentThread';
 import SlaTimer from '../../components/tickets/SlaTimer';
 import ImageUpload from '../../components/tickets/ImageUpload';
 import { getTicketById, updateTicketStatus } from '../../api/ticketApi';
+import { AuthContext } from '../../context/AuthContext';
 
 export default function TicketDetailPage() {
   const { id } = useParams();
+  const { user } = useContext(AuthContext);
+  const isAdmin = user?.role === 'ADMIN';
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [ticketError, setTicketError] = useState('');
@@ -120,48 +123,52 @@ export default function TicketDetailPage() {
 
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="card">
-             <h3 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--on-surface-variant)', marginBottom: '20px', fontWeight: '600' }}>SLA Tracking</h3>
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                   <p style={{ fontSize: '13px', color: 'var(--on-surface-variant)', marginBottom: '8px' }}>Resolution Deadline</p>
-                   {ticket.slaDeadline ? <SlaTimer deadline={ticket.slaDeadline} status={ticket.status} /> : <span style={{ color: 'var(--on-surface-variant)', fontSize: '14px', fontStyle: 'italic' }}>Not Set</span>}
-                </div>
-             </div>
-          </div>
-
-          <div className="card">
-            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--on-surface-variant)', marginBottom: '20px', fontWeight: '600' }}>Actions</h3>
-
-            {actionError && (
-              <div style={{ marginBottom: '12px', padding: '10px 12px', borderRadius: '8px', backgroundColor: '#fee2e2', color: '#991b1b', fontSize: '14px' }}>
-                {actionError}
+          {isAdmin && (
+            <>
+              <div className="card">
+                 <h3 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--on-surface-variant)', marginBottom: '20px', fontWeight: '600' }}>SLA Tracking</h3>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div>
+                       <p style={{ fontSize: '13px', color: 'var(--on-surface-variant)', marginBottom: '8px' }}>Resolution Deadline</p>
+                       {ticket.slaDeadline ? <SlaTimer deadline={ticket.slaDeadline} status={ticket.status} /> : <span style={{ color: 'var(--on-surface-variant)', fontSize: '14px', fontStyle: 'italic' }}>Not Set</span>}
+                    </div>
+                 </div>
               </div>
-            )}
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {ticket.status === 'OPEN' && (
-                <button className="btn-primary" onClick={() => handleUpdateStatus('IN_PROGRESS')} style={{ width: '100%', justifyContent: 'center' }}>
-                 Mark In Progress
-                </button>
-              )}
-              {ticket.status === 'OPEN' && (
-                <button className="btn-secondary" onClick={() => handleUpdateStatus('REJECTED')} style={{ width: '100%', justifyContent: 'center' }}>
-                  Reject Ticket
-                </button>
-              )}
-              {ticket.status === 'IN_PROGRESS' && (
-                <button className="btn-primary" onClick={() => handleUpdateStatus('RESOLVED')} style={{ width: '100%', justifyContent: 'center' }}>
-                  Resolve Ticket
-                </button>
-              )}
-              {ticket.status === 'RESOLVED' && (
-                <button className="btn-secondary" onClick={() => handleUpdateStatus('CLOSED')} style={{ width: '100%', justifyContent: 'center' }}>
-                  Close Ticket
-                </button>
-              )}
-            </div>
-          </div>
+
+              <div className="card">
+                <h3 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--on-surface-variant)', marginBottom: '20px', fontWeight: '600' }}>Actions</h3>
+
+                {actionError && (
+                  <div style={{ marginBottom: '12px', padding: '10px 12px', borderRadius: '8px', backgroundColor: '#fee2e2', color: '#991b1b', fontSize: '14px' }}>
+                    {actionError}
+                  </div>
+                )}
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {ticket.status === 'OPEN' && (
+                    <button className="btn-primary" onClick={() => handleUpdateStatus('IN_PROGRESS')} style={{ width: '100%', justifyContent: 'center' }}>
+                     Mark In Progress
+                    </button>
+                  )}
+                  {ticket.status === 'OPEN' && (
+                    <button className="btn-secondary" onClick={() => handleUpdateStatus('REJECTED')} style={{ width: '100%', justifyContent: 'center' }}>
+                      Reject Ticket
+                    </button>
+                  )}
+                  {ticket.status === 'IN_PROGRESS' && (
+                    <button className="btn-primary" onClick={() => handleUpdateStatus('RESOLVED')} style={{ width: '100%', justifyContent: 'center' }}>
+                      Resolve Ticket
+                    </button>
+                  )}
+                  {ticket.status === 'RESOLVED' && (
+                    <button className="btn-secondary" onClick={() => handleUpdateStatus('CLOSED')} style={{ width: '100%', justifyContent: 'center' }}>
+                      Close Ticket
+                    </button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
