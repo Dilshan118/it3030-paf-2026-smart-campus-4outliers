@@ -88,6 +88,18 @@ public class TicketController {
     }
 
     /**
+     * Delete a ticket. Only owner can delete and only OPEN tickets.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Object>> deleteTicket(@PathVariable Long id) {
+        // TODO: Replace with actual logged-in user ID
+        Long userId = 1L;
+
+        ticketService.deleteTicket(id, userId);
+        return ResponseEntity.ok(ApiResponse.success("Ticket deleted successfully"));
+    }
+
+    /**
      * Update ticket status.
      * Note: Expects resolutionNotes and rejectionReason optionally as request params.
      */

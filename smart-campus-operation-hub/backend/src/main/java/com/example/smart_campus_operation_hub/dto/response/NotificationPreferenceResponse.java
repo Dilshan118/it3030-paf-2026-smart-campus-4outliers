@@ -1,8 +1,8 @@
-package com.example.smart_campus_operation_hub.dto.request;
+package com.example.smart_campus_operation_hub.dto.response;
 
 import java.time.LocalTime;
 
-public class NotificationPrefRequest {
+public class NotificationPreferenceResponse {
 
     private Boolean bookingEnabled;
     private Boolean ticketEnabled;

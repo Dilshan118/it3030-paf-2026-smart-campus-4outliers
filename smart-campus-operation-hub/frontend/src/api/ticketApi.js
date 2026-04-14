@@ -5,6 +5,7 @@ export const getTickets = (params) => api.get('/tickets', { params }).then(res =
 export const getTicketById = (id) => api.get(`/tickets/${id}`).then(res => res.data);
 export const createTicket = (data) => api.post('/tickets', data).then(res => res.data);
 export const updateTicket = (id, data) => api.put(`/tickets/${id}`, data).then(res => res.data);
+export const deleteTicket = (id) => api.delete(`/tickets/${id}`).then(res => res.data);
 export const updateTicketStatus = (id, status, notes = '', reason = '') => 
     api.patch(`/tickets/${id}/status`, null, { params: { status, resolutionNotes: notes, rejectionReason: reason } }).then(res => res.data);
 export const assignTechnician = (id, techId) => 
