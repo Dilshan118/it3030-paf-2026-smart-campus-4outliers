@@ -29,7 +29,7 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
       
       <div>
         <label className="label-text" style={{ marginTop: 0, marginBottom: '8px' }}>Category</label>
-        <select name="category" value={formData.category} onChange={handleChange} required className="input-field" style={{ backgroundColor: 'var(--surface-container-highest)', borderRadius: '6px', appearance: 'none', cursor: 'pointer' }}>
+        <select name="category" value={formData.category} onChange={handleChange} required className="input-field" style={{ appearance: 'none', cursor: 'pointer' }}>
           <option value="IT_ISSUE">IT Issue</option>
           <option value="SAFETY">Safety</option>
           <option value="CLEANING">Cleaning</option>
@@ -41,7 +41,7 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
 
       <div>
         <label className="label-text" style={{ marginTop: 0, marginBottom: '8px' }}>Priority</label>
-        <select name="priority" value={formData.priority} onChange={handleChange} required className="input-field" style={{ backgroundColor: 'var(--surface-container-highest)', borderRadius: '6px', appearance: 'none', cursor: 'pointer' }}>
+        <select name="priority" value={formData.priority} onChange={handleChange} required className="input-field" style={{ appearance: 'none', cursor: 'pointer' }}>
           <option value="LOW">Low</option>
           <option value="MEDIUM">Medium</option>
           <option value="HIGH">High</option>
@@ -51,17 +51,17 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
 
       <div>
         <label className="label-text" style={{ marginTop: 0, marginBottom: '8px' }}>Description</label>
-        <textarea name="description" value={formData.description} onChange={handleChange} required minLength={10} className="input-field" style={{ minHeight: '120px', resize: 'vertical', backgroundColor: 'var(--surface-container-highest)', borderRadius: '6px' }} />
+        <textarea name="description" value={formData.description} onChange={handleChange} required minLength={10} className="input-field" style={{ minHeight: '120px', resize: 'vertical' }} />
       </div>
 
       <div>
         <label className="label-text" style={{ marginTop: 0, marginBottom: '8px' }}>Contact Info</label>
-        <input type="text" name="contactInfo" value={formData.contactInfo} onChange={handleChange} required className="input-field" placeholder="Phone directory # or email" style={{ backgroundColor: 'var(--surface-container-highest)', borderRadius: '6px' }} />
+        <input type="text" name="contactInfo" value={formData.contactInfo} onChange={handleChange} required className="input-field" placeholder="Phone directory # or email" />
       </div>
 
       <div>
         <label className="label-text" style={{ marginTop: 0, marginBottom: '8px' }}>Resource ID <span style={{opacity: 0.5, fontWeight: 400}}>(Numeric Only, Optional)</span></label>
-        <input type="number" name="resourceId" value={formData.resourceId} onChange={handleChange} className="input-field" placeholder="e.g. 4567" style={{ backgroundColor: 'var(--surface-container-highest)', borderRadius: '6px' }} />
+        <input type="number" name="resourceId" value={formData.resourceId} onChange={handleChange} className="input-field" placeholder="e.g. 4567" />
       </div>
 
       <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>

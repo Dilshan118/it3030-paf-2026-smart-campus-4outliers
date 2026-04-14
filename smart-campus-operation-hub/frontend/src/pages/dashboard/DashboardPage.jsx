@@ -8,74 +8,74 @@ export default function DashboardPage() {
 
   return (
     <div className="page-container" style={{ paddingBottom: '60px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 className="h1" style={{ marginBottom: '8px' }}>Welcome back, {user?.name || 'User'}</h1>
-        <p style={{ color: 'var(--on-surface-variant)', fontSize: '1rem' }}>
+      <div style={{ marginBottom: '40px' }}>
+        <h1 className="h1" style={{ marginBottom: '8px', fontSize: '3rem' }}>Welcome back, {user?.name || 'User'}</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: '1rem', fontFamily: 'var(--font-mono)' }}>
           Live metrics and pending integrations across your domain.
         </p>
       </div>
 
-      <div className="dashboard-grid">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
         {/* Live Ticket Metric */}
-        <div className="metric-card" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
             <span className="label-text" style={{ margin: 0 }}>Active Tickets</span>
-            <div style={{ padding: '8px', backgroundColor: '#e0e7ff', borderRadius: '8px', color: 'var(--primary)' }}>
-              <Ticket size={24} strokeWidth={1.5} />
+            <div style={{ color: 'var(--accent-base)' }}>
+              <Ticket size={24} strokeWidth={2} />
             </div>
           </div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '16px', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: '3.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '16px', letterSpacing: '-0.02em', fontFamily: 'var(--font-display)' }}>
             Live
           </div>
-          <NavLink to="/tickets" style={{ textDecoration: 'none', color: 'var(--primary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <NavLink to="/tickets" style={{ textDecoration: 'none', color: 'var(--accent-base)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             Manage Queue <span aria-hidden="true">&rarr;</span>
           </NavLink>
         </div>
 
         {/* Global SLA Health */}
-        <div className="metric-card" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
             <span className="label-text" style={{ margin: 0 }}>SLA Health</span>
-            <div style={{ padding: '8px', backgroundColor: '#ecfdf5', borderRadius: '8px', color: '#059669' }}>
-              <Activity size={24} strokeWidth={1.5} />
+            <div style={{ color: 'var(--info)' }}>
+              <Activity size={24} strokeWidth={2} />
             </div>
           </div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px', letterSpacing: '-0.02em', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            Active <span style={{ fontSize: '1rem', color: '#059669', fontWeight: 500 }}>Targeting 100%</span>
+          <div style={{ fontSize: '3.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px', letterSpacing: '-0.02em', display: 'flex', alignItems: 'baseline', gap: '12px', fontFamily: 'var(--font-display)' }}>
+            100%
           </div>
-          <div style={{ marginTop: 'auto', fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>
+          <div style={{ marginTop: 'auto', fontSize: '0.875rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
             Based on active resolution timers.
           </div>
         </div>
 
         {/* Pending Module: Bookings */}
-        <div className="metric-card-muted" style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', position: 'relative', opacity: 0.5, borderStyle: 'dashed' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
             <span className="label-text" style={{ margin: 0 }}>Facility Bookings</span>
-            <div style={{ padding: '8px', backgroundColor: 'var(--surface-container-high)', borderRadius: '8px', color: 'var(--on-surface-variant)' }}>
-              <CalendarDays size={24} strokeWidth={1.5} />
+            <div style={{ color: 'var(--text-muted)' }}>
+              <CalendarDays size={24} strokeWidth={2} />
             </div>
           </div>
-          <div style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '16px', opacity: 0.7 }}>
+          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '16px', fontFamily: 'var(--font-display)' }}>
             Awaiting Deployment
           </div>
-          <div style={{ marginTop: 'auto', fontSize: '0.875rem', color: 'var(--on-surface-variant)', fontStyle: 'italic' }}>
+          <div style={{ marginTop: 'auto', fontSize: '0.875rem', color: 'var(--text-muted)', fontStyle: 'italic', fontFamily: 'var(--font-mono)' }}>
             Module configuration pending.
           </div>
         </div>
 
         {/* Pending Module: Resources */}
-        <div className="metric-card-muted" style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', position: 'relative', opacity: 0.5, borderStyle: 'dashed' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
             <span className="label-text" style={{ margin: 0 }}>Resource Sync</span>
-            <div style={{ padding: '8px', backgroundColor: 'var(--surface-container-high)', borderRadius: '8px', color: 'var(--on-surface-variant)' }}>
-              <Box size={24} strokeWidth={1.5} />
+            <div style={{ color: 'var(--text-muted)' }}>
+              <Box size={24} strokeWidth={2} />
             </div>
           </div>
-          <div style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '16px', opacity: 0.7 }}>
+          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '16px', fontFamily: 'var(--font-display)' }}>
             Awaiting Deployment
           </div>
-          <div style={{ marginTop: 'auto', fontSize: '0.875rem', color: 'var(--on-surface-variant)', fontStyle: 'italic' }}>
+          <div style={{ marginTop: 'auto', fontSize: '0.875rem', color: 'var(--text-muted)', fontStyle: 'italic', fontFamily: 'var(--font-mono)' }}>
             Hardware node detection pending.
           </div>
         </div>

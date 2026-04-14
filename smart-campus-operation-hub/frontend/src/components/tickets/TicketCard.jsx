@@ -5,30 +5,16 @@ export default function TicketCard({ ticket }) {
   const { id, category, priority, status, description, createdAt, title } = ticket;
 
   return (
-    <Link to={`/tickets/${id}`} style={{ 
+    <Link to={`/tickets/${id}`} className="card" style={{ 
       display: 'grid', 
       gridTemplateColumns: 'minmax(0, 1.5fr) 1fr auto', 
       gap: '24px', 
       alignItems: 'center',
       textDecoration: 'none',
       color: 'inherit',
-      padding: '20px 24px',
-      borderRadius: '12px',
-      backgroundColor: 'var(--surface-container-lowest)',
-      transition: 'all 0.2s cubic-bezier(0.2, 0, 0, 1)',
-      border: '1px solid transparent', // Anti-jitter
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.backgroundColor = 'var(--surface-container-low)';
-      e.currentTarget.style.transform = 'translateY(-2px)';
-      e.currentTarget.style.boxShadow = 'var(--ambient-shadow)';
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.backgroundColor = 'var(--surface-container-lowest)';
-      e.currentTarget.style.transform = 'none';
-      e.currentTarget.style.boxShadow = 'none';
-    }}
-    >
+      padding: '24px',
+      cursor: 'pointer'
+    }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <h3 style={{ margin: 0, fontSize: '15px', color: 'var(--on-surface)', fontWeight: '600' }}>
           {title || `Ticket #${id} - ${category.replace('_', ' ')}`}

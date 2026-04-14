@@ -15,11 +15,11 @@ import TicketManagePage from './pages/tickets/TicketManagePage';
 
 function DashboardLayout({ children }) {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
+    <div className="app-layout">
       <Sidebar />
-      <div className="app-shell" style={{ flex: 1, backgroundColor: 'var(--surface-container-low)', display: 'flex', flexDirection: 'column' }}>
+      <div className="app-shell" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' }}>
         <Navbar />
-        <main className="app-main" style={{ padding: '40px 48px', maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+        <main className="app-main" style={{ padding: '0', width: '100%', boxSizing: 'border-box' }}>
           {children}
         </main>
       </div>
