@@ -18,16 +18,16 @@ export default function Navbar() {
       
       <NotificationBell />
 
-      {/* Floating Glass Header */}
-      <div className="glass-chip" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      {/* Industrial Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '8px 16px', border: '1px solid var(--border-main)', background: 'var(--bg-surface)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#dcfce7', boxShadow: '0 0 0 3px #bbf7d0' }}></div>
-          <span style={{ color: 'var(--on-surface-variant)', fontWeight: 600 }}>{user?.name || 'User'}</span>
+          <div style={{ width: 8, height: 8, backgroundColor: 'var(--accent-base)' }}></div>
+          <span style={{ color: 'var(--text-main)', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: '0.9rem' }}>{user?.name || 'User'}</span>
         </div>
 
         <button
           onClick={handleLogout}
-          style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', color: 'var(--on-surface-variant)', cursor: 'pointer', padding: 0 }}
+          style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}
           title="Logout"
         >
           <LogOut size={16} strokeWidth={2} style={{ opacity: 0.7 }} />

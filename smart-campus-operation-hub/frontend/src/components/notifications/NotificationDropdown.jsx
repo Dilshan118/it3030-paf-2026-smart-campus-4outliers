@@ -98,8 +98,9 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
         marginTop: '8px',
         width: '360px',
         backgroundColor: 'var(--surface-container-lowest)',
-        borderRadius: '12px',
-        boxShadow: 'var(--ambient-shadow), 0 8px 32px rgba(25, 28, 30, 0.12)',
+        borderRadius: '0',
+        border: '1px solid var(--border-main)',
+        boxShadow: 'var(--block-shadow)',
         zIndex: 50,
         overflow: 'hidden',
       }}
@@ -112,7 +113,7 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
         padding: '16px 20px',
         backgroundColor: 'var(--surface-container-low)',
       }}>
-        <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--on-surface)' }}>Notifications</h3>
+        <h3 className="label-text" style={{ margin: 0 }}>Notifications</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {notifications.some(n => !n.isRead) && (
             <button
@@ -141,7 +142,7 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
         ) : notifications.length === 0 ? (
           <div style={{ padding: '40px 24px', textAlign: 'center' }}>
             <Bell size={32} strokeWidth={1} style={{ color: 'var(--on-surface-variant)', opacity: 0.2, margin: '0 auto 12px' }} />
-            <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.85rem' }}>No notifications yet</p>
+            <p className="label-text">No notifications yet</p>
           </div>
         ) : (
           <div>
@@ -165,12 +166,12 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
                     cursor: 'pointer',
                     ...(
                       !notification.isRead
-                        ? { backgroundColor: 'rgba(42, 20, 180, 0.04)', borderLeft: '3px solid var(--primary)' }
+                        ? { backgroundColor: 'var(--bg-surface-elevated)', borderLeft: '3px solid var(--accent-base)' }
                         : {}
                     ),
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? 'var(--surface-container-low)' : 'rgba(42, 20, 180, 0.06)'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? '' : 'rgba(42, 20, 180, 0.04)'}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-surface-elevated)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? '' : 'var(--bg-surface-elevated)'}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{
