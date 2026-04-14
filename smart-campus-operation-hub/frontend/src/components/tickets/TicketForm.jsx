@@ -25,7 +25,7 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card" style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
+    <form onSubmit={handleSubmit} className="card" style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '640px', margin: '0 auto', width: '100%' }}>
       
       <div>
         <label className="label-text" style={{ marginTop: 0, marginBottom: '8px' }}>Category</label>

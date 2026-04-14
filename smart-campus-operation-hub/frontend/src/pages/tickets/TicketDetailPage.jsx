@@ -71,7 +71,12 @@ export default function TicketDetailPage() {
         <ArrowLeft size={16} /> Back to Library
       </Link>
 
-      <div className="ticket-detail-layout">
+      <div style={{
+        display: 'grid',
+        gap: '32px',
+        gridTemplateColumns: isAdmin ? 'minmax(0, 2.5fr) minmax(300px, 1fr)' : 'minmax(0, 800px)',
+        justifyContent: isAdmin ? 'stretch' : 'center'
+      }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           {/* Main Info Card */}
