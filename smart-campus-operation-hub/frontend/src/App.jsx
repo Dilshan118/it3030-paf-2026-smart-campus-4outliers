@@ -12,6 +12,9 @@ import TicketListPage from './pages/tickets/TicketListPage';
 import TicketCreatePage from './pages/tickets/TicketCreatePage';
 import TicketDetailPage from './pages/tickets/TicketDetailPage';
 import TicketManagePage from './pages/tickets/TicketManagePage';
+import ResourceListPage from './pages/resources/ResourceListPage';
+import ResourceDetailPage from './pages/resources/ResourceDetailPage';
+import ResourceManagePage from './pages/resources/ResourceManagePage';
 
 function DashboardLayout({ children }) {
   return (
@@ -58,16 +61,12 @@ function App() {
             </ProtectedRoute>
           } />
           
-          <Route path="/resources/*" element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <div className="card" style={{ textAlign: 'center' }}>
-                  <h2 className="h1">Resources Module</h2>
-                  <p style={{ color: 'var(--on-surface-variant)' }}>Coming soon...</p>
-                </div>
-              </DashboardLayout>
-            </ProtectedRoute>
-          } />
+          {/* Resource Routes */}
+          <Route path="/resources" element={<ProtectedRoute><DashboardLayout><ResourceListPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/resources/:id" element={<ProtectedRoute><DashboardLayout><ResourceDetailPage /></DashboardLayout></ProtectedRoute>} />
+
+          {/* Admin Routes */}
+          <Route path="/admin/resources" element={<ProtectedRoute><DashboardLayout><ResourceManagePage /></DashboardLayout></ProtectedRoute>} />
 
           <Route path="/admin/*" element={
             <ProtectedRoute>

@@ -30,15 +30,14 @@ export default function Sidebar() {
 
       <div style={{ opacity: 0.5, padding: '14px 24px', display: 'flex', alignItems: 'center', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'not-allowed' }}>
         <CalendarDays size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
-        Bookings 
+        Bookings
         <span className="badge" style={{ marginLeft: 'auto' }}>Soon</span>
       </div>
 
-      <div style={{ opacity: 0.5, padding: '14px 24px', display: 'flex', alignItems: 'center', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'not-allowed', marginBottom: '8px' }}>
+      <NavLink to="/resources" className={navClassName}>
         <Box size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
         Resources
-        <span className="badge" style={{ marginLeft: 'auto' }}>Soon</span>
-      </div>
+      </NavLink>
 
       {isAdmin && (
         <div style={{ marginTop: '24px' }}>
