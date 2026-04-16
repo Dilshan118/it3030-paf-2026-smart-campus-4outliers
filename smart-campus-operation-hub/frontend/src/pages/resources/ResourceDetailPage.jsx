@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getResourceById } from '../../api/resourceApi';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
 
 const typeLabel = (type) => type?.replace('_', ' ');
 
@@ -59,7 +61,22 @@ export default function ResourceDetailPage() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             overflow: 'hidden', borderRadius: '4px'
           }}>
-            {resource.imageUrl
+            {resource.imageUrls && resource.imageUrls.length > 0
+              ? (
+                  <Swiper
+                    modules={[Navigation, Pagination]}
+                    navigation
+                    pagination={{ clickable: true }}
+                    style={{ width: '100%', height: '100%' }}
+                  >
+                    {resource.imageUrls.map((url, i) => (
+                      <SwiperSlide key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src={`http://localhost:8080${url}`} alt={`${resource.name}-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.onerror = null; e.target.parentNode.innerHTML = '<span style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem;">NO IMAGE AVAILABLE</span>'; }} />
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                )
+              : resource.imageUrl 
               ? <img src={`http://localhost:8080${resource.imageUrl}`} alt={resource.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.onerror = null; e.target.parentNode.innerHTML = '<span style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem;">NO IMAGE AVAILABLE</span>'; }} />
               : <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>NO IMAGE AVAILABLE</span>
             }
