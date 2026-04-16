@@ -81,23 +81,29 @@ public class ResourceController {
     }
 
         @PostMapping("/{id}/image")
-    public ResponseEntity<ResourceResponse> uploadImage(
+    public ResponseEntity<ResourceResponse> uploadImages(
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file) throws IOException {
+            @RequestParam("file") MultipartFile[] files) throws IOException {
 
-        if (file.getSize() > 5 * 1024 * 1024)
-            throw new IllegalArgumentException("File size must not exceed 5MB");
+        java.util.List<String> uploadedUrls = new java.util.ArrayList<>();
 
-        String contentType = file.getContentType();
-        if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png")))
-            throw new IllegalArgumentException("Only JPG and PNG files are allowed");
+        for (MultipartFile file : files) {
+            if (file.getSize() > 5 * 1024 * 1024)
+                throw new IllegalArgumentException("File size must not exceed 5MB");
 
-        String filename = "resource_" + id + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        Path uploadPath = Paths.get("uploads");
-        Files.createDirectories(uploadPath);
-        Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+            String contentType = file.getContentType();
+            if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png") && !contentType.equals("image/webp")))
+                throw new IllegalArgumentException("Only JPG, PNG and WEBP files are allowed");
 
-        return ResponseEntity.ok(resourceService.updateImageUrl(id, "/uploads/" + filename));
+            String filename = "resource_" + id + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path uploadPath = Paths.get("uploads");
+            Files.createDirectories(uploadPath);
+            Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+
+            uploadedUrls.add("/uploads/" + filename);
+        }
+
+        return ResponseEntity.ok(resourceService.addImageUrls(id, uploadedUrls));
     }
 
 }

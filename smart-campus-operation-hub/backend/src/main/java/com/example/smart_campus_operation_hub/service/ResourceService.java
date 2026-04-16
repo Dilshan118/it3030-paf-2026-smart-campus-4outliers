@@ -81,16 +81,21 @@ public class ResourceService {
         resource.setLocation(request.getLocation());
         resource.setDescription(request.getDescription());
         resource.setAvailabilityWindows(request.getAvailabilityWindows());
-        resource.setImageUrl(request.getImageUrl());
+        if (request.getImageUrls() != null) {
+            resource.setImageUrls(request.getImageUrls());
+        }
     }
 
-    public ResourceResponse updateImageUrl(Long id, String imageUrl) {
-    Resource resource = resourceRepository.findById(id)
-            .filter(r -> !r.getIsDeleted())
-            .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + id));
-    resource.setImageUrl(imageUrl);
-    return ResourceResponse.from(resourceRepository.save(resource));
-}
+    public ResourceResponse addImageUrls(Long id, java.util.List<String> imageUrls) {
+        Resource resource = resourceRepository.findById(id)
+                .filter(r -> !r.getIsDeleted())
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + id));
+        if (resource.getImageUrls() == null) {
+            resource.setImageUrls(new java.util.ArrayList<>());
+        }
+        resource.getImageUrls().addAll(imageUrls);
+        return ResourceResponse.from(resourceRepository.save(resource));
+    }
 
 }
 

@@ -4,6 +4,8 @@ import com.example.smart_campus_operation_hub.enums.ResourceStatus;
 import com.example.smart_campus_operation_hub.enums.ResourceType;
 import com.example.smart_campus_operation_hub.model.Resource;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
 public class ResourceResponse {
 
@@ -15,7 +17,7 @@ public class ResourceResponse {
     private String description;
     private String availabilityWindows;
     private ResourceStatus status;
-    private String imageUrl;
+    private List<String> imageUrls;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -30,7 +32,16 @@ public class ResourceResponse {
         dto.description = r.getDescription();
         dto.availabilityWindows = r.getAvailabilityWindows();
         dto.status = r.getStatus();
-        dto.imageUrl = r.getImageUrl();
+        
+        List<String> urls = new ArrayList<>();
+        if (r.getImageUrls() != null && !r.getImageUrls().isEmpty()) {
+            urls.addAll(r.getImageUrls());
+        }
+        if (r.getLegacyImageUrl() != null && !r.getLegacyImageUrl().trim().isEmpty() && !urls.contains(r.getLegacyImageUrl())) {
+            urls.add(r.getLegacyImageUrl());
+        }
+        dto.imageUrls = urls;
+        
         dto.createdAt = r.getCreatedAt();
         dto.updatedAt = r.getUpdatedAt();
         return dto;
@@ -45,7 +56,7 @@ public class ResourceResponse {
     public String getDescription() { return description; }
     public String getAvailabilityWindows() { return availabilityWindows; }
     public ResourceStatus getStatus() { return status; }
-    public String getImageUrl() { return imageUrl; }
+    public List<String> getImageUrls() { return imageUrls; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }
