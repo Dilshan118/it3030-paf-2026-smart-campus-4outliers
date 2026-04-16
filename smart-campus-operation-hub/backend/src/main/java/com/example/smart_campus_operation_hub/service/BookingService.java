@@ -175,7 +175,6 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         return toResponse(bookingRepository.save(booking));
     }
-
     // ─── Approve Booking (Admin) ──────────────────────────────────────
     public BookingResponse approveBooking(Long id) {
         Booking booking = bookingRepository.findById(id)
@@ -186,8 +185,25 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.APPROVED);
+
+        // Generate QR code string
+        String qrCode = generateQrCode(booking);
+        booking.setQrCode(qrCode);
+
         return toResponse(bookingRepository.save(booking));
     }
+
+    // ─── Generate QR Code ─────────────────────────────────────────────
+    private String generateQrCode(Booking booking) {
+        return String.format("BOOKING-%d-%s-%s-%s-%s",
+                booking.getId(),
+                booking.getResource().getId(),
+                booking.getDate(),
+                booking.getStartTime(),
+                booking.getEndTime()
+        );
+    }
+        
 
     // ─── Reject Booking (Admin) ───────────────────────────────────────
     public BookingResponse rejectBooking(Long id, String reason) {
