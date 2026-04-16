@@ -24,8 +24,11 @@ public class BookingController {
     // POST / → Create booking
     @PostMapping
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
-            @Valid @RequestBody BookingRequest request,
-            @RequestParam Long userId) {
+            @Valid @RequestBody BookingRequest request) {
+            
+        // TODO: Replace with actual logged-in user ID/role from SecurityContext
+        Long userId = 1L;
+
         BookingResponse response = bookingService.createBooking(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Booking created successfully"));
@@ -34,14 +37,18 @@ public class BookingController {
     // GET / → List bookings (own for USER, all for ADMIN)
     @GetMapping
     public ResponseEntity<ApiResponse<Page<BookingResponse>>> getAllBookings(
-            @RequestParam(required = false) Long userId,
             Pageable pageable) {
+
+        // TODO: Replace with actual logged-in user details
+        Long userId = 1L;
+        String role = "USER";
+
         Page<BookingResponse> bookings;
-        if (userId != null) {
-            bookings = bookingService.getBookingsByUser(userId, pageable);
-        } else {
-            bookings = bookingService.getAllBookings(pageable);
+        switch (role) {
+            case "ADMIN", "MANAGER" -> bookings = bookingService.getAllBookings(pageable);
+            default -> bookings = bookingService.getBookingsByUser(userId, pageable);
         }
+
         return ResponseEntity.ok(ApiResponse.success(bookings, "Bookings retrieved successfully"));
     }
 
@@ -57,14 +64,23 @@ public class BookingController {
     public ResponseEntity<ApiResponse<BookingResponse>> updateBooking(
             @PathVariable Long id,
             @Valid @RequestBody BookingRequest request) {
-        BookingResponse response = bookingService.updateBooking(id, request);
+
+        // TODO: Replace with actual logged-in user details
+        Long userId = 1L;
+
+        BookingResponse response = bookingService.updateBooking(id, request, userId);
         return ResponseEntity.ok(ApiResponse.success(response, "Booking updated successfully"));
     }
 
     // DELETE /{id} → Cancel booking
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(@PathVariable Long id) {
-        BookingResponse response = bookingService.cancelBooking(id);
+
+        // TODO: Replace with actual logged-in user details
+        Long userId = 1L;
+        String role = "USER";
+
+        BookingResponse response = bookingService.cancelBooking(id, userId, role);
         return ResponseEntity.ok(ApiResponse.success(response, "Booking cancelled successfully"));
     }
 

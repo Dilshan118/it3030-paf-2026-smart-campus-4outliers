@@ -59,15 +59,15 @@ export default function TicketManagePage() {
 
   return (
     <div className="page-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 className="h1" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Settings size={28} /> Operations Log
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h1 className="h1" style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: 0 }}>
+          <Settings size={28} strokeWidth={2} /> Operations Log
         </h1>
       </div>
 
       {actionError && (
-        <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
-          {actionError}
+        <div style={{ padding: '16px', border: '1px solid var(--danger)', backgroundColor: 'var(--danger-muted)', color: 'var(--danger)', fontFamily: 'var(--font-mono)', marginBottom: '16px' }}>
+          ERROR: {actionError}
         </div>
       )}
 
@@ -79,20 +79,20 @@ export default function TicketManagePage() {
         ) : (
           <div className="no-border-list">
             {/* Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 150px 150px 200px 100px', gap: '16px', padding: '8px 16px', borderBottom: 'none', color: 'var(--on-surface-variant)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>
-              <div>Issue Details</div>
-              <div>Status</div>
-              <div>Priority</div>
-              <div>Assignment</div>
-              <div style={{ textAlign: 'right' }}>Actions</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 150px 150px 200px 100px', gap: '16px', padding: '8px 16px', borderBottom: 'var(--border-thick)' }}>
+              <div className="label-text">Issue Details</div>
+              <div className="label-text">Status</div>
+              <div className="label-text">Priority</div>
+              <div className="label-text">Assignment</div>
+              <div className="label-text" style={{ textAlign: 'right' }}>Actions</div>
             </div>
 
             {/* List */}
             {tickets.map(t => (
-              <div key={t.id} className="data-row" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 150px 150px 200px 100px', gap: '16px', padding: '16px', alignItems: 'center', borderRadius: '8px' }}>
+              <div key={t.id} className="data-row" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 150px 150px 200px 100px', gap: '16px', padding: '16px', alignItems: 'center', borderBottom: '1px solid var(--border-main)' }}>
                 <Link to={`/tickets/${t.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontWeight: '600', color: 'var(--on-surface-variant)' }}>#{t.id} - {t.category}</span>
-                  <span style={{ fontSize: '13px', color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.description}</span>
+                  <span style={{ fontWeight: '600', color: 'var(--accent-base)', fontFamily: 'var(--font-mono)' }}>#{t.id} - {t.category}</span>
+                  <span style={{ fontSize: '14px', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.description}</span>
                 </Link>
                 
                 <div><span className={`status-badge status-${t.status.toLowerCase()}`}>{t.status}</span></div>
@@ -105,7 +105,7 @@ export default function TicketManagePage() {
                      value={t.assignedToId || ''} 
                      onChange={(e) => handleAssign(t.id, e)}
                      className="input-field"
-                     style={{ padding: '6px 12px', fontSize: '12px', backgroundColor: 'var(--surface)', margin: 0, width: '100%' }}
+                     style={{ padding: '6px 12px', fontSize: '12px', fontFamily: 'var(--font-mono)', margin: 0, width: '100%', height: 'auto' }}
                    >
                      <option value="">Unassigned</option>
                      {availableTechnicians.map(tech => (
@@ -119,10 +119,10 @@ export default function TicketManagePage() {
                   {t.status !== 'RESOLVED' && t.status !== 'CLOSED' && (
                     <button 
                       onClick={() => handleResolve(t.id)}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--primary)' }}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--info)' }}
                       title="Quick Resolve"
                     >
-                      <CheckCircle size={20} strokeWidth={1.5} />
+                      <CheckCircle size={20} strokeWidth={2} />
                     </button>
                   )}
                 </div>
