@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getAllResources, createResource, updateResource, deleteResource, toggleResourceStatus, uploadResourceImage } from '../../api/resourceApi';
 import ResourceForm from '../../components/resources/ResourceForm';
 
-const EMPTY_FORM = { name: '', type: 'LAB', capacity: '', location: '', description: '', availabilityWindows: '', imageUrl: '', imageFile: null };
+const EMPTY_FORM = { name: '', type: 'LAB', capacity: '', location: '', description: '', availabilityWindows: '', imageUrls: [], imageFiles: [] };
 const TYPE_OPTIONS = ['LECTURE_HALL', 'LAB', 'MEETING_ROOM', 'EQUIPMENT'];
 const typeLabel = (type) => type.replace('_', ' ');
 
@@ -29,7 +29,7 @@ export default function ResourceManagePage() {
   const openCreate = () => { setForm(EMPTY_FORM); setEditingId(null); setShowModal(true); };
   const openEdit = (r) => {
     setForm({ name: r.name, type: r.type, capacity: r.capacity || '', location: r.location,
-      description: r.description || '', availabilityWindows: r.availabilityWindows || '', imageUrl: r.imageUrl || '', imageFile: null });
+      description: r.description || '', availabilityWindows: r.availabilityWindows || '', imageUrls: r.imageUrls || [], imageFiles: [] });
     setEditingId(r.id);
     setShowModal(true);
   };
@@ -39,7 +39,7 @@ export default function ResourceManagePage() {
     setSaving(true);
     try {
       const payload = { ...form, capacity: form.capacity ? Number(form.capacity) : null };
-      delete payload.imageFile; // Remove from JSON payload
+      delete payload.imageFiles; // Remove from JSON payload
 
       let savedResource;
       if (editingId) {
@@ -49,9 +49,11 @@ export default function ResourceManagePage() {
       }
 
       // Handle Image Upload if selected
-      if (form.imageFile) {
+      if (form.imageFiles && form.imageFiles.length > 0) {
         const formData = new FormData();
-        formData.append('file', form.imageFile);
+        form.imageFiles.forEach(file => {
+          formData.append('file', file);
+        });
         const resourceId = editingId || savedResource.data.id;
         await uploadResourceImage(resourceId, formData);
       }

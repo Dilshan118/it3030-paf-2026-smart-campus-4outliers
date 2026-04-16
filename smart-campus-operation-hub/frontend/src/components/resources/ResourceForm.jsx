@@ -135,7 +135,7 @@ export default function ResourceForm({ form, setForm, onSubmit, onCancel, saving
 
       {/* Modern Image Upload */}
       <div>
-        <label className="label-text">Resource Image</label>
+        <label className="label-text">Resource Images</label>
         <div 
           style={{ 
             marginTop: '8px', 
@@ -158,41 +158,63 @@ export default function ResourceForm({ form, setForm, onSubmit, onCancel, saving
             e.preventDefault();
             e.currentTarget.style.borderColor = 'var(--border-main)';
             e.currentTarget.style.background = 'var(--bg-surface-elevated)';
-            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-              if (e.dataTransfer.files[0].type === 'image/webp') {
-                  alert('WEBP format is not supported. Please upload JPG or PNG.');
-                  return;
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+              const newFiles = Array.from(e.dataTransfer.files);
+              const validFiles = newFiles.filter(f => f.type !== 'image/webp');
+              if (newFiles.length !== validFiles.length) {
+                  alert('Some files were ignored because WEBP format is not supported. Please upload JPG or PNG.');
               }
-              setForm({ ...form, imageFile: e.dataTransfer.files[0] });
+              setForm({ ...form, imageFiles: [...(form.imageFiles || []), ...validFiles] });
             }
           }}
         >
-          {form.imageFile ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-primary)', padding: '12px 16px', borderRadius: '6px', border: '1px solid var(--border-main)', width: '100%' }}>
-              <div style={{ padding: '8px', background: 'rgba(204,255,0,0.1)', borderRadius: '4px', color: 'var(--accent-base)' }}>
-                <ImageIcon size={20} />
-              </div>
-              <div style={{ flex: 1, textAlign: 'left', overflow: 'hidden' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--text-main)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                  {form.imageFile.name}
+          {((form.imageFiles && form.imageFiles.length > 0) || (form.imageUrls && form.imageUrls.length > 0)) ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+              {/* Existing Images */}
+              {form.imageUrls && form.imageUrls.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                  {form.imageUrls.map((url, idx) => (
+                    <div key={`url-${idx}`} style={{ position: 'relative' }}>
+                      <img src={`http://localhost:8080${url}`} alt="Resource" style={{ height: '60px', width: '60px', borderRadius: '4px', objectFit: 'cover' }} />
+                    </div>
+                  ))}
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                  {(form.imageFile.size / 1024 / 1024).toFixed(2)} MB
+              )}
+              
+              {/* New files to upload */}
+              {form.imageFiles && form.imageFiles.map((file, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-primary)', padding: '12px 16px', borderRadius: '6px', border: '1px solid var(--border-main)', width: '100%' }}>
+                  <div style={{ padding: '8px', background: 'rgba(204,255,0,0.1)', borderRadius: '4px', color: 'var(--accent-base)' }}>
+                    <ImageIcon size={20} />
+                  </div>
+                  <div style={{ flex: 1, textAlign: 'left', overflow: 'hidden' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--text-main)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                      {file.name}
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => {
+                    const latestFiles = [...form.imageFiles];
+                    latestFiles.splice(i, 1);
+                    setForm({ ...form, imageFiles: latestFiles });
+                  }} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '4px' }}>
+                    <X size={18} />
+                  </button>
                 </div>
-              </div>
-              <button type="button" onClick={() => setForm({ ...form, imageFile: null })} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '4px' }}>
-                <X size={18} />
-              </button>
-            </div>
-          ) : form.imageUrl && !form.imageFile ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-               <img src={`http://localhost:8080${form.imageUrl}`} alt="Current Resource" style={{ height: '80px', width: 'auto', borderRadius: '4px', objectFit: 'cover' }} />
-               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Current Image</span>
-               <label className="btn-secondary" style={{ display: 'inline-flex', cursor: 'pointer', padding: '6px 12px', fontSize: '0.8rem', marginTop: '8px' }}>
-                 Change Image
-                 <input type="file" accept="image/jpeg, image/png" style={{ display: 'none' }}
-                   onChange={(e) => { if (e.target.files[0]) setForm({ ...form, imageFile: e.target.files[0] }); }} />
-               </label>
+              ))}
+
+              <label className="btn-secondary" style={{ alignSelf: 'center', display: 'inline-flex', cursor: 'pointer', padding: '6px 12px', fontSize: '0.8rem', marginTop: '8px' }}>
+                  Add More Images
+                  <input type="file" multiple accept="image/jpeg, image/png" style={{ display: 'none' }}
+                    onChange={(e) => { 
+                      if (e.target.files) {
+                        const newFiles = Array.from(e.target.files);
+                        setForm({ ...form, imageFiles: [...(form.imageFiles || []), ...newFiles] }); 
+                      }
+                    }} />
+              </label>
             </div>
           ) : (
             <>
@@ -200,23 +222,22 @@ export default function ResourceForm({ form, setForm, onSubmit, onCancel, saving
                 <UploadCloud size={28} />
               </div>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                Drag and drop an image here, or{' '}
+                Drag and drop images here, or{' '}
                 <label style={{ color: 'var(--accent-base)', cursor: 'pointer', textDecoration: 'underline' }}>
                   browse
-                  <input type="file" accept="image/jpeg, image/png" style={{ display: 'none' }}
+                  <input type="file" multiple accept="image/jpeg, image/png" style={{ display: 'none' }}
                     onChange={(e) => {
-                      if (e.target.files[0]) {
-                        if (e.target.files[0].type === 'image/webp') {
-                          alert('WEBP format is not supported. Please upload JPG or PNG.');
-                          return;
-                        }
-                        setForm({ ...form, imageFile: e.target.files[0] });
+                      if (e.target.files) {
+                        const newFiles = Array.from(e.target.files);
+                        const validFiles = newFiles.filter(f => f.type !== 'image/webp');
+                        if (newFiles.length !== validFiles.length) alert('WEBP format is not supported. Please upload JPG or PNG.');
+                        setForm({ ...form, imageFiles: [...(form.imageFiles || []), ...validFiles] });
                       }
                     }} />
                 </label>
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', opacity: 0.7 }}>
-                Supports: JPG, PNG (Max 5MB)
+                Supports: JPG, PNG (Max 5MB per file, multiple allowed)
               </div>
             </>
           )}
