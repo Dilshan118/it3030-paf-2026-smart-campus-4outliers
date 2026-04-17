@@ -15,6 +15,8 @@ import TicketManagePage from './pages/tickets/TicketManagePage';
 import ResourceListPage from './pages/resources/ResourceListPage';
 import ResourceDetailPage from './pages/resources/ResourceDetailPage';
 import ResourceManagePage from './pages/resources/ResourceManagePage';
+import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
+import UserManagePage from './pages/admin/UserManagePage';
 
 function DashboardLayout({ children }) {
   return (
@@ -67,6 +69,8 @@ function App() {
 
           {/* Admin Routes */}
           <Route path="/admin/resources" element={<ProtectedRoute><DashboardLayout><ResourceManagePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/analytics" element={<ProtectedRoute><DashboardLayout><AnalyticsDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute><DashboardLayout><UserManagePage /></DashboardLayout></ProtectedRoute>} />
 
           <Route path="/admin/*" element={
             <ProtectedRoute>
