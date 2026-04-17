@@ -1,5 +1,6 @@
 package com.example.smart_campus_operation_hub.service;
 
+<<<<<<< HEAD
 import com.example.smart_campus_operation_hub.dto.request.BookingRequest;
 import com.example.smart_campus_operation_hub.dto.response.BookingResponse;
 import com.example.smart_campus_operation_hub.enums.BookingStatus;
@@ -10,33 +11,29 @@ import com.example.smart_campus_operation_hub.exception.UnauthorizedException;
 import com.example.smart_campus_operation_hub.model.Booking;
 import com.example.smart_campus_operation_hub.model.Resource;
 import com.example.smart_campus_operation_hub.model.User;
+=======
+>>>>>>> parent of 63edba2 (Merge pull request #10 from Dilshan118/feature/module-b-booking-management)
 import com.example.smart_campus_operation_hub.repository.BookingRepository;
 import com.example.smart_campus_operation_hub.repository.ResourceRepository;
-import com.example.smart_campus_operation_hub.repository.UserRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-
+/**
+ * MEMBER 2: Booking Service
+ * TODO: Implement booking CRUD, conflict detection, approval workflow
+ */
 @Service
 public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final ResourceRepository resourceRepository;
-    private final UserRepository userRepository;
 
     public BookingService(BookingRepository bookingRepository,
-                          ResourceRepository resourceRepository,
-                          UserRepository userRepository) {
+                          ResourceRepository resourceRepository) {
         this.bookingRepository = bookingRepository;
         this.resourceRepository = resourceRepository;
-        this.userRepository = userRepository;
     }
 
+<<<<<<< HEAD
     // ─── Create Booking ───────────────────────────────────────────────
     public BookingResponse createBooking(BookingRequest request, Long userId) {
 
@@ -249,3 +246,15 @@ public class BookingService {
         return response;
     }
 }
+=======
+    // TODO: getAllBookings(Pageable pageable) — user sees own, admin sees all
+    // TODO: getBookingById(Long id)
+    // TODO: createBooking(BookingRequest request, Long userId) — with conflict check
+    // TODO: updateBooking(Long id, BookingRequest request)
+    // TODO: cancelBooking(Long id)
+    // TODO: approveBooking(Long id) — Admin only
+    // TODO: rejectBooking(Long id, String reason) — Admin only
+    // TODO: checkConflicts(Long resourceId, LocalDate date, LocalTime start, LocalTime end)
+    // TODO: generateQrCode(Long id)
+}
+>>>>>>> parent of 63edba2 (Merge pull request #10 from Dilshan118/feature/module-b-booking-management)
