@@ -1,16 +1,19 @@
 package com.example.smart_campus_operation_hub.controller;
 
+import com.example.smart_campus_operation_hub.dto.request.BookingRequest;
+import com.example.smart_campus_operation_hub.dto.response.BookingResponse;
 import com.example.smart_campus_operation_hub.service.BookingService;
 import com.example.smart_campus_operation_hub.util.ApiResponse;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * MEMBER 2: Booking Controller
- * Base path: /api/v1/bookings
- *
- * TODO: Implement all endpoints
- */
+import java.time.LocalDate;
+import java.time.LocalTime;
+
 @RestController
 @RequestMapping("/api/v1/bookings")
 public class BookingController {
@@ -21,12 +24,11 @@ public class BookingController {
         this.bookingService = bookingService;
     }
 
-<<<<<<< HEAD
     // POST / → Create booking
     @PostMapping
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
             @Valid @RequestBody BookingRequest request) {
-            
+
         // TODO: Replace with actual logged-in user ID/role from SecurityContext
         Long userId = 1L;
 
@@ -110,22 +112,10 @@ public class BookingController {
             @RequestParam String endTime) {
         boolean hasConflict = bookingService.hasConflicts(
                 resourceId,
-                java.time.LocalDate.parse(date),
-                java.time.LocalTime.parse(startTime),
-                java.time.LocalTime.parse(endTime)
+                LocalDate.parse(date),
+                LocalTime.parse(startTime),
+                LocalTime.parse(endTime)
         );
         return ResponseEntity.ok(ApiResponse.success(hasConflict, "Conflict check completed"));
     }
 }
-=======
-    // TODO: GET    /                 → List bookings (own for USER, all for ADMIN)
-    // TODO: GET    /{id}             → Get booking by ID
-    // TODO: POST   /                 → Create booking (with conflict check)
-    // TODO: PUT    /{id}             → Update booking (only if PENDING)
-    // TODO: DELETE /{id}             → Cancel booking
-    // TODO: PATCH  /{id}/approve     → Approve booking (Admin)
-    // TODO: PATCH  /{id}/reject      → Reject booking with reason (Admin)
-    // TODO: GET    /{id}/qr          → Get QR code for approved booking
-    // TODO: GET    /conflicts        → Check for conflicts
-}
->>>>>>> parent of 63edba2 (Merge pull request #10 from Dilshan118/feature/module-b-booking-management)
