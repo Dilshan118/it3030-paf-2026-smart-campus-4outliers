@@ -10,6 +10,7 @@ import com.example.smart_campus_operation_hub.model.User;
 import com.example.smart_campus_operation_hub.repository.CommentRepository;
 import com.example.smart_campus_operation_hub.repository.TicketRepository;
 import com.example.smart_campus_operation_hub.repository.UserRepository;
+import com.example.smart_campus_operation_hub.enums.NotificationType;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,13 +25,16 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public CommentService(CommentRepository commentRepository,
                           TicketRepository ticketRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          NotificationService notificationService) {
         this.commentRepository = commentRepository;
         this.ticketRepository = ticketRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -52,6 +56,18 @@ public class CommentService {
 
         // Optional: Update ticket's updatedAt timestamp
         ticketRepository.save(ticket);
+        
+        // Notify ticket owner if the commenter is not the owner
+        if (!ticket.getUser().getId().equals(authorId)) {
+            notificationService.send(ticket.getUser().getId(), NotificationType.COMMENT_ADDED,
+                "New Comment on Ticket", author.getName() + " commented on your ticket.", ticket.getId(), "TICKET");
+        }
+        
+        // Notify assigned technician if the commenter is not the technician
+        if (ticket.getAssignedTo() != null && !ticket.getAssignedTo().getId().equals(authorId)) {
+            notificationService.send(ticket.getAssignedTo().getId(), NotificationType.COMMENT_ADDED,
+                "New Comment on Assigned Ticket", author.getName() + " commented on Ticket #" + ticket.getId(), ticket.getId(), "TICKET");
+        }
 
         return mapToResponse(saved);
     }

@@ -10,6 +10,7 @@ import com.example.smart_campus_operation_hub.model.Comment;
 import com.example.smart_campus_operation_hub.model.Resource;
 import com.example.smart_campus_operation_hub.model.Ticket;
 import com.example.smart_campus_operation_hub.model.User;
+import com.example.smart_campus_operation_hub.enums.NotificationType;
 import com.example.smart_campus_operation_hub.enums.TicketPriority;
 import com.example.smart_campus_operation_hub.enums.TicketStatus;
 import com.example.smart_campus_operation_hub.repository.ResourceRepository;
@@ -31,13 +32,16 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final ResourceRepository resourceRepository;
+    private final NotificationService notificationService;
 
     public TicketService(TicketRepository ticketRepository,
                          UserRepository userRepository,
-                         ResourceRepository resourceRepository) {
+                         ResourceRepository resourceRepository,
+                         NotificationService notificationService) {
         this.ticketRepository = ticketRepository;
         this.userRepository = userRepository;
         this.resourceRepository = resourceRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -250,6 +254,23 @@ public class TicketService {
 
         ticket.setStatus(newStatus);
         Ticket saved = ticketRepository.save(ticket);
+        
+        // Notifications
+        if (newStatus == TicketStatus.RESOLVED) {
+            notificationService.send(saved.getUser().getId(), NotificationType.TICKET_RESOLVED, 
+                "Ticket Resolved", "Your ticket for " + saved.getResource().getName() + " has been resolved.", saved.getId(), "TICKET");
+        } else if (newStatus == TicketStatus.CLOSED) {
+            notificationService.send(saved.getUser().getId(), NotificationType.TICKET_CLOSED, 
+                "Ticket Closed", "Your ticket for " + saved.getResource().getName() + " has been closed.", saved.getId(), "TICKET");
+            if (saved.getAssignedTo() != null) {
+                notificationService.send(saved.getAssignedTo().getId(), NotificationType.TICKET_CLOSED, 
+                    "Ticket Closed", "Ticket #" + saved.getId() + " has been closed.", saved.getId(), "TICKET");
+            }
+        } else {
+            notificationService.send(saved.getUser().getId(), NotificationType.TICKET_STATUS_CHANGED, 
+                "Ticket Status Updated", "Your ticket status changed to " + newStatus, saved.getId(), "TICKET");
+        }
+
         return mapToResponse(saved);
     }
 
@@ -279,6 +300,13 @@ public class TicketService {
         }
 
         Ticket saved = ticketRepository.save(ticket);
+
+        // Notify user and technician
+        notificationService.send(saved.getUser().getId(), NotificationType.TICKET_ASSIGNED, 
+            "Technician Assigned", technician.getName() + " has been assigned to your ticket.", saved.getId(), "TICKET");
+        notificationService.send(technician.getId(), NotificationType.TICKET_ASSIGNED, 
+            "New Ticket Assigned", "You have been assigned to Ticket #" + saved.getId(), saved.getId(), "TICKET");
+
         return mapToResponse(saved);
     }
 
