@@ -1,6 +1,5 @@
 package com.example.smart_campus_operation_hub.service;
 
-<<<<<<< HEAD
 import com.example.smart_campus_operation_hub.dto.request.BookingRequest;
 import com.example.smart_campus_operation_hub.dto.response.BookingResponse;
 import com.example.smart_campus_operation_hub.enums.BookingStatus;
@@ -11,44 +10,38 @@ import com.example.smart_campus_operation_hub.exception.UnauthorizedException;
 import com.example.smart_campus_operation_hub.model.Booking;
 import com.example.smart_campus_operation_hub.model.Resource;
 import com.example.smart_campus_operation_hub.model.User;
-=======
->>>>>>> parent of 63edba2 (Merge pull request #10 from Dilshan118/feature/module-b-booking-management)
 import com.example.smart_campus_operation_hub.repository.BookingRepository;
 import com.example.smart_campus_operation_hub.repository.ResourceRepository;
+import com.example.smart_campus_operation_hub.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-/**
- * MEMBER 2: Booking Service
- * TODO: Implement booking CRUD, conflict detection, approval workflow
- */
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
 @Service
 public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final ResourceRepository resourceRepository;
+    private final UserRepository userRepository;
 
     public BookingService(BookingRepository bookingRepository,
-                          ResourceRepository resourceRepository) {
+                          ResourceRepository resourceRepository,
+                          UserRepository userRepository) {
         this.bookingRepository = bookingRepository;
         this.resourceRepository = resourceRepository;
+        this.userRepository = userRepository;
     }
 
-<<<<<<< HEAD
     // ─── Create Booking ───────────────────────────────────────────────
     public BookingResponse createBooking(BookingRequest request, Long userId) {
 
         // 1. Validate time range
-        if (!request.getEndTime().isAfter(request.getStartTime())) {
-            throw new BadRequestException("End time must be after start time");
-        }
-
-        long minutes = Duration.between(request.getStartTime(), request.getEndTime()).toMinutes();
-        if (minutes < 30) {
-            throw new BadRequestException("Minimum booking duration is 30 minutes");
-        }
-        if (minutes > 480) {
-            throw new BadRequestException("Maximum booking duration is 8 hours");
-        }
+        validateTimeRange(request.getStartTime(), request.getEndTime());
 
         // 2. Check resource exists and is ACTIVE
         Resource resource = resourceRepository.findById(request.getResourceId())
@@ -58,7 +51,16 @@ public class BookingService {
             throw new BadRequestException("Resource is not available for booking");
         }
 
-        // 3. Check for conflicts
+        // 3. Validate attendees based on resource type
+        validateAttendees(resource, request.getExpectedAttendees());
+
+        // 4. Check attendees doesn't exceed capacity
+        validateCapacity(resource, request.getExpectedAttendees());
+
+        // 5. Check booking time falls within availability windows
+        validateAvailability(resource, request.getDate(), request.getStartTime(), request.getEndTime());
+
+        // 6. Check for conflicts
         List<Booking> conflicts = bookingRepository.findConflictingBookings(
                 request.getResourceId(),
                 request.getDate(),
@@ -69,11 +71,11 @@ public class BookingService {
             throw new BadRequestException("Booking conflict: resource is already booked for this time");
         }
 
-        // 4. Get user
+        // 7. Get user
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
-        // 5. Create and save booking
+        // 8. Create and save booking
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setResource(resource);
@@ -102,22 +104,24 @@ public class BookingService {
             throw new BadRequestException("Only PENDING bookings can be updated");
         }
 
-        // Validate time range
-        if (!request.getEndTime().isAfter(request.getStartTime())) {
-            throw new BadRequestException("End time must be after start time");
-        }
+        // 1. Validate time range
+        validateTimeRange(request.getStartTime(), request.getEndTime());
 
-        long minutes = Duration.between(request.getStartTime(), request.getEndTime()).toMinutes();
-        if (minutes < 30) {
-            throw new BadRequestException("Minimum booking duration is 30 minutes");
-        }
-        if (minutes > 480) {
-            throw new BadRequestException("Maximum booking duration is 8 hours");
-        }
+        // 2. Get resource for validation
+        Resource resource = booking.getResource();
 
-        // Check for conflicts (exclude current booking from check)
+        // 3. Validate attendees based on resource type
+        validateAttendees(resource, request.getExpectedAttendees());
+
+        // 4. Check attendees doesn't exceed capacity
+        validateCapacity(resource, request.getExpectedAttendees());
+
+        // 5. Check booking time falls within availability windows
+        validateAvailability(resource, request.getDate(), request.getStartTime(), request.getEndTime());
+
+        // 6. Check for conflicts (exclude current booking from check)
         List<Booking> conflicts = bookingRepository.findConflictingBookings(
-                booking.getResource().getId(),
+                resource.getId(),
                 request.getDate(),
                 request.getStartTime(),
                 request.getEndTime()
@@ -127,7 +131,7 @@ public class BookingService {
             throw new BadRequestException("Booking conflict: resource is already booked for this time");
         }
 
-        // Update fields
+        // 7. Update fields
         booking.setDate(request.getDate());
         booking.setStartTime(request.getStartTime());
         booking.setEndTime(request.getEndTime());
@@ -172,6 +176,7 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         return toResponse(bookingRepository.save(booking));
     }
+
     // ─── Approve Booking (Admin) ──────────────────────────────────────
     public BookingResponse approveBooking(Long id) {
         Booking booking = bookingRepository.findById(id)
@@ -189,18 +194,6 @@ public class BookingService {
 
         return toResponse(bookingRepository.save(booking));
     }
-
-    // ─── Generate QR Code ─────────────────────────────────────────────
-    private String generateQrCode(Booking booking) {
-        return String.format("BOOKING-%d-%s-%s-%s-%s",
-                booking.getId(),
-                booking.getResource().getId(),
-                booking.getDate(),
-                booking.getStartTime(),
-                booking.getEndTime()
-        );
-    }
-        
 
     // ─── Reject Booking (Admin) ───────────────────────────────────────
     public BookingResponse rejectBooking(Long id, String reason) {
@@ -221,6 +214,109 @@ public class BookingService {
                                  LocalTime startTime, LocalTime endTime) {
         return !bookingRepository.findConflictingBookings(
                 resourceId, date, startTime, endTime).isEmpty();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PRIVATE HELPER METHODS
+    // ═══════════════════════════════════════════════════════════════════
+
+    // ─── Validate Time Range ──────────────────────────────────────────
+    private void validateTimeRange(LocalTime startTime, LocalTime endTime) {
+        if (!endTime.isAfter(startTime)) {
+            throw new BadRequestException("End time must be after start time");
+        }
+
+        long minutes = Duration.between(startTime, endTime).toMinutes();
+        if (minutes < 30) {
+            throw new BadRequestException("Minimum booking duration is 30 minutes");
+        }
+        if (minutes > 480) {
+            throw new BadRequestException("Maximum booking duration is 8 hours");
+        }
+    }
+
+    // ─── Validate Attendees Based on Resource Type ────────────────────
+    private void validateAttendees(Resource resource, Integer expectedAttendees) {
+        String resourceType = resource.getType().name();
+
+        if (resourceType.equals("EQUIPMENT")) {
+            // Equipment doesn't need attendees count
+            if (expectedAttendees != null && expectedAttendees > 0) {
+                throw new BadRequestException("Equipment bookings don't require attendees count");
+            }
+        } else {
+            // LAB, LECTURE_HALL, MEETING_ROOM require attendees
+            if (expectedAttendees == null || expectedAttendees < 1) {
+                throw new BadRequestException("Expected attendees is required for " + resourceType);
+            }
+        }
+    }
+
+    // ─── Validate Capacity ────────────────────────────────────────────
+    private void validateCapacity(Resource resource, Integer expectedAttendees) {
+        if (expectedAttendees != null && resource.getCapacity() != null) {
+            if (expectedAttendees > resource.getCapacity()) {
+                throw new BadRequestException(
+                    "Expected attendees (" + expectedAttendees +
+                    ") exceeds resource capacity (" + resource.getCapacity() + ")"
+                );
+            }
+        }
+    }
+
+    // ─── Validate Availability Windows ────────────────────────────────
+    private void validateAvailability(Resource resource, LocalDate date,
+                                       LocalTime startTime, LocalTime endTime) {
+        String availabilityWindows = resource.getAvailabilityWindows();
+        if (availabilityWindows != null && !availabilityWindows.isEmpty()) {
+            if (!isWithinAvailability(date, startTime, endTime, availabilityWindows)) {
+                throw new BadRequestException("Booking time is outside resource availability hours");
+            }
+        }
+    }
+
+    // ─── Check Availability Windows ───────────────────────────────────
+    private boolean isWithinAvailability(LocalDate date, LocalTime startTime,
+                                          LocalTime endTime, String availabilityJson) {
+        try {
+            // Get day of week (e.g., "mon", "tue", etc.)
+            String dayOfWeek = date.getDayOfWeek().name().substring(0, 3).toLowerCase();
+
+            // Parse JSON like {"mon":"09:00-17:00","tue":"09:00-17:00"}
+            if (!availabilityJson.contains(dayOfWeek)) {
+                return false; // Resource not available on this day
+            }
+
+            // Extract time range for this day
+            int dayIndex = availabilityJson.indexOf(dayOfWeek);
+            int colonIndex = availabilityJson.indexOf(":", dayIndex);
+            int startQuote = availabilityJson.indexOf("\"", colonIndex);
+            int endQuote = availabilityJson.indexOf("\"", startQuote + 1);
+
+            String timeRange = availabilityJson.substring(startQuote + 1, endQuote);
+            String[] times = timeRange.split("-");
+
+            LocalTime availStart = LocalTime.parse(times[0]);
+            LocalTime availEnd = LocalTime.parse(times[1]);
+
+            // Check if booking falls within availability
+            return !startTime.isBefore(availStart) && !endTime.isAfter(availEnd);
+
+        } catch (Exception e) {
+            // If parsing fails, allow the booking (fail open)
+            return true;
+        }
+    }
+
+    // ─── Generate QR Code ─────────────────────────────────────────────
+    private String generateQrCode(Booking booking) {
+        return String.format("BOOKING-%d-%s-%s-%s-%s",
+                booking.getId(),
+                booking.getResource().getId(),
+                booking.getDate(),
+                booking.getStartTime(),
+                booking.getEndTime()
+        );
     }
 
     // ─── Map Booking to Response ──────────────────────────────────────
@@ -246,15 +342,3 @@ public class BookingService {
         return response;
     }
 }
-=======
-    // TODO: getAllBookings(Pageable pageable) — user sees own, admin sees all
-    // TODO: getBookingById(Long id)
-    // TODO: createBooking(BookingRequest request, Long userId) — with conflict check
-    // TODO: updateBooking(Long id, BookingRequest request)
-    // TODO: cancelBooking(Long id)
-    // TODO: approveBooking(Long id) — Admin only
-    // TODO: rejectBooking(Long id, String reason) — Admin only
-    // TODO: checkConflicts(Long resourceId, LocalDate date, LocalTime start, LocalTime end)
-    // TODO: generateQrCode(Long id)
-}
->>>>>>> parent of 63edba2 (Merge pull request #10 from Dilshan118/feature/module-b-booking-management)
