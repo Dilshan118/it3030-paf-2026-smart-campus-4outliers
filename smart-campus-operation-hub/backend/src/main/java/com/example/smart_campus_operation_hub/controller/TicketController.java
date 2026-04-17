@@ -35,13 +35,17 @@ public class TicketController {
      * Get all tickets. Role-based filtering handled by service.
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<Object>> getAllTickets(org.springframework.data.domain.Pageable pageable) {
+    public ResponseEntity<ApiResponse<Object>> getAllTickets(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String priority,
+            @RequestParam(required = false) String category,
+            org.springframework.data.domain.Pageable pageable) {
         // TODO: Replace with actual logged-in user details
         Long userId = 1L;
         String role = "USER";
 
         org.springframework.data.domain.Page<com.example.smart_campus_operation_hub.dto.response.TicketResponse> response =
-                ticketService.getAllTickets(userId, role, pageable);
+                ticketService.getAllTickets(userId, role, status, priority, category, pageable);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }

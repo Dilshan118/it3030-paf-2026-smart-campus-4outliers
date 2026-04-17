@@ -18,7 +18,12 @@ import com.example.smart_campus_operation_hub.repository.TicketRepository;
 import com.example.smart_campus_operation_hub.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import jakarta.persistence.criteria.Predicate;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import java.time.LocalDateTime;
 
@@ -121,15 +126,30 @@ public class TicketService {
      * @param pageable pagination params (page, size, sort)
      * @return paginated list of tickets
      */
-    public Page<TicketResponse> getAllTickets(Long userId, String role, Pageable pageable) {
-        Page<Ticket> tickets;
+    public Page<TicketResponse> getAllTickets(Long userId, String role, String status, String priority, String category, Pageable pageable) {
+        Specification<Ticket> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-        switch (role) {
-            case "ADMIN", "MANAGER" -> tickets = ticketRepository.findAll(pageable);
-            case "TECHNICIAN" -> tickets = ticketRepository.findByAssignedToId(userId, pageable);
-            default -> tickets = ticketRepository.findByUserId(userId, pageable);
-        }
+            if ("TECHNICIAN".equals(role)) {
+                predicates.add(cb.equal(root.get("assignedTo").get("id"), userId));
+            } else if (!"ADMIN".equals(role) && !"MANAGER".equals(role)) {
+                predicates.add(cb.equal(root.get("user").get("id"), userId));
+            }
 
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), TicketStatus.valueOf(status.toUpperCase())));
+            }
+            if (priority != null && !priority.isEmpty()) {
+                predicates.add(cb.equal(root.get("priority"), TicketPriority.valueOf(priority.toUpperCase())));
+            }
+            if (category != null && !category.isEmpty()) {
+                predicates.add(cb.equal(root.get("category"), com.example.smart_campus_operation_hub.enums.TicketCategory.valueOf(category.toUpperCase())));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Ticket> tickets = ticketRepository.findAll(spec, pageable);
         return tickets.map(this::mapToResponse);
     }
     /**
