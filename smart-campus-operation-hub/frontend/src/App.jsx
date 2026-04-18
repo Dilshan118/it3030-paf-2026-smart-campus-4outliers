@@ -22,9 +22,9 @@ function DashboardLayout({ children }) {
   return (
     <div className="app-layout">
       <Sidebar />
-      <div className="app-shell" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' }}>
+      <div className="app-shell" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', background: 'var(--bg-primary)' }}>
         <Navbar />
-        <main className="app-main" style={{ padding: '0', width: '100%', boxSizing: 'border-box' }}>
+        <main className="app-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0', width: '100%', boxSizing: 'border-box' }}>
           {children}
         </main>
       </div>
