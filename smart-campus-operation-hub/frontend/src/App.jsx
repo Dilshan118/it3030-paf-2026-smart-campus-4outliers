@@ -15,6 +15,7 @@ import TicketManagePage from './pages/tickets/TicketManagePage';
 import ResourceListPage from './pages/resources/ResourceListPage';
 import ResourceDetailPage from './pages/resources/ResourceDetailPage';
 import ResourceManagePage from './pages/resources/ResourceManagePage';
+import ResourceAnalyticsPage from './pages/resources/ResourceAnalyticsPage';
 import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
 import UserManagePage from './pages/admin/UserManagePage';
 
@@ -69,6 +70,7 @@ function App() {
 
           {/* Admin Routes */}
           <Route path="/admin/resources" element={<ProtectedRoute><DashboardLayout><ResourceManagePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/resources/analytics" element={<ProtectedRoute><DashboardLayout><ResourceAnalyticsPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/admin/analytics" element={<ProtectedRoute><DashboardLayout><AnalyticsDashboard /></DashboardLayout></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute><DashboardLayout><UserManagePage /></DashboardLayout></ProtectedRoute>} />
 

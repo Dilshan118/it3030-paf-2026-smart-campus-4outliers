@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Ticket, CalendarDays, Box, Bell, Users, Settings, Briefcase, Command } from 'lucide-react';
+import { LayoutDashboard, Ticket, CalendarDays, Box, Bell, Users, Settings, Briefcase, Command, TrendingUp } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 
 export default function Sidebar() {
@@ -57,18 +57,25 @@ export default function Sidebar() {
           <div className="sidebar-divider"></div>
           
           <span className="sidebar-label">Admin Environment</span>
-          
+
           <NavLink to="/admin/users" className={navClassName}>
             <Users size={20} strokeWidth={1.5} className="sidebar-icon" />
             Users & Roles
           </NavLink>
+          
+          <NavLink to="/admin/resources" className={navClassName}>
+            <Settings size={20} strokeWidth={1.5} className="sidebar-icon" />
+            Manage Resources
+          </NavLink>
+
+          <NavLink to="/admin/resources/analytics" className={navClassName} style={{ marginLeft: '12px', marginTop: '-2px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            <TrendingUp size={16} strokeWidth={1.8} className="sidebar-icon" style={{ marginRight: '8px' }} />
+            Analytics
+          </NavLink>
+
           <NavLink to="/tickets/manage" className={navClassName}>
             <Briefcase size={20} strokeWidth={1.5} className="sidebar-icon" />
             Operations Log
-          </NavLink>
-          <NavLink to="/admin/analytics" className={navClassName}>
-            <Settings size={20} strokeWidth={1.5} className="sidebar-icon" />
-            System Analytics
           </NavLink>
         </div>
       )}
