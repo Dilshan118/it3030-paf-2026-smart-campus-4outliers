@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getTickets, assignTechnician, updateTicketStatus } from '../../api/ticketApi';
-import { Settings, UserPlus, CheckCircle } from 'lucide-react';
+import { getTickets, assignTechnician, updateTicketStatus, deleteTicket } from '../../api/ticketApi';
+import { Briefcase, Activity, CheckCircle, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function TicketManagePage() {
@@ -8,7 +8,6 @@ export default function TicketManagePage() {
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState('');
 
-  // Hardcoded for dummy frontend until user system is up
   const availableTechnicians = [
     { id: 2, name: 'Saman Kumara (Tech)' },
     { id: 3, name: 'Alice Silva (Tech)' }
@@ -17,7 +16,6 @@ export default function TicketManagePage() {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      // Example of getting all unpaginated or first page of high size for admin view
       const res = await getTickets({ page: 0, size: 50 });
       setTickets(res.data?.content || []);
     } catch (err) {
@@ -27,14 +25,11 @@ export default function TicketManagePage() {
     }
   };
 
-  useEffect(() => {
-    fetchTickets();
-  }, []);
+  useEffect(() => { fetchTickets(); }, []);
 
   const handleAssign = async (ticketId, e) => {
     const techId = e.target.value;
     if (!techId) return;
-    
     try {
       setActionError('');
       await assignTechnician(ticketId, techId);
@@ -44,10 +39,21 @@ export default function TicketManagePage() {
     }
   };
 
+
+  const handleDeleteTicket = async (id) => {
+    if (!window.confirm("Are you sure you want to completely delete this ticket?")) return;
+    try {
+      setActionError('');
+      await deleteTicket(id);
+      await fetchTickets();
+    } catch (err) {
+      setActionError('Failed to delete: ' + (err.response?.data?.message || err.message));
+    }
+  }
+
   const handleResolve = async (ticketId) => {
     const notes = window.prompt("Resolution Notes:", "Resolved by admin operations");
     if (!notes) return;
-
     try {
       setActionError('');
       await updateTicketStatus(ticketId, 'RESOLVED', notes, '');
@@ -58,76 +64,136 @@ export default function TicketManagePage() {
   }
 
   return (
-    <div className="page-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 className="h1" style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: 0 }}>
-          <Settings size={28} strokeWidth={2} /> Operations Log
-        </h1>
+    <div className="page-container" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+      <style>{`
+        .page-header {
+          display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 32px; margin-bottom: 48px;
+        }
+        .page-title {
+          font-size: clamp(2rem, 4vw, 3rem); font-family: var(--font-display); font-weight: 800; letter-spacing: -0.03em; color: var(--text-main); line-height: 1.1;
+        }
+        .data-row {
+          display: grid; grid-template-columns: minmax(200px, 2fr) 150px 150px 200px 100px;
+          gap: 16px; padding: 24px; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.03);
+          transition: background 0.2s;
+        }
+        .data-row:hover { background: rgba(42, 20, 180, 0.02); }
+        .data-row:last-child { border-bottom: none; }
+      `}</style>
+
+      <div className="page-header">
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--accent-base)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '16px', fontWeight: 700 }}>
+            Central Administration
+          </div>
+          <h1 className="page-title">
+            Operations <span style={{ color: 'var(--text-muted)' }}>Log</span>
+          </h1>
+        </div>
+
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <button className="btn-secondary">
+            <SlidersHorizontal size={18} /> Filters
+          </button>
+        </div>
       </div>
 
       {actionError && (
-        <div style={{ padding: '16px', border: '1px solid var(--danger)', backgroundColor: 'var(--danger-muted)', color: 'var(--danger)', fontFamily: 'var(--font-mono)', marginBottom: '16px' }}>
-          ERROR: {actionError}
+        <div style={{ padding: '16px 24px', borderRadius: 'var(--radius)', background: 'var(--danger-muted)', color: 'var(--danger)', fontFamily: 'var(--font-mono)', marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <strong>SYS_ERR:</strong> {actionError}
         </div>
       )}
 
-      <div className="card" style={{ padding: '8px' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {loading ? (
-          <p style={{ textAlign: 'center', padding: '32px 0', opacity: 0.5 }}>Loading operations data...</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '300px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid rgba(0,0,0,0.05)', borderTopColor: 'var(--accent-base)', animation: 'spin 1s linear infinite' }} />
+          </div>
         ) : tickets.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: '32px 0', opacity: 0.5 }}>No operations logged.</p>
+          <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.8, minHeight: '400px', background: 'var(--bg-surface)' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'var(--bg-surface-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', color: 'var(--text-muted)' }}>
+               <Activity size={32} />
+            </div>
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>Log is clear</h3>
+            <p style={{ color: 'var(--text-muted)' }}>No operations data found.</p>
+          </div>
         ) : (
-          <div className="no-border-list">
-            {/* Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 150px 150px 200px 100px', gap: '16px', padding: '8px 16px', borderBottom: 'var(--border-thick)' }}>
-              <div className="label-text">Issue Details</div>
-              <div className="label-text">Status</div>
-              <div className="label-text">Priority</div>
-              <div className="label-text">Assignment</div>
-              <div className="label-text" style={{ textAlign: 'right' }}>Actions</div>
+          <div style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', overflow: 'hidden' }}>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 2fr) 150px 150px 200px 100px', gap: '16px', padding: '16px 24px', background: 'var(--bg-surface-elevated)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div>Issue Details</div>
+              <div>Status</div>
+              <div>Priority</div>
+              <div>Assignment</div>
+              <div style={{ textAlign: 'right' }}>Actions</div>
             </div>
 
-            {/* List */}
-            {tickets.map(t => (
-              <div key={t.id} className="data-row" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 150px 150px 200px 100px', gap: '16px', padding: '16px', alignItems: 'center', borderBottom: '1px solid var(--border-main)' }}>
-                <Link to={`/tickets/${t.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontWeight: '600', color: 'var(--accent-base)', fontFamily: 'var(--font-mono)' }}>#{t.id} - {t.category}</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.description}</span>
-                </Link>
-                
-                <div><span className={`status-badge status-${t.status.toLowerCase()}`}>{t.status}</span></div>
-                
-                <div><span className={`priority-badge priority-${t.priority.toLowerCase()}`}>{t.priority}</span></div>
-                
-                {/* Tech Assignment */}
-                <div>
-                   <select 
-                     value={t.assignedToId || ''} 
-                     onChange={(e) => handleAssign(t.id, e)}
-                     className="input-field"
-                     style={{ padding: '6px 12px', fontSize: '12px', fontFamily: 'var(--font-mono)', margin: 0, width: '100%', height: 'auto' }}
-                   >
-                     <option value="">Unassigned</option>
-                     {availableTechnicians.map(tech => (
-                       <option key={tech.id} value={tech.id}>{tech.name}</option>
-                     ))}
-                   </select>
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {tickets.map(t => (
+                <div key={t.id} className="data-row">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <Link to={`/tickets/${t.id}`} style={{ textDecoration: 'none', color: 'var(--text-main)', fontSize: '1.05rem', fontFamily: 'var(--font-body)', fontWeight: 700, letterSpacing: '-0.01em' }}>
+                      {t.category.replace('_', ' ')}
+                    </Link>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--font-mono)' }}>
+                      #{t.id} • {new Date(t.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  
+                  <div><span className={`status-badge status-${t.status.toLowerCase()}`}>{t.status.replace('_', ' ')}</span></div>
+                  
+                  <div><span className={`priority-badge priority-${t.priority.toLowerCase()}`}>{t.priority}</span></div>
+                  
+                  <div>
+                     <select 
+                       value={t.assignedToId || ''} 
+                       onChange={(e) => handleAssign(t.id, e)}
+                       style={{ 
+                         width: '100%', padding: '8px 12px', borderRadius: '8px', border: 'none',
+                         background: 'var(--bg-surface-elevated)', fontFamily: 'var(--font-mono)', 
+                         fontSize: '0.8rem', color: 'var(--text-main)', outline: 'none', cursor: 'pointer'
+                       }}
+                     >
+                       <option value="">Unassigned</option>
+                       {availableTechnicians.map(tech => (
+                         <option key={tech.id} value={tech.id}>{tech.name}</option>
+                       ))}
+                     </select>
+                  </div>
 
-                {/* Actions */}
-                <div style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                  {t.status !== 'RESOLVED' && t.status !== 'CLOSED' && (
-                    <button 
-                      onClick={() => handleResolve(t.id)}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--info)' }}
-                      title="Quick Resolve"
+                  <div style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                    <Link to={`/tickets/${t.id}`} 
+                      style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(42, 20, 180, 0.05)', color: 'var(--accent-base)', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                      title="Edit Ticket"
                     >
-                      <CheckCircle size={20} strokeWidth={2} />
+                      <Briefcase size={16} strokeWidth={2} />
+                    </Link>
+                    {t.status !== 'RESOLVED' && t.status !== 'CLOSED' && (
+                      <button 
+                        onClick={() => handleResolve(t.id)}
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                        title="Quick Resolve"
+                        onMouseOver={(e) => { e.currentTarget.style.background = 'var(--success)'; e.currentTarget.style.color = 'white'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.color = 'var(--success)'; }}
+                      >
+                        <CheckCircle size={18} strokeWidth={2} />
+                      </button>
+                    )}
+
+                    <button 
+                      onClick={() => handleDeleteTicket(t.id)}
+                      style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(225, 42, 69, 0.1)', color: 'var(--danger)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', marginLeft: '8px' }}
+                      title="Delete Ticket"
+                      onMouseOver={(e) => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(225, 42, 69, 0.1)'; e.currentTarget.style.color = 'var(--danger)'; }}
+                    >
+                      <Trash2 size={16} strokeWidth={2} />
                     </button>
-                  )}
+
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
