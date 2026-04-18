@@ -1,6 +1,7 @@
 package com.example.smart_campus_operation_hub.controller;
 
 import com.example.smart_campus_operation_hub.dto.request.ResourceRequest;
+import com.example.smart_campus_operation_hub.dto.response.ResourceAnalyticsDTO;
 import com.example.smart_campus_operation_hub.dto.response.ResourceResponse;
 import com.example.smart_campus_operation_hub.enums.ResourceStatus;
 import com.example.smart_campus_operation_hub.enums.ResourceType;
@@ -72,6 +73,12 @@ public class ResourceController {
             @RequestParam(required = false) Integer minCapacity,
             Pageable pageable) {
         return ResponseEntity.ok(resourceService.searchResources(type, status, location, minCapacity, pageable));
+    }
+
+    // GET /api/v1/resources/analytics
+    @GetMapping("/analytics")
+    public ResponseEntity<ResourceAnalyticsDTO> getAnalytics() {
+        return ResponseEntity.ok(resourceService.getAnalytics());
     }
 
     // PATCH /api/v1/resources/{id}/status  (Admin only)

@@ -1,6 +1,7 @@
 package com.example.smart_campus_operation_hub.service;
 
 import com.example.smart_campus_operation_hub.dto.request.ResourceRequest;
+import com.example.smart_campus_operation_hub.dto.response.ResourceAnalyticsDTO;
 import com.example.smart_campus_operation_hub.dto.response.ResourceResponse;
 import com.example.smart_campus_operation_hub.enums.ResourceStatus;
 import com.example.smart_campus_operation_hub.enums.ResourceType;
@@ -10,6 +11,11 @@ import com.example.smart_campus_operation_hub.repository.ResourceRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.time.YearMonth;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ResourceService {
@@ -84,6 +90,43 @@ public class ResourceService {
         if (request.getImageUrls() != null) {
             resource.setImageUrls(request.getImageUrls());
         }
+    }
+
+    public ResourceAnalyticsDTO getAnalytics() {
+        List<Resource> all = resourceRepository.findAll()
+            .stream()
+            .filter(r -> !Boolean.TRUE.equals(r.getIsDeleted()))
+            .collect(Collectors.toList());
+
+        long total = all.size();
+        long active = all.stream().filter(r -> r.getStatus() == ResourceStatus.ACTIVE).count();
+        long outOfService = all.stream().filter(r -> r.getStatus() == ResourceStatus.OUT_OF_SERVICE).count();
+
+        // groupingBy rejects null keys — skip resources with null type or location
+        Map<String, Long> byType = all.stream()
+            .filter(r -> r.getType() != null)
+            .collect(Collectors.groupingBy(r -> r.getType().name(), Collectors.counting()));
+
+        Map<String, Long> byLocation = all.stream()
+            .filter(r -> r.getLocation() != null && !r.getLocation().isBlank())
+            .collect(Collectors.groupingBy(Resource::getLocation, Collectors.counting()));
+
+        YearMonth currentMonth = YearMonth.now();
+        long addedThisMonth = all.stream()
+            .filter(r -> {
+                if (r.getCreatedAt() == null) {
+                // Optionally log a warning here
+                return false;
+                }
+                return YearMonth.from(r.getCreatedAt()).equals(currentMonth);
+            })
+            .count();
+
+        double activePercentage = total > 0
+            ? Math.round((double) active / total * 1000.0) / 10.0
+            : 0.0;
+
+        return new ResourceAnalyticsDTO(total, active, outOfService, byType, byLocation, addedThisMonth, activePercentage);
     }
 
     public ResourceResponse addImageUrls(Long id, java.util.List<String> imageUrls) {
