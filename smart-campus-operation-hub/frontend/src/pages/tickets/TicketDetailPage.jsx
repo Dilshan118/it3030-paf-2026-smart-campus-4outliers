@@ -23,7 +23,7 @@ export default function TicketDetailPage() {
     try {
       setTicketError('');
       const resp = await getTicketById(id);
-      setTicket(resp.data); // getTicketById returns res.data which contains {success, data}
+      setTicket(resp.data);
     } catch (err) {
       setTicketError(err.response?.data?.message || 'Failed to load ticket details');
     } finally {
@@ -92,8 +92,8 @@ export default function TicketDetailPage() {
 
   return (
     <div className="page-container">
-      <Link to="/tickets" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '24px', color: 'var(--on-surface-variant)', textDecoration: 'none', fontWeight: '500' }}>
-        <ArrowLeft size={16} /> Back to Library
+      <Link to="/tickets" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '24px', color: 'var(--text-muted)', textDecoration: 'none', fontWeight: '600' }}>
+        <ArrowLeft size={16} /> Back to Tickets
       </Link>
 
       <div style={{
@@ -106,15 +106,15 @@ export default function TicketDetailPage() {
           
           {isEditing ? (
             <div className="card">
-              <h2 className="h2" style={{ marginBottom: '24px' }}>Edit Ticket</h2>
+              <h2 className="h2" style={{ marginBottom: '24px', fontSize: '2rem' }}>Edit Incident</h2>
               <TicketForm initialData={ticket} onSubmit={handleEditSubmit} onCancel={() => setIsEditing(false)} />
             </div>
           ) : (
             <div className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                 <div>
-                  <h1 className="h1" style={{ borderBottom: 'none', marginBottom: 0 }}>{ticket.title || `Ticket #${ticket.id} (${ticket.category.replace('_', ' ')})`}</h1>
-                  <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '15px', fontFamily: 'var(--font-mono)' }}>
+                  <h1 className="h1" style={{ marginBottom: 0, fontSize: '2rem' }}>{ticket.title || `Incident #${ticket.id} (${ticket.category.replace('_', ' ')})`}</h1>
+                  <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '0.9rem', fontFamily: 'var(--font-mono)' }}>
                     #{ticket.id} • Created by {ticket.userName || `User ${ticket.userId}`}
                   </p>
                 </div>
@@ -123,29 +123,29 @@ export default function TicketDetailPage() {
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '32px', padding: '16px', borderTop: 'var(--border-thick)', borderBottom: 'var(--border-thick)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '32px', padding: '24px', background: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius)' }}>
                 <div>
                   <p className="label-text">Category</p>
-                  <p style={{ fontWeight: '500', fontFamily: 'var(--font-mono)' }}>{ticket.category}</p>
+                  <p style={{ fontWeight: '700', fontFamily: 'var(--font-mono)' }}>{ticket.category}</p>
                 </div>
                 <div>
                   <p className="label-text">Priority</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {ticket.priority === 'CRITICAL' && <AlertCircle size={14} color="var(--danger)" />}
-                    <span style={{ fontWeight: '500', fontFamily: 'var(--font-mono)', color: ticket.priority === 'CRITICAL' ? 'var(--danger)' : 'inherit' }}>{ticket.priority}</span>
+                    <span style={{ fontWeight: '700', fontFamily: 'var(--font-mono)', color: ticket.priority === 'CRITICAL' ? 'var(--danger)' : 'inherit' }}>{ticket.priority}</span>
                   </div>
                 </div>
                 {ticket.resourceId && (
                   <div>
                     <p className="label-text">Resource ID</p>
-                    <p style={{ fontWeight: '500', fontFamily: 'var(--font-mono)' }}>{ticket.resourceId}</p>
+                    <p style={{ fontWeight: '700', fontFamily: 'var(--font-mono)' }}>{ticket.resourceId}</p>
                   </div>
                 )}
               </div>
 
-              <div style={{ padding: '24px', border: '1px solid var(--border-main)', background: 'var(--bg-primary)' }}>
-                <h3 className="label-text" style={{ marginBottom: '16px' }}>Description</h3>
-                <p style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', margin: 0 }}>{ticket.description}</p>
+              <div style={{ padding: '24px', background: 'var(--bg-primary)', borderRadius: 'var(--radius)' }}>
+                <h3 className="label-text" style={{ marginBottom: '16px' }}>Description Details</h3>
+                <p style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', margin: 0, fontSize: '0.95rem' }}>{ticket.description}</p>
               </div>
             </div>
           )}
@@ -165,17 +165,17 @@ export default function TicketDetailPage() {
               <h3 className="label-text" style={{ marginBottom: '20px' }}>Your Actions</h3>
               
               {actionError && !isAdmin && (
-                <div style={{ marginBottom: '12px', padding: '10px 12px', border: '1px solid var(--danger)', backgroundColor: 'var(--danger-muted)', color: 'var(--danger)', fontSize: '14px', fontFamily: 'var(--font-mono)' }}>
+                <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: 'var(--radius)', background: 'var(--danger-muted)', color: 'var(--danger)', fontSize: '0.85rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
                   {actionError}
                 </div>
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <button className="btn-secondary" onClick={() => setIsEditing(true)} style={{ width: '100%', justifyContent: 'center', display: 'flex', gap: '8px' }}>
-                  <Edit2 size={16} /> Edit Ticket
+                <button className="btn-secondary" onClick={() => setIsEditing(true)} style={{ width: '100%', justifyContent: 'center' }}>
+                  <Edit2 size={16} /> Edit Details
                 </button>
-                <button className="btn-secondary" onClick={handleDelete} style={{ width: '100%', justifyContent: 'center', display: 'flex', gap: '8px', color: 'var(--danger)', borderColor: 'var(--danger)' }}>
-                  <Trash2 size={16} /> Delete Ticket
+                <button className="btn-secondary" onClick={handleDelete} style={{ width: '100%', justifyContent: 'center', color: 'var(--danger)', background: 'var(--danger-muted)' }}>
+                  <Trash2 size={16} /> Withdraw Ticket
                 </button>
               </div>
             </div>
@@ -194,33 +194,33 @@ export default function TicketDetailPage() {
               </div>
 
               <div className="card">
-                <h3 className="label-text" style={{ marginBottom: '20px' }}>Actions</h3>
+                <h3 className="label-text" style={{ marginBottom: '20px' }}>Administration Setup</h3>
 
                 {actionError && (
-                  <div style={{ marginBottom: '12px', padding: '10px 12px', border: '1px solid var(--danger)', backgroundColor: 'var(--danger-muted)', color: 'var(--danger)', fontSize: '14px', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: 'var(--radius)', background: 'var(--danger-muted)', color: 'var(--danger)', fontSize: '0.85rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
                     {actionError}
                   </div>
                 )}
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {ticket.status === 'OPEN' && (
-                    <button className="btn-primary" onClick={() => handleUpdateStatus('IN_PROGRESS')} style={{ width: '100%', justifyContent: 'center' }}>
+                    <button className="btn-secondary" onClick={() => handleUpdateStatus('IN_PROGRESS')} style={{ width: '100%', justifyContent: 'center' }}>
                      Mark In Progress
                     </button>
                   )}
                   {ticket.status === 'OPEN' && (
-                    <button className="btn-secondary" onClick={() => handleUpdateStatus('REJECTED')} style={{ width: '100%', justifyContent: 'center' }}>
-                      Reject Ticket
+                    <button className="btn-secondary" onClick={() => handleUpdateStatus('REJECTED')} style={{ width: '100%', justifyContent: 'center', color: 'var(--danger)', background: 'var(--danger-muted)' }}>
+                      Reject Request
                     </button>
                   )}
                   {ticket.status === 'IN_PROGRESS' && (
                     <button className="btn-primary" onClick={() => handleUpdateStatus('RESOLVED')} style={{ width: '100%', justifyContent: 'center' }}>
-                      Resolve Ticket
+                      Complete Resolution
                     </button>
                   )}
                   {ticket.status === 'RESOLVED' && (
                     <button className="btn-secondary" onClick={() => handleUpdateStatus('CLOSED')} style={{ width: '100%', justifyContent: 'center' }}>
-                      Close Ticket
+                      Close Ticket File
                     </button>
                   )}
                 </div>
