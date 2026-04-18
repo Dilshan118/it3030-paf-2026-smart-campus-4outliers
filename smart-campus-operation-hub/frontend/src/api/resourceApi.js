@@ -26,3 +26,6 @@ export const uploadResourceImage = (id, formData) =>
   api.post(`/resources/${id}/image`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+
+export const getResourceAnalytics = () =>
+  api.get('/resources/analytics');
