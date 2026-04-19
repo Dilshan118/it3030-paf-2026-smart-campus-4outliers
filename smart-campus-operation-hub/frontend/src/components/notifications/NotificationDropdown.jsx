@@ -85,6 +85,8 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
       return `/bookings/${notification.referenceId}`;
     } else if (notification.referenceType === 'TICKET') {
       return `/tickets/${notification.referenceId}`;
+    } else if (notification.referenceType === 'RESOURCE') {
+      return `/resources/${notification.referenceId}`;
     }
     return null;
   };

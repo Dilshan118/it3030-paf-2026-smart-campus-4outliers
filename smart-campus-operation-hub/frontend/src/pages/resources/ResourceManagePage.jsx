@@ -98,11 +98,33 @@ export default function ResourceManagePage() {
         .data-row:last-child { border-bottom: none; }
 
         .modal-overlay {
-          position: fixed; inset: 0; background: rgba(7, 5, 26, 0.6); backdrop-filter: blur(12px);
-          display: flex; alignItems: center; justifyContent: center; z-index: 1000;
-          animation: fadeIn 0.3s ease;
+          position: fixed; inset: 0;
+          background: rgba(7, 5, 26, 0.7); backdrop-filter: blur(8px);
+          display: flex; align-items: center; justify-content: center; z-index: 1000;
+          padding: 24px;
+          animation: fadeIn 0.2s ease;
         }
+        .modal-card {
+          width: 100%; max-width: 620px; max-height: 88vh; overflow-y: auto;
+          background: var(--bg-surface); border-radius: var(--radius-lg);
+          box-shadow: 0 24px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06);
+          animation: slideUp 0.25s cubic-bezier(0.16,1,0.3,1);
+        }
+        .modal-header {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 28px 32px 0;
+        }
+        .modal-body { padding: 24px 32px 32px; }
+        .modal-close-btn {
+          background: transparent; border: none; cursor: pointer;
+          color: var(--text-muted); padding: 6px; border-radius: 6px;
+          display: flex; align-items: center; justify-content: center;
+          transition: color 0.15s, background 0.15s; flex-shrink: 0;
+        }
+        .modal-close-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.06); }
+        .modal-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 20px 0 0; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
       `}</style>
 
       <div className="page-header">
@@ -200,19 +222,32 @@ export default function ResourceManagePage() {
       </div>
 
       {showModal && (
-        <div className="modal-overlay">
-          <div className="card" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', background: 'var(--bg-surface)' }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', marginBottom: '32px' }}>
-              {editingId ? 'Update Entity Metadata' : 'Provision Hardware/Space'}
-            </h3>
-            <ResourceForm 
-              form={form} 
-              setForm={setForm} 
-              onSubmit={handleSave} 
-              onCancel={() => setShowModal(false)}
-              saving={saving}
-              isEdit={!!editingId}
-            />
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
+          <div className="modal-card">
+            <div className="modal-header">
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--accent-base)', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700, marginBottom: '6px' }}>
+                  {editingId ? 'Edit Resource' : 'New Resource'}
+                </div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>
+                  {editingId ? 'Update Entity Metadata' : 'Provision Hardware/Space'}
+                </h3>
+              </div>
+              <button className="modal-close-btn" onClick={() => setShowModal(false)} title="Close">
+                <Plus size={20} strokeWidth={2.5} style={{ transform: 'rotate(45deg)' }} />
+              </button>
+            </div>
+            <div className="modal-divider" />
+            <div className="modal-body">
+              <ResourceForm
+                form={form}
+                setForm={setForm}
+                onSubmit={handleSave}
+                onCancel={() => setShowModal(false)}
+                saving={saving}
+                isEdit={!!editingId}
+              />
+            </div>
           </div>
         </div>
       )}

@@ -1,9 +1,13 @@
 package com.example.smart_campus_operation_hub.controller;
 
+import com.example.smart_campus_operation_hub.dto.request.ResourceRecommendationRequest;
 import com.example.smart_campus_operation_hub.dto.request.ResourceRequest;
+import com.example.smart_campus_operation_hub.dto.response.ResourceAnalyticsDTO;
+import com.example.smart_campus_operation_hub.dto.response.ResourceRecommendationResult;
 import com.example.smart_campus_operation_hub.dto.response.ResourceResponse;
 import com.example.smart_campus_operation_hub.enums.ResourceStatus;
 import com.example.smart_campus_operation_hub.enums.ResourceType;
+import com.example.smart_campus_operation_hub.service.ResourceScoringService;
 import com.example.smart_campus_operation_hub.service.ResourceService;
 import jakarta.validation.Valid;
 
@@ -12,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,9 +30,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class ResourceController {
 
     private final ResourceService resourceService;
+    private final ResourceScoringService resourceScoringService;
 
-    public ResourceController(ResourceService resourceService) {
-        this.resourceService = resourceService;
+    public ResourceController(ResourceService resourceService, ResourceScoringService resourceScoringService) {
+        this.resourceService        = resourceService;
+        this.resourceScoringService = resourceScoringService;
     }
 
     // GET /api/v1/resources
@@ -72,6 +79,19 @@ public class ResourceController {
             @RequestParam(required = false) Integer minCapacity,
             Pageable pageable) {
         return ResponseEntity.ok(resourceService.searchResources(type, status, location, minCapacity, pageable));
+    }
+
+    // GET /api/v1/resources/analytics
+    @GetMapping("/analytics")
+    public ResponseEntity<ResourceAnalyticsDTO> getAnalytics() {
+        return ResponseEntity.ok(resourceService.getAnalytics());
+    }
+
+    // POST /api/v1/resources/recommend
+    @PostMapping("/recommend")
+    public ResponseEntity<List<ResourceRecommendationResult>> recommend(
+            @RequestBody ResourceRecommendationRequest request) {
+        return ResponseEntity.ok(resourceScoringService.recommend(request));
     }
 
     // PATCH /api/v1/resources/{id}/status  (Admin only)

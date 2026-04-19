@@ -5,12 +5,15 @@ import com.example.smart_campus_operation_hub.dto.response.NotificationPreferenc
 import com.example.smart_campus_operation_hub.dto.response.NotificationResponse;
 import com.example.smart_campus_operation_hub.service.NotificationService;
 import com.example.smart_campus_operation_hub.util.ApiResponse;
+import com.example.smart_campus_operation_hub.repository.UserRepository;
+import com.example.smart_campus_operation_hub.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 /**
  * MEMBER 4: Notification Controller
@@ -21,9 +24,11 @@ import java.security.Principal;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
-    public NotificationController(NotificationService notificationService) {
+    public NotificationController(NotificationService notificationService, UserRepository userRepository) {
         this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -110,6 +115,11 @@ public class NotificationController {
                 return Long.parseLong(principal.getName());
             } catch (NumberFormatException ignored) {
             }
+        }
+        // Fallback for mocked frontend users - queries first available USER since DB could start empty
+        List<User> allUsers = userRepository.findAll();
+        if (!allUsers.isEmpty()) {
+            return allUsers.get(0).getId();
         }
         return 1L;
     }
