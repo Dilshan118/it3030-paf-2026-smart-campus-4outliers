@@ -12,6 +12,7 @@ public class BookingResponse {
     private Long resourceId;
     private String resourceName;
     private String resourceLocation;
+    private String resourceType;
     private Long userId;
     private String userName;
     private LocalDate date;
@@ -39,6 +40,9 @@ public class BookingResponse {
 
     public String getResourceLocation() { return resourceLocation; }
     public void setResourceLocation(String resourceLocation) { this.resourceLocation = resourceLocation; }
+
+    public String getResourceType() { return resourceType; }
+    public void setResourceType(String resourceType) { this.resourceType = resourceType; }
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
