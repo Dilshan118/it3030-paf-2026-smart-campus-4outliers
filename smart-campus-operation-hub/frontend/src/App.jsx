@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Sidebar from './components/common/Sidebar';
@@ -15,6 +14,11 @@ import TicketManagePage from './pages/tickets/TicketManagePage';
 import ResourceListPage from './pages/resources/ResourceListPage';
 import ResourceDetailPage from './pages/resources/ResourceDetailPage';
 import ResourceManagePage from './pages/resources/ResourceManagePage';
+import BookingListPage from './pages/bookings/BookingListPage';
+import BookingCreatePage from './pages/bookings/BookingCreatePage';
+import BookingDetailPage from './pages/bookings/BookingDetailPage';
+import BookingAdminDetailPage from './pages/bookings/BookingAdminDetailPage';
+import BookingReviewPage from './pages/bookings/BookingReviewPage';
 
 function DashboardLayout({ children }) {
   return (
@@ -49,17 +53,10 @@ function App() {
           <Route path="/tickets/manage" element={<ProtectedRoute><DashboardLayout><TicketManagePage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute><DashboardLayout><TicketDetailPage /></DashboardLayout></ProtectedRoute>} />
 
-          {/* Placeholders for Other Modules */}
-          <Route path="/bookings/*" element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <div className="card" style={{ textAlign: 'center' }}>
-                  <h2 className="h1">Bookings Module</h2>
-                  <p style={{ color: 'var(--on-surface-variant)' }}>Coming soon...</p>
-                </div>
-              </DashboardLayout>
-            </ProtectedRoute>
-          } />
+          {/* Booking Routes */}
+          <Route path="/bookings" element={<ProtectedRoute><DashboardLayout><BookingListPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/bookings/new" element={<ProtectedRoute><DashboardLayout><BookingCreatePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/bookings/:id" element={<ProtectedRoute><DashboardLayout><BookingDetailPage /></DashboardLayout></ProtectedRoute>} />
           
           {/* Resource Routes */}
           <Route path="/resources" element={<ProtectedRoute><DashboardLayout><ResourceListPage /></DashboardLayout></ProtectedRoute>} />
@@ -67,6 +64,8 @@ function App() {
 
           {/* Admin Routes */}
           <Route path="/admin/resources" element={<ProtectedRoute><DashboardLayout><ResourceManagePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/bookings" element={<ProtectedRoute><DashboardLayout><BookingReviewPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/bookings/:id" element={<ProtectedRoute><DashboardLayout><BookingAdminDetailPage /></DashboardLayout></ProtectedRoute>} />
 
           <Route path="/admin/*" element={
             <ProtectedRoute>
