@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Ticket, CalendarDays, Box, Bell, Users, Settings, Briefcase } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
@@ -28,11 +28,10 @@ export default function Sidebar() {
         Notifications
       </NavLink>
 
-      <div style={{ opacity: 0.5, padding: '14px 24px', display: 'flex', alignItems: 'center', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'not-allowed' }}>
+      <NavLink to="/bookings" className={navClassName}>
         <CalendarDays size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
         Bookings
-        <span className="badge" style={{ marginLeft: 'auto' }}>Soon</span>
-      </div>
+      </NavLink>
 
       <NavLink to="/resources" className={navClassName}>
         <Box size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
@@ -49,6 +48,10 @@ export default function Sidebar() {
           <NavLink to="/tickets/manage" className={navClassName}>
             <Briefcase size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
             Operations Log
+          </NavLink>
+          <NavLink to="/admin/bookings" className={navClassName}>
+            <CalendarDays size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
+            Booking Review
           </NavLink>
           <NavLink to="/admin/analytics" className={navClassName}>
             <Settings size={20} strokeWidth={1.5} style={{ marginRight: '16px' }} />
