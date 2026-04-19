@@ -16,6 +16,7 @@ import com.example.smart_campus_operation_hub.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import com.example.smart_campus_operation_hub.enums.NotificationType;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -28,13 +29,16 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final ResourceRepository resourceRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public BookingService(BookingRepository bookingRepository,
                           ResourceRepository resourceRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
         this.resourceRepository = resourceRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     // ─── Create Booking ───────────────────────────────────────────────
@@ -87,6 +91,17 @@ public class BookingService {
         booking.setStatus(BookingStatus.PENDING);
 
         Booking saved = bookingRepository.save(booking);
+
+        // 9. Send Notification
+        notificationService.send(
+                userId,
+                NotificationType.BOOKING_CREATED,
+                "Booking Requested: " + resource.getName(),
+                "Your booking for " + resource.getName() + " on " + request.getDate() + " is pending approval.",
+                saved.getId(),
+                "BOOKING"
+        );
+
         return toResponse(saved);
     }
 
@@ -174,7 +189,19 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
-        return toResponse(bookingRepository.save(booking));
+
+        Booking saved = bookingRepository.save(booking);
+
+        notificationService.send(
+                saved.getUser().getId(),
+                NotificationType.BOOKING_CANCELLED,
+                "Booking Cancelled",
+                "Your booking for " + saved.getResource().getName() + " on " + saved.getDate() + " was cancelled.",
+                saved.getId(),
+                "BOOKING"
+        );
+
+        return toResponse(saved);
     }
 
     // ─── Approve Booking (Admin) ──────────────────────────────────────
@@ -192,7 +219,18 @@ public class BookingService {
         String qrCode = generateQrCode(booking);
         booking.setQrCode(qrCode);
 
-        return toResponse(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        notificationService.send(
+                saved.getUser().getId(),
+                NotificationType.BOOKING_APPROVED,
+                "Booking Approved",
+                "Your booking for " + saved.getResource().getName() + " on " + saved.getDate() + " has been approved.",
+                saved.getId(),
+                "BOOKING"
+        );
+
+        return toResponse(saved);
     }
 
     // ─── Reject Booking (Admin) ───────────────────────────────────────
@@ -206,7 +244,19 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.REJECTED);
         booking.setAdminReason(reason);
-        return toResponse(bookingRepository.save(booking));
+
+        Booking saved = bookingRepository.save(booking);
+
+        notificationService.send(
+                saved.getUser().getId(),
+                NotificationType.BOOKING_REJECTED,
+                "Booking Rejected",
+                "Your booking for " + saved.getResource().getName() + " on " + saved.getDate() + " was rejected. Reason: " + reason,
+                saved.getId(),
+                "BOOKING"
+        );
+
+        return toResponse(saved);
     }
 
     // ─── Check Conflicts ─────────────────────────────────────────────
