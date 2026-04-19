@@ -16,6 +16,7 @@ import ResourceListPage from './pages/resources/ResourceListPage';
 import ResourceDetailPage from './pages/resources/ResourceDetailPage';
 import ResourceManagePage from './pages/resources/ResourceManagePage';
 import ResourceAnalyticsPage from './pages/resources/ResourceAnalyticsPage';
+import ResourceFinderPage from './pages/resources/ResourceFinderPage';
 import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
 import UserManagePage from './pages/admin/UserManagePage';
 
@@ -66,6 +67,7 @@ function App() {
           
           {/* Resource Routes */}
           <Route path="/resources" element={<ProtectedRoute><DashboardLayout><ResourceListPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/resources/finder" element={<ProtectedRoute><DashboardLayout><ResourceFinderPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/resources/:id" element={<ProtectedRoute><DashboardLayout><ResourceDetailPage /></DashboardLayout></ProtectedRoute>} />
 
           {/* Admin Routes */}

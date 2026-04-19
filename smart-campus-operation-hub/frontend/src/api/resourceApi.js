@@ -29,3 +29,6 @@ export const uploadResourceImage = (id, formData) =>
 
 export const getResourceAnalytics = () =>
   api.get('/resources/analytics');
+
+export const getResourceRecommendations = (payload) =>
+  api.post('/resources/recommend', payload);
