@@ -12,15 +12,16 @@ export default function TicketDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-  const isAdmin = user?.role === 'ADMIN';
-  const canManage = isAdmin || user?.role === 'MANAGER';
-  const isAssignedTech = user?.role === 'TECHNICIAN' && ticket?.assignedToId === user?.id;
-  const isOwner = user?.id === ticket?.userId;
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [ticketError, setTicketError] = useState('');
   const [actionError, setActionError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+
+  const isAdmin = user?.role === 'ADMIN';
+  const canManage = isAdmin || user?.role === 'MANAGER';
+  const isAssignedTech = user?.role === 'TECHNICIAN' && ticket?.assignedToId === user?.id;
+  const isOwner = user?.id === ticket?.userId;
 
   const fetchTicket = useCallback(async () => {
     try {
