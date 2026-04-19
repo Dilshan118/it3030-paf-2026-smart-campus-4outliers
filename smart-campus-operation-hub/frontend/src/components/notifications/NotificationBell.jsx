@@ -18,7 +18,7 @@ export default function NotificationBell() {
   const fetchUnreadCount = async () => {
     try {
       const response = await getUnreadCount();
-      setUnreadCount(response.data.data || 0);
+      setUnreadCount(response.data || 0);
     } catch (error) {
       console.error('Failed to fetch unread count:', error);
     }
