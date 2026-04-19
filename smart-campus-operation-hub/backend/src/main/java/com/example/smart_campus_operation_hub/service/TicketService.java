@@ -229,9 +229,21 @@ public class TicketService {
      *   RESOLVED → CLOSED
      */
     public TicketResponse updateTicketStatus(Long id, TicketStatus newStatus,
-                                              String resolutionNotes, String rejectionReason) {
+                                              String resolutionNotes, String rejectionReason,
+                                              Long callerId, String callerRole) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
+
+        if ("TECHNICIAN".equals(callerRole)) {
+            if (ticket.getAssignedTo() == null || !ticket.getAssignedTo().getId().equals(callerId)) {
+                throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
+                        "You can only update status for tickets assigned to you");
+            }
+            if (newStatus != TicketStatus.RESOLVED) {
+                throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
+                        "Technicians can only mark tickets as resolved");
+            }
+        }
 
         TicketStatus current = ticket.getStatus();
 
