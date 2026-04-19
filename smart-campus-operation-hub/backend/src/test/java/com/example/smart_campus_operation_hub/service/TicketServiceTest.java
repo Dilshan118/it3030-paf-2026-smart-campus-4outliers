@@ -83,7 +83,7 @@ class TicketServiceTest {
         when(ticketRepository.save(any(Ticket.class))).thenReturn(mockTicket);
 
         // Act
-        TicketResponse response = ticketService.updateTicketStatus(100L, TicketStatus.IN_PROGRESS, null, null);
+        TicketResponse response = ticketService.updateTicketStatus(100L, TicketStatus.IN_PROGRESS, null, null, 1L, "ADMIN");
 
         // Assert
         assertEquals(TicketStatus.IN_PROGRESS.name(), response.getStatus());
@@ -99,7 +99,7 @@ class TicketServiceTest {
 
         // Act & Assert
         assertThrows(BadRequestException.class, () -> {
-            ticketService.updateTicketStatus(100L, TicketStatus.CLOSED, null, null);
+            ticketService.updateTicketStatus(100L, TicketStatus.CLOSED, null, null, 1L, "ADMIN");
         });
     }
 
@@ -111,7 +111,7 @@ class TicketServiceTest {
 
         // Act & Assert
         assertThrows(BadRequestException.class, () -> {
-            ticketService.updateTicketStatus(100L, TicketStatus.RESOLVED, "", null);
+            ticketService.updateTicketStatus(100L, TicketStatus.RESOLVED, "", null, 1L, "ADMIN");
         });
     }
 
@@ -132,3 +132,4 @@ class TicketServiceTest {
         verify(notificationService, times(2)).send(anyLong(), eq(NotificationType.TICKET_ASSIGNED), anyString(), anyString(), eq(100L), eq("TICKET"));
     }
 }
+
