@@ -1,9 +1,13 @@
 package com.example.smart_campus_operation_hub.controller;
 
+import com.example.smart_campus_operation_hub.dto.request.ResourceRecommendationRequest;
 import com.example.smart_campus_operation_hub.dto.request.ResourceRequest;
+import com.example.smart_campus_operation_hub.dto.response.ResourceAnalyticsDTO;
+import com.example.smart_campus_operation_hub.dto.response.ResourceRecommendationResult;
 import com.example.smart_campus_operation_hub.dto.response.ResourceResponse;
 import com.example.smart_campus_operation_hub.enums.ResourceStatus;
 import com.example.smart_campus_operation_hub.enums.ResourceType;
+import com.example.smart_campus_operation_hub.service.ResourceScoringService;
 import com.example.smart_campus_operation_hub.service.ResourceService;
 import jakarta.validation.Valid;
 
@@ -12,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,9 +30,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class ResourceController {
 
     private final ResourceService resourceService;
+    private final ResourceScoringService resourceScoringService;
 
-    public ResourceController(ResourceService resourceService) {
-        this.resourceService = resourceService;
+    public ResourceController(ResourceService resourceService, ResourceScoringService resourceScoringService) {
+        this.resourceService        = resourceService;
+        this.resourceScoringService = resourceScoringService;
     }
 
     // GET /api/v1/resources
@@ -74,6 +81,19 @@ public class ResourceController {
         return ResponseEntity.ok(resourceService.searchResources(type, status, location, minCapacity, pageable));
     }
 
+    // GET /api/v1/resources/analytics
+    @GetMapping("/analytics")
+    public ResponseEntity<ResourceAnalyticsDTO> getAnalytics() {
+        return ResponseEntity.ok(resourceService.getAnalytics());
+    }
+
+    // POST /api/v1/resources/recommend
+    @PostMapping("/recommend")
+    public ResponseEntity<List<ResourceRecommendationResult>> recommend(
+            @RequestBody ResourceRecommendationRequest request) {
+        return ResponseEntity.ok(resourceScoringService.recommend(request));
+    }
+
     // PATCH /api/v1/resources/{id}/status  (Admin only)
     @PatchMapping("/{id}/status")
     public ResponseEntity<ResourceResponse> toggleStatus(@PathVariable Long id) {
@@ -81,23 +101,29 @@ public class ResourceController {
     }
 
         @PostMapping("/{id}/image")
-    public ResponseEntity<ResourceResponse> uploadImage(
+    public ResponseEntity<ResourceResponse> uploadImages(
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file) throws IOException {
+            @RequestParam("file") MultipartFile[] files) throws IOException {
 
-        if (file.getSize() > 5 * 1024 * 1024)
-            throw new IllegalArgumentException("File size must not exceed 5MB");
+        java.util.List<String> uploadedUrls = new java.util.ArrayList<>();
 
-        String contentType = file.getContentType();
-        if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png")))
-            throw new IllegalArgumentException("Only JPG and PNG files are allowed");
+        for (MultipartFile file : files) {
+            if (file.getSize() > 5 * 1024 * 1024)
+                throw new IllegalArgumentException("File size must not exceed 5MB");
 
-        String filename = "resource_" + id + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        Path uploadPath = Paths.get("uploads");
-        Files.createDirectories(uploadPath);
-        Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+            String contentType = file.getContentType();
+            if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png") && !contentType.equals("image/webp")))
+                throw new IllegalArgumentException("Only JPG, PNG and WEBP files are allowed");
 
-        return ResponseEntity.ok(resourceService.updateImageUrl(id, "/uploads/" + filename));
+            String filename = "resource_" + id + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path uploadPath = Paths.get("uploads");
+            Files.createDirectories(uploadPath);
+            Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+
+            uploadedUrls.add("/uploads/" + filename);
+        }
+
+        return ResponseEntity.ok(resourceService.addImageUrls(id, uploadedUrls));
     }
 
 }

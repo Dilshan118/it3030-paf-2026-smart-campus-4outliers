@@ -2,6 +2,7 @@ package com.example.smart_campus_operation_hub.dto.request;
 
 import com.example.smart_campus_operation_hub.enums.ResourceType;
 import jakarta.validation.constraints.*;
+import java.util.List;
 
 public class ResourceRequest {
 
@@ -20,7 +21,7 @@ public class ResourceRequest {
 
     private String description;
     private String availabilityWindows; // JSON string
-    private String imageUrl;
+    private List<String> imageUrls;
 
     // Getters and Setters
     public String getName() { return name; }
@@ -41,6 +42,6 @@ public class ResourceRequest {
     public String getAvailabilityWindows() { return availabilityWindows; }
     public void setAvailabilityWindows(String availabilityWindows) { this.availabilityWindows = availabilityWindows; }
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public List<String> getImageUrls() { return imageUrls; }
+    public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls; }
 }

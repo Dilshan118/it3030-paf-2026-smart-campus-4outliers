@@ -5,6 +5,9 @@ import com.example.smart_campus_operation_hub.enums.ResourceType;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+    import java.util.List;
+import java.util.ArrayList;
+
 @Entity
 @Table(name = "resources")
 public class Resource {
@@ -35,7 +38,13 @@ public class Resource {
     @Column(nullable = false)
     private ResourceStatus status = ResourceStatus.ACTIVE;
 
-    private String imageUrl;
+    @ElementCollection
+    @CollectionTable(name = "resource_images", joinColumns = @JoinColumn(name = "resource_id"))
+    @Column(name = "image_url")
+    private List<String> imageUrls = new ArrayList<>();
+
+    @Column(name = "image_url", insertable = false, updatable = false)
+    private String legacyImageUrl;
 
     @Column(nullable = false)
     private Boolean isDeleted = false;
@@ -82,8 +91,11 @@ public class Resource {
     public ResourceStatus getStatus() { return status; }
     public void setStatus(ResourceStatus status) { this.status = status; }
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public List<String> getImageUrls() { return imageUrls; }
+    public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls; }
+
+    public String getLegacyImageUrl() { return legacyImageUrl; }
+    public void setLegacyImageUrl(String legacyImageUrl) { this.legacyImageUrl = legacyImageUrl; }
 
     public Boolean getIsDeleted() { return isDeleted; }
     public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }

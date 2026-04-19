@@ -15,14 +15,18 @@ import TicketManagePage from './pages/tickets/TicketManagePage';
 import ResourceListPage from './pages/resources/ResourceListPage';
 import ResourceDetailPage from './pages/resources/ResourceDetailPage';
 import ResourceManagePage from './pages/resources/ResourceManagePage';
+import ResourceAnalyticsPage from './pages/resources/ResourceAnalyticsPage';
+import ResourceFinderPage from './pages/resources/ResourceFinderPage';
+import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
+import UserManagePage from './pages/admin/UserManagePage';
 
 function DashboardLayout({ children }) {
   return (
     <div className="app-layout">
       <Sidebar />
-      <div className="app-shell" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' }}>
+      <div className="app-shell" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', background: 'var(--bg-primary)' }}>
         <Navbar />
-        <main className="app-main" style={{ padding: '0', width: '100%', boxSizing: 'border-box' }}>
+        <main className="app-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0', width: '100%', boxSizing: 'border-box' }}>
           {children}
         </main>
       </div>
@@ -63,10 +67,14 @@ function App() {
           
           {/* Resource Routes */}
           <Route path="/resources" element={<ProtectedRoute><DashboardLayout><ResourceListPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/resources/finder" element={<ProtectedRoute><DashboardLayout><ResourceFinderPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/resources/:id" element={<ProtectedRoute><DashboardLayout><ResourceDetailPage /></DashboardLayout></ProtectedRoute>} />
 
           {/* Admin Routes */}
           <Route path="/admin/resources" element={<ProtectedRoute><DashboardLayout><ResourceManagePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/resources/analytics" element={<ProtectedRoute><DashboardLayout><ResourceAnalyticsPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/analytics" element={<ProtectedRoute><DashboardLayout><AnalyticsDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute><DashboardLayout><UserManagePage /></DashboardLayout></ProtectedRoute>} />
 
           <Route path="/admin/*" element={
             <ProtectedRoute>
