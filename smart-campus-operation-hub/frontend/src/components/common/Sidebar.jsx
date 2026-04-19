@@ -6,6 +6,7 @@ import { AuthContext } from '../../context/AuthContext';
 export default function Sidebar() {
   const { user } = useContext(AuthContext);
   const isAdmin = user?.role === 'ADMIN';
+  const isAdminOrManager = isAdmin || user?.role === 'MANAGER';
 
   // Add the custom floating dark-theme styling directly via an internal <style> or utilizing index.css class names
   const navClassName = ({ isActive }) => (isActive ? 'active sidebar-link' : 'sidebar-link');
@@ -57,17 +58,19 @@ export default function Sidebar() {
         </NavLink>
       </div>
 
-      {isAdmin && (
+      {isAdminOrManager && (
         <div className="sidebar-nav-group" style={{ marginTop: 'auto' }}>
           <div className="sidebar-divider"></div>
-          
+
           <span className="sidebar-label">Admin Environment</span>
 
-          <NavLink to="/admin/users" className={navClassName}>
-            <Users size={20} strokeWidth={1.5} className="sidebar-icon" />
-            Users & Roles
-          </NavLink>
-          
+          {isAdmin && (
+            <NavLink to="/admin/users" className={navClassName}>
+              <Users size={20} strokeWidth={1.5} className="sidebar-icon" />
+              Users & Roles
+            </NavLink>
+          )}
+
           <NavLink to="/admin/resources" className={navClassName}>
             <Settings size={20} strokeWidth={1.5} className="sidebar-icon" />
             Manage Resources

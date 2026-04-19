@@ -22,11 +22,11 @@ export default function NotificationHistoryPage() {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await getNotifications(page, pageSize, filter === 'READ', filter === 'UNREAD');
-      const data = response.data.data;
-      setNotifications(data.content || []);
-      setTotalPages(data.totalPages || 0);
-      setTotalElements(data.totalElements || 0);
+      const response = await getNotifications(page, pageSize);
+      const data = response.data;
+      setNotifications(data?.content || []);
+      setTotalPages(data?.totalPages || 0);
+      setTotalElements(data?.totalElements || 0);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -103,9 +103,11 @@ export default function NotificationHistoryPage() {
     return null;
   };
 
-  const filteredNotifications = notifications.filter(n =>
-    n.title.toLowerCase().includes(searchTerm.toLowerCase()) || n.message.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredNotifications = notifications.filter(n => {
+    const matchesSearch = n.title.toLowerCase().includes(searchTerm.toLowerCase()) || n.message.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filter === 'ALL' || (filter === 'READ' && n.isRead) || (filter === 'UNREAD' && !n.isRead);
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <div className="page-container" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>

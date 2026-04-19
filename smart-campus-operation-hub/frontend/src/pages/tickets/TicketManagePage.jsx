@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { getTickets, assignTechnician, updateTicketStatus, deleteTicket } from '../../api/ticketApi';
+import api from '../../api/axiosConfig';
 import { Briefcase, Activity, CheckCircle, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function TicketManagePage() {
   const [tickets, setTickets] = useState([]);
+  const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState('');
 
-  const availableTechnicians = [
-    { id: 2, name: 'Saman Kumara (Tech)' },
-    { id: 3, name: 'Alice Silva (Tech)' }
-  ];
+  useEffect(() => {
+    api.get('/users/technicians')
+      .then(res => setTechnicians(res.data?.data || []))
+      .catch(() => {});
+  }, []);
 
   const fetchTickets = async () => {
     try {
@@ -155,8 +158,9 @@ export default function TicketManagePage() {
                        }}
                      >
                        <option value="">Unassigned</option>
-                       {availableTechnicians.map(tech => (
+                       {technicians.map(tech => (
                          <option key={tech.id} value={tech.id}>{tech.name}</option>
+
                        ))}
                      </select>
                   </div>

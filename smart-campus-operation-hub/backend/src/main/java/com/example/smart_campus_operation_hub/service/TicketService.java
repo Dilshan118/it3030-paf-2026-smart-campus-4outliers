@@ -229,9 +229,21 @@ public class TicketService {
      *   RESOLVED → CLOSED
      */
     public TicketResponse updateTicketStatus(Long id, TicketStatus newStatus,
-                                              String resolutionNotes, String rejectionReason) {
+                                              String resolutionNotes, String rejectionReason,
+                                              Long callerId, String callerRole) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
+
+        if ("TECHNICIAN".equals(callerRole)) {
+            if (ticket.getAssignedTo() == null || !ticket.getAssignedTo().getId().equals(callerId)) {
+                throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
+                        "You can only update status for tickets assigned to you");
+            }
+            if (newStatus != TicketStatus.RESOLVED) {
+                throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
+                        "Technicians can only mark tickets as resolved");
+            }
+        }
 
         TicketStatus current = ticket.getStatus();
 
@@ -276,18 +288,19 @@ public class TicketService {
         Ticket saved = ticketRepository.save(ticket);
         
         // Notifications
+        String resourceLabel = saved.getResource() != null ? saved.getResource().getName() : "ticket #" + saved.getId();
         if (newStatus == TicketStatus.RESOLVED) {
-            notificationService.send(saved.getUser().getId(), NotificationType.TICKET_RESOLVED, 
-                "Ticket Resolved", "Your ticket for " + saved.getResource().getName() + " has been resolved.", saved.getId(), "TICKET");
+            notificationService.send(saved.getUser().getId(), NotificationType.TICKET_RESOLVED,
+                "Ticket Resolved", "Your ticket for " + resourceLabel + " has been resolved.", saved.getId(), "TICKET");
         } else if (newStatus == TicketStatus.CLOSED) {
-            notificationService.send(saved.getUser().getId(), NotificationType.TICKET_CLOSED, 
-                "Ticket Closed", "Your ticket for " + saved.getResource().getName() + " has been closed.", saved.getId(), "TICKET");
+            notificationService.send(saved.getUser().getId(), NotificationType.TICKET_CLOSED,
+                "Ticket Closed", "Your ticket for " + resourceLabel + " has been closed.", saved.getId(), "TICKET");
             if (saved.getAssignedTo() != null) {
-                notificationService.send(saved.getAssignedTo().getId(), NotificationType.TICKET_CLOSED, 
+                notificationService.send(saved.getAssignedTo().getId(), NotificationType.TICKET_CLOSED,
                     "Ticket Closed", "Ticket #" + saved.getId() + " has been closed.", saved.getId(), "TICKET");
             }
         } else {
-            notificationService.send(saved.getUser().getId(), NotificationType.TICKET_STATUS_CHANGED, 
+            notificationService.send(saved.getUser().getId(), NotificationType.TICKET_STATUS_CHANGED,
                 "Ticket Status Updated", "Your ticket status changed to " + newStatus, saved.getId(), "TICKET");
         }
 

@@ -3,6 +3,7 @@ package com.example.smart_campus_operation_hub.controller;
 import com.example.smart_campus_operation_hub.service.AnalyticsService;
 import com.example.smart_campus_operation_hub.util.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,6 +24,7 @@ public class AnalyticsController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAnalytics() {
         Map<String, Object> stats = analyticsService.getDashboardMetrics();
         return ResponseEntity.ok(ApiResponse.success(stats));

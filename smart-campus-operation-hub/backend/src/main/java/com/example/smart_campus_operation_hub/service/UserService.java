@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,5 +48,9 @@ public class UserService {
         User user = getCurrentUser(targetUserId);
         user.setRole(newRole);
         return userRepository.save(user);
+    }
+
+    public List<User> getTechnicians() {
+        return userRepository.findByRole(Role.TECHNICIAN);
     }
 }

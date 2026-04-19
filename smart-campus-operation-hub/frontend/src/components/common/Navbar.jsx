@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
-import { Bell, User, Search, ChevronDown, Rocket } from 'lucide-react';
+import { Search, Rocket, LogOut } from 'lucide-react';
 import NotificationBell from '../notifications/NotificationBell';
 
 export default function Navbar() {
@@ -70,6 +70,22 @@ export default function Navbar() {
 
         <NotificationBell />
 
+        <button
+          onClick={logout}
+          title="Sign Out"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'rgba(225, 42, 69, 0.08)', border: 'none',
+            color: 'var(--danger)', cursor: 'pointer', transition: 'all 0.2s',
+            flexShrink: 0
+          }}
+          onMouseOver={e => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white'; }}
+          onMouseOut={e => { e.currentTarget.style.background = 'rgba(225, 42, 69, 0.08)'; e.currentTarget.style.color = 'var(--danger)'; }}
+        >
+          <LogOut size={18} strokeWidth={2} />
+        </button>
+
         {/* User Profile Pill */}
         <div className="user-profile-pill" style={{
           display: 'flex', alignItems: 'center', gap: '12px',
@@ -97,37 +113,11 @@ export default function Navbar() {
               {user?.role || 'Operator'}
             </span>
           </div>
-          <ChevronDown size={16} color="var(--text-muted)" style={{ marginLeft: '8px' }} />
-
-          {/* Inline dropdown hack for minimal setup */}
-          <div className="user-dropdown" style={{
-            position: 'absolute', top: 'calc(100% + 12px)', right: 0,
-            background: 'white', borderRadius: '16px', padding: '8px',
-            boxShadow: 'var(--ambient-shadow-hover)',
-            border: '1px solid rgba(0,0,0,0.03)',
-            minWidth: '200px', opacity: 0, visibility: 'hidden',
-            transform: 'translateY(-10px)', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}>
-            <button onClick={logout} style={{
-              width: '100%', padding: '12px 16px', borderRadius: '10px',
-              border: 'none', background: 'transparent', textAlign: 'left',
-              color: 'var(--danger)', fontWeight: 600, fontFamily: 'var(--font-body)',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-              transition: 'background 0.2s'
-            }} className="dropdown-btn">
-              Sign Out Session
-            </button>
-          </div>
-
           <style>{`
             .user-profile-pill:hover {
               background: var(--bg-surface);
               box-shadow: 0 10px 24px -8px rgba(42, 20, 180, 0.12);
             }
-            .user-profile-pill:hover .user-dropdown {
-              opacity: 1; visibility: visible; transform: translateY(0);
-            }
-            .dropdown-btn:hover { background: var(--danger-muted); }
           `}</style>
         </div>
       </div>

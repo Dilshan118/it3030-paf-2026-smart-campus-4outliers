@@ -12,12 +12,16 @@ export default function TicketDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-  const isAdmin = user?.role === 'ADMIN';
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [ticketError, setTicketError] = useState('');
   const [actionError, setActionError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+
+  const isAdmin = user?.role === 'ADMIN';
+  const canManage = isAdmin || user?.role === 'MANAGER';
+  const isAssignedTech = user?.role === 'TECHNICIAN' && ticket?.assignedToId === user?.id;
+  const isOwner = user?.id === ticket?.userId;
 
   const fetchTicket = useCallback(async () => {
     try {
@@ -99,8 +103,8 @@ export default function TicketDetailPage() {
       <div style={{
         display: 'grid',
         gap: '32px',
-        gridTemplateColumns: isAdmin ? 'minmax(0, 2.5fr) minmax(300px, 1fr)' : 'minmax(0, 800px)',
-        justifyContent: isAdmin ? 'stretch' : 'center'
+        gridTemplateColumns: (canManage || isAssignedTech) ? 'minmax(0, 2.5fr) minmax(300px, 1fr)' : 'minmax(0, 800px)',
+        justifyContent: (canManage || isAssignedTech) ? 'stretch' : 'center'
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
@@ -160,11 +164,11 @@ export default function TicketDetailPage() {
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
-          {ticket.status === 'OPEN' && !isEditing && (
+          {isOwner && ticket.status === 'OPEN' && !isEditing && (
             <div className="card">
               <h3 className="label-text" style={{ marginBottom: '20px' }}>Your Actions</h3>
-              
-              {actionError && !isAdmin && (
+
+              {actionError && !canManage && (
                 <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: 'var(--radius)', background: 'var(--danger-muted)', color: 'var(--danger)', fontSize: '0.85rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
                   {actionError}
                 </div>
@@ -181,51 +185,51 @@ export default function TicketDetailPage() {
             </div>
           )}
 
-          {isAdmin && (
-            <>
-              <div className="card">
-                 <h3 className="label-text" style={{ marginBottom: '20px' }}>SLA Tracking</h3>
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div>
-                       <p className="label-text">Resolution Deadline</p>
-                       {ticket.slaDeadline ? <SlaTimer deadline={ticket.slaDeadline} status={ticket.status} /> : <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>Not Set</span>}
-                    </div>
-                 </div>
-              </div>
-
-              <div className="card">
-                <h3 className="label-text" style={{ marginBottom: '20px' }}>Administration Setup</h3>
-
-                {actionError && (
-                  <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: 'var(--radius)', background: 'var(--danger-muted)', color: 'var(--danger)', fontSize: '0.85rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
-                    {actionError}
-                  </div>
-                )}
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {ticket.status === 'OPEN' && (
-                    <button className="btn-secondary" onClick={() => handleUpdateStatus('IN_PROGRESS')} style={{ width: '100%', justifyContent: 'center' }}>
-                     Mark In Progress
-                    </button>
-                  )}
-                  {ticket.status === 'OPEN' && (
-                    <button className="btn-secondary" onClick={() => handleUpdateStatus('REJECTED')} style={{ width: '100%', justifyContent: 'center', color: 'var(--danger)', background: 'var(--danger-muted)' }}>
-                      Reject Request
-                    </button>
-                  )}
-                  {ticket.status === 'IN_PROGRESS' && (
-                    <button className="btn-primary" onClick={() => handleUpdateStatus('RESOLVED')} style={{ width: '100%', justifyContent: 'center' }}>
-                      Complete Resolution
-                    </button>
-                  )}
-                  {ticket.status === 'RESOLVED' && (
-                    <button className="btn-secondary" onClick={() => handleUpdateStatus('CLOSED')} style={{ width: '100%', justifyContent: 'center' }}>
-                      Close Ticket File
-                    </button>
-                  )}
+          {canManage && (
+            <div className="card">
+              <h3 className="label-text" style={{ marginBottom: '20px' }}>SLA Tracking</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <p className="label-text">Resolution Deadline</p>
+                  {ticket.slaDeadline ? <SlaTimer deadline={ticket.slaDeadline} status={ticket.status} /> : <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>Not Set</span>}
                 </div>
               </div>
-            </>
+            </div>
+          )}
+
+          {(canManage || isAssignedTech) && (
+            <div className="card">
+              <h3 className="label-text" style={{ marginBottom: '20px' }}>Administration Setup</h3>
+
+              {actionError && (
+                <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: 'var(--radius)', background: 'var(--danger-muted)', color: 'var(--danger)', fontSize: '0.85rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                  {actionError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {canManage && ticket.status === 'OPEN' && (
+                  <button className="btn-secondary" onClick={() => handleUpdateStatus('IN_PROGRESS')} style={{ width: '100%', justifyContent: 'center' }}>
+                    Mark In Progress
+                  </button>
+                )}
+                {canManage && ticket.status === 'OPEN' && (
+                  <button className="btn-secondary" onClick={() => handleUpdateStatus('REJECTED')} style={{ width: '100%', justifyContent: 'center', color: 'var(--danger)', background: 'var(--danger-muted)' }}>
+                    Reject Request
+                  </button>
+                )}
+                {(canManage || isAssignedTech) && ticket.status === 'IN_PROGRESS' && (
+                  <button className="btn-primary" onClick={() => handleUpdateStatus('RESOLVED')} style={{ width: '100%', justifyContent: 'center' }}>
+                    Complete Resolution
+                  </button>
+                )}
+                {canManage && ticket.status === 'RESOLVED' && (
+                  <button className="btn-secondary" onClick={() => handleUpdateStatus('CLOSED')} style={{ width: '100%', justifyContent: 'center' }}>
+                    Close Ticket File
+                  </button>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>
