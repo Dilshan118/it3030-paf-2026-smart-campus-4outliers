@@ -83,6 +83,17 @@ public class TicketService {
 
         // 5. Save and return
         Ticket saved = ticketRepository.save(ticket);
+
+        // 6. Send Notification
+        notificationService.send(
+                userId,
+                com.example.smart_campus_operation_hub.enums.NotificationType.TICKET_CREATED,
+                "Ticket #" + saved.getId() + " Submitted Successfully",
+                "Your request regarding '" + saved.getCategory() + "' has been logged and is pending review.",
+                saved.getId(),
+                "TICKET"
+        );
+
         return mapToResponse(saved);
     }
 
