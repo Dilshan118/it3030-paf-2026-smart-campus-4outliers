@@ -1,7 +1,14 @@
 package com.example.smart_campus_operation_hub.service;
 
+import com.example.smart_campus_operation_hub.enums.Role;
+import com.example.smart_campus_operation_hub.exception.ResourceNotFoundException;
+import com.example.smart_campus_operation_hub.model.User;
 import com.example.smart_campus_operation_hub.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 /**
  * MEMBER 4: User Service
@@ -16,8 +23,29 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    // TODO: getCurrentUser(Long userId)
-    // TODO: updateProfile(Long userId, UserUpdateRequest request)
-    // TODO: getAllUsers(Pageable pageable) — Admin only
-    // TODO: updateUserRole(Long userId, Role newRole) — Admin only
+    public User getCurrentUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+    }
+
+    public User updateProfile(Long userId, Map<String, Object> updates) {
+        User user = getCurrentUser(userId);
+        if (updates.containsKey("name")) {
+            user.setName((String) updates.get("name"));
+        }
+        if (updates.containsKey("avatarUrl")) {
+            user.setAvatarUrl((String) updates.get("avatarUrl"));
+        }
+        return userRepository.save(user);
+    }
+
+    public Page<User> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable);
+    }
+
+    public User updateUserRole(Long targetUserId, Role newRole) {
+        User user = getCurrentUser(targetUserId);
+        user.setRole(newRole);
+        return userRepository.save(user);
+    }
 }
