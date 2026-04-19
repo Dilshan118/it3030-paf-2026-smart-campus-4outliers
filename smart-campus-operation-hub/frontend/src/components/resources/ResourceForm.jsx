@@ -162,7 +162,7 @@ export default function ResourceForm({ form, setForm, onSubmit, onCancel, saving
             <input
               className="rf-input" required minLength={3} maxLength={100}
               placeholder="e.g. Computer Lab C"
-              pattern="^(?!\s*$)[a-zA-Z0-9\s_.,()-]+$"
+              pattern="^[a-zA-Z0-9 ._,()-]+$"
               title="Name cannot be empty or contain unsupported special characters."
               value={form.name}
               onChange={e => {
@@ -187,7 +187,7 @@ export default function ResourceForm({ form, setForm, onSubmit, onCancel, saving
             <input
               className="rf-input" required minLength={2} maxLength={100}
               placeholder="e.g. Block A, Floor 2"
-              pattern="^(?!\s*$)[a-zA-Z0-9\s_.,-]+$"
+              pattern="^[a-zA-Z0-9 ._,-]+$"
               title="Location must be a valid string without unusual characters."
               value={form.location}
               onChange={e => {
