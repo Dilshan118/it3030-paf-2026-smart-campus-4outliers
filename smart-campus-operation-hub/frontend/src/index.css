@@ -372,6 +372,24 @@ h6 {
   border-color: var(--danger);
 }
 
+.status-pending {
+  color: var(--warning);
+  background: rgba(255, 170, 0, 0.1);
+  border-color: var(--warning);
+}
+
+.status-approved {
+  color: var(--info);
+  background: rgba(0, 221, 255, 0.1);
+  border-color: var(--info);
+}
+
+.status-cancelled {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-muted);
+}
+
 .priority-low {
   color: var(--text-muted);
   border-color: var(--border-main);
