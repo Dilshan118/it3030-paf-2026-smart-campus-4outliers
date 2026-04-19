@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getResourceRecommendations } from '../../api/resourceApi';
-import { Zap, Search, MapPin, Users, LayoutGrid, Star, ChevronRight, AlertTriangle, Info } from 'lucide-react';
+import { Zap, Search, MapPin, Users, LayoutGrid, Star, ChevronRight, AlertTriangle, Info, Clock } from 'lucide-react';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -41,6 +41,22 @@ function scoreLabel(s) {
   if (s >= 70) return 'Good';
   if (s >= 50) return 'Fair';
   return 'Poor';
+}
+
+function formatAvailabilityPreview(jsonStr) {
+  if (!jsonStr) return 'Not Specified';
+  try {
+    const windows = JSON.parse(jsonStr);
+    const keys = Object.keys(windows);
+    if (keys.length === 0) return 'Not Specified';
+    if (keys.length === 7) return 'Mon-Sun Available';
+    if (keys.length === 5 && !windows['sat'] && !windows['sun']) return 'Weekdays Only';
+    
+    // Default to the first entry if it's mixed
+    return `${keys.length} Days Available`;
+  } catch (e) {
+    return 'Available';
+  }
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -197,7 +213,7 @@ function ResultCard({ result, onView }) {
           {resource.name}
         </div>
 
-        {/* Location & capacity */}
+        {/* Location & capacity & time */}
         <div style={{ display: 'flex', gap: '16px', marginTop: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
             <MapPin size={11} /> {resource.location || '—'}
@@ -205,6 +221,11 @@ function ResultCard({ result, onView }) {
           {resource.capacity && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
               <Users size={11} /> {resource.capacity} seats
+            </div>
+          )}
+          {resource.availabilityWindows && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
+              <Clock size={11} /> {formatAvailabilityPreview(resource.availabilityWindows)}
             </div>
           )}
         </div>

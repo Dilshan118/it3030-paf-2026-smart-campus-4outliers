@@ -6,6 +6,46 @@ import { Navigation, Pagination } from 'swiper/modules';
 
 const typeLabel = (type) => type?.replace('_', ' ');
 
+const formatAvailability = (jsonString) => {
+  if (!jsonString) return null;
+  try {
+    const windows = JSON.parse(jsonString);
+    if (!windows || Object.keys(windows).length === 0) return null;
+    
+    // Ordered days of the week map
+    const dayMap = {
+      mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', 
+      thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday'
+    };
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+        {Object.entries(windows).map(([day, time]) => (
+          <div key={day} style={{ 
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '6px 12px', background: 'var(--bg-primary)', 
+            borderRadius: '6px', border: '1px solid var(--border-main)',
+            fontSize: '0.8rem'
+          }}>
+            <span style={{ fontWeight: 600, color: 'var(--text-main)', textTransform: 'capitalize' }}>
+              {dayMap[day.toLowerCase()] || day}
+            </span>
+            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-base)', fontWeight: 600, fontSize: '0.75rem' }}>
+              {time}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  } catch (e) {
+    return (
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+        {jsonString}
+      </p>
+    );
+  }
+};
+
 export default function ResourceDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -123,9 +163,7 @@ export default function ResourceDetailPage() {
               {resource.availabilityWindows && (
                 <div>
                   <label className="label-text">Availability</label>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    {resource.availabilityWindows}
-                  </p>
+                  {formatAvailability(resource.availabilityWindows)}
                 </div>
               )}
               <div>
