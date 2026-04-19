@@ -22,6 +22,12 @@ export function AuthProvider({ children }) {
       email: 'test@example.com',
       role: 'ADMIN'
     };
+    // Ensure a token exists in localStorage so the axios interceptor sends
+    // the Authorization header. Real login flow uses login() which stores
+    // the actual JWT; this fallback covers the dev mock-user path.
+    if (!localStorage.getItem('token')) {
+      localStorage.setItem('token', 'mock-dev-token');
+    }
     setUser(mockUser);
     setLoading(false);
   }, []);
