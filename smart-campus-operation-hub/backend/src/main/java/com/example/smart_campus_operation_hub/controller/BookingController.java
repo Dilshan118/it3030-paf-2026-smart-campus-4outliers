@@ -2,6 +2,7 @@ package com.example.smart_campus_operation_hub.controller;
 
 import com.example.smart_campus_operation_hub.dto.request.BookingRequest;
 import com.example.smart_campus_operation_hub.dto.response.BookingResponse;
+import com.example.smart_campus_operation_hub.enums.BookingStatus;
 import com.example.smart_campus_operation_hub.service.BookingService;
 import com.example.smart_campus_operation_hub.util.ApiResponse;
 import jakarta.validation.Valid;
@@ -27,30 +28,44 @@ public class BookingController {
     // POST / → Create booking
     @PostMapping
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
+            @RequestParam(required = false) Long userId,
             @Valid @RequestBody BookingRequest request) {
 
-        // TODO: Replace with actual logged-in user ID/role from SecurityContext
-        Long userId = 1L;
+        // Use the userId passed from the frontend (from AuthContext).
+        // Falls back to 1L during dev when no auth is wired yet.
+        // TODO: When JWT auth is added, read userId from SecurityContext instead.
+        Long effectiveUserId = (userId != null) ? userId : 1L;
 
-        BookingResponse response = bookingService.createBooking(request, userId);
+        BookingResponse response = bookingService.createBooking(request, effectiveUserId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Booking created successfully"));
     }
 
-    // GET / → List bookings (own for USER, all for ADMIN)
+    // GET / → List bookings.
+    //   With ?userId=X  → returns that user's bookings (user view)
+    //   Without userId  → returns all bookings (admin view)
+    //   TODO: When JWT auth is added, verify userId matches SecurityContext or role is ADMIN
     @GetMapping
     public ResponseEntity<ApiResponse<Page<BookingResponse>>> getAllBookings(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String date,
             Pageable pageable) {
 
-        // TODO: Replace with actual logged-in user details
-        Long userId = 1L;
-        String role = "USER";
-
-        Page<BookingResponse> bookings;
-        switch (role) {
-            case "ADMIN", "MANAGER" -> bookings = bookingService.getAllBookings(pageable);
-            default -> bookings = bookingService.getBookingsByUser(userId, pageable);
+        BookingStatus bookingStatus = null;
+        if (status != null && !status.isBlank()) {
+            try { bookingStatus = BookingStatus.valueOf(status.toUpperCase()); }
+            catch (IllegalArgumentException ignored) { }
         }
+        LocalDate localDate = null;
+        if (date != null && !date.isBlank()) {
+            try { localDate = LocalDate.parse(date); }
+            catch (Exception ignored) { }
+        }
+
+        Page<BookingResponse> bookings = (userId != null)
+                ? bookingService.getBookingsByUser(userId, bookingStatus, localDate, pageable)
+                : bookingService.getAllBookings(bookingStatus, localDate, pageable);
 
         return ResponseEntity.ok(ApiResponse.success(bookings, "Bookings retrieved successfully"));
     }
@@ -77,13 +92,15 @@ public class BookingController {
 
     // DELETE /{id} → Cancel booking
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(
+            @PathVariable Long id,
+            @RequestParam(required = false) String reason) {
 
         // TODO: Replace with actual logged-in user details
         Long userId = 1L;
         String role = "USER";
 
-        BookingResponse response = bookingService.cancelBooking(id, userId, role);
+        BookingResponse response = bookingService.cancelBooking(id, userId, role, reason);
         return ResponseEntity.ok(ApiResponse.success(response, "Booking cancelled successfully"));
     }
 
