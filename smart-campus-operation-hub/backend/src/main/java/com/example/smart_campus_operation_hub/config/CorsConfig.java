@@ -21,6 +21,8 @@ public class CorsConfig {
         config.setAllowCredentials(true);
         config.setAllowedOrigins(Arrays.asList(
                 "http://localhost:5173",   // Vite dev server
+                "http://localhost:5174",   // Vite dev server (alternate)
+                "http://localhost:5175",   // Vite dev server (alternate)
                 "http://localhost:3000"    // alternative dev port
         ));
         config.setAllowedHeaders(Arrays.asList("*"));
