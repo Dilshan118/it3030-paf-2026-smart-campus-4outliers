@@ -8,6 +8,10 @@ import com.example.smart_campus_operation_hub.enums.ResourceType;
 import com.example.smart_campus_operation_hub.exception.ResourceNotFoundException;
 import com.example.smart_campus_operation_hub.model.Resource;
 import com.example.smart_campus_operation_hub.repository.ResourceRepository;
+import com.example.smart_campus_operation_hub.enums.NotificationType;
+import com.example.smart_campus_operation_hub.enums.Role;
+import com.example.smart_campus_operation_hub.model.User;
+import com.example.smart_campus_operation_hub.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,9 +25,15 @@ import java.util.stream.Collectors;
 public class ResourceService {
 
     private final ResourceRepository resourceRepository;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
-    public ResourceService(ResourceRepository resourceRepository) {
+    public ResourceService(ResourceRepository resourceRepository,
+                           NotificationService notificationService,
+                           UserRepository userRepository) {
         this.resourceRepository = resourceRepository;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     public Page<ResourceResponse> getAllResources(Pageable pageable) {
@@ -41,7 +51,53 @@ public class ResourceService {
     public ResourceResponse createResource(ResourceRequest request) {
         Resource resource = new Resource();
         mapRequestToEntity(request, resource);
-        return ResourceResponse.from(resourceRepository.save(resource));
+        Resource savedResource = resourceRepository.save(resource);
+        
+        notifyUsersAboutNewResource(savedResource);
+
+        return ResourceResponse.from(savedResource);
+    }
+
+    private void notifyUsersAboutNewResource(Resource resource) {
+        String title = "New Resource Added";
+        String message = "A new resource '" + resource.getName() + "' is now available.";
+        String adminMessage = "Successfully created new resource: " + resource.getName();
+
+        List<User> users = userRepository.findAll();
+        
+        // Auto-seed a mock ADMIN user directly in remote Postgres DB if users list is entirely blank 
+        // to prevent notification loop skipping caused by front-end-only mocked Auth.
+        if (users.isEmpty()) {
+             User defaultAdmin = new User();
+             defaultAdmin.setName("System Admin");
+             defaultAdmin.setEmail("system.admin@smartcampus.com");
+             defaultAdmin.setRole(Role.ADMIN);
+             defaultAdmin.setIsActive(true);
+             userRepository.save(defaultAdmin);
+             users.add(defaultAdmin);
+        }
+
+        for (User user : users) {
+             if (user.getRole() == Role.ADMIN) {
+                 notificationService.send(
+                         user.getId(),
+                         NotificationType.RESOURCE_ADDED,
+                         "Resource Creation Successful",
+                         adminMessage,
+                         resource.getId(),
+                         "RESOURCE"
+                 );
+             } else if (user.getRole() == Role.USER) {
+                 notificationService.send(
+                         user.getId(),
+                         NotificationType.RESOURCE_ADDED,
+                         title,
+                         message,
+                         resource.getId(),
+                         "RESOURCE"
+                 );
+             }
+        }
     }
 
     public ResourceResponse updateResource(Long id, ResourceRequest request) {
