@@ -2,38 +2,29 @@
 import api from './axiosConfig';
 
 // Get paginated notifications
-export const getNotifications = (page = 0, size = 20) => {
-  return api.get('/notifications', {
-    params: { page, size }
-  });
-};
+export const getNotifications = (page = 0, size = 20) =>
+  api.get('/notifications', { params: { page, size } }).then(res => res.data);
 
 // Get unread notification count
-export const getUnreadCount = () => {
-  return api.get('/notifications/unread-count');
-};
+export const getUnreadCount = () =>
+  api.get('/notifications/unread-count').then(res => res.data);
 
 // Mark notification as read
-export const markAsRead = (id) => {
-  return api.patch(`/notifications/${id}/read`);
-};
+export const markAsRead = (id) =>
+  api.patch(`/notifications/${id}/read`).then(res => res.data);
 
 // Mark all notifications as read
-export const markAllAsRead = () => {
-  return api.patch('/notifications/read-all');
-};
+export const markAllAsRead = () =>
+  api.patch('/notifications/read-all').then(res => res.data);
 
 // Delete notification
-export const deleteNotification = (id) => {
-  return api.delete(`/notifications/${id}`);
-};
+export const deleteNotification = (id) =>
+  api.delete(`/notifications/${id}`).then(res => res.data);
 
 // Get notification preferences
-export const getPreferences = () => {
-  return api.get('/notifications/preferences');
-};
+export const getPreferences = () =>
+  api.get('/notifications/preferences').then(res => res.data);
 
 // Update notification preferences
-export const updatePreferences = (data) => {
-  return api.put('/notifications/preferences', data);
-};
+export const updatePreferences = (data) =>
+  api.put('/notifications/preferences', data).then(res => res.data);

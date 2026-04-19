@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -24,78 +26,73 @@ public class BookingController {
         this.bookingService = bookingService;
     }
 
-    // POST / → Create booking
     @PostMapping
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
+            Authentication authentication,
             @Valid @RequestBody BookingRequest request) {
 
-        // TODO: Replace with actual logged-in user ID/role from SecurityContext
-        Long userId = 1L;
-
+        Long userId = (Long) authentication.getPrincipal();
         BookingResponse response = bookingService.createBooking(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Booking created successfully"));
     }
 
-    // GET / → List bookings (own for USER, all for ADMIN)
     @GetMapping
     public ResponseEntity<ApiResponse<Page<BookingResponse>>> getAllBookings(
+            Authentication authentication,
             Pageable pageable) {
 
-        // TODO: Replace with actual logged-in user details
-        Long userId = 1L;
-        String role = "USER";
+        Long userId = (Long) authentication.getPrincipal();
+        String role = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
 
         Page<BookingResponse> bookings;
-        switch (role) {
-            case "ADMIN", "MANAGER" -> bookings = bookingService.getAllBookings(pageable);
-            default -> bookings = bookingService.getBookingsByUser(userId, pageable);
+        if (role.equals("ADMIN") || role.equals("MANAGER")) {
+            bookings = bookingService.getAllBookings(pageable);
+        } else {
+            bookings = bookingService.getBookingsByUser(userId, pageable);
         }
 
         return ResponseEntity.ok(ApiResponse.success(bookings, "Bookings retrieved successfully"));
     }
 
-    // GET /{id} → Get booking by ID
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<BookingResponse>> getBookingById(@PathVariable Long id) {
         BookingResponse response = bookingService.getBookingById(id);
         return ResponseEntity.ok(ApiResponse.success(response, "Booking retrieved successfully"));
     }
 
-    // PUT /{id} → Update booking (only if PENDING)
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<BookingResponse>> updateBooking(
+            Authentication authentication,
             @PathVariable Long id,
             @Valid @RequestBody BookingRequest request) {
 
-        // TODO: Replace with actual logged-in user details
-        Long userId = 1L;
-
+        Long userId = (Long) authentication.getPrincipal();
         BookingResponse response = bookingService.updateBooking(id, request, userId);
         return ResponseEntity.ok(ApiResponse.success(response, "Booking updated successfully"));
     }
 
-    // DELETE /{id} → Cancel booking
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(
+            Authentication authentication,
+            @PathVariable Long id) {
 
-        // TODO: Replace with actual logged-in user details
-        Long userId = 1L;
-        String role = "USER";
+        Long userId = (Long) authentication.getPrincipal();
+        String role = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
 
         BookingResponse response = bookingService.cancelBooking(id, userId, role);
         return ResponseEntity.ok(ApiResponse.success(response, "Booking cancelled successfully"));
     }
 
-    // PATCH /{id}/approve → Approve booking (Admin)
     @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ApiResponse<BookingResponse>> approveBooking(@PathVariable Long id) {
         BookingResponse response = bookingService.approveBooking(id);
         return ResponseEntity.ok(ApiResponse.success(response, "Booking approved successfully"));
     }
 
-    // PATCH /{id}/reject → Reject booking with reason (Admin)
     @PatchMapping("/{id}/reject")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ApiResponse<BookingResponse>> rejectBooking(
             @PathVariable Long id,
             @RequestParam String reason) {
@@ -103,7 +100,6 @@ public class BookingController {
         return ResponseEntity.ok(ApiResponse.success(response, "Booking rejected successfully"));
     }
 
-    // GET /conflicts → Check for conflicts
     @GetMapping("/conflicts")
     public ResponseEntity<ApiResponse<Boolean>> checkConflicts(
             @RequestParam Long resourceId,

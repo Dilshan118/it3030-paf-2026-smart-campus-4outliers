@@ -25,7 +25,7 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
     try {
       setLoading(true);
       const response = await getNotifications(0, 5);
-      setNotifications(response.data.data.content || []);
+      setNotifications(response.data?.content || []);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -85,6 +85,8 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
       return `/bookings/${notification.referenceId}`;
     } else if (notification.referenceType === 'TICKET') {
       return `/tickets/${notification.referenceId}`;
+    } else if (notification.referenceType === 'RESOURCE') {
+      return `/resources/${notification.referenceId}`;
     }
     return null;
   };

@@ -1,9 +1,13 @@
 package com.example.smart_campus_operation_hub.controller;
 
+import com.example.smart_campus_operation_hub.dto.request.ResourceRecommendationRequest;
 import com.example.smart_campus_operation_hub.dto.request.ResourceRequest;
+import com.example.smart_campus_operation_hub.dto.response.ResourceAnalyticsDTO;
+import com.example.smart_campus_operation_hub.dto.response.ResourceRecommendationResult;
 import com.example.smart_campus_operation_hub.dto.response.ResourceResponse;
 import com.example.smart_campus_operation_hub.enums.ResourceStatus;
 import com.example.smart_campus_operation_hub.enums.ResourceType;
+import com.example.smart_campus_operation_hub.service.ResourceScoringService;
 import com.example.smart_campus_operation_hub.service.ResourceService;
 import jakarta.validation.Valid;
 
@@ -12,11 +16,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,45 +31,44 @@ import org.springframework.web.multipart.MultipartFile;
 public class ResourceController {
 
     private final ResourceService resourceService;
+    private final ResourceScoringService resourceScoringService;
 
-    public ResourceController(ResourceService resourceService) {
+    public ResourceController(ResourceService resourceService, ResourceScoringService resourceScoringService) {
         this.resourceService = resourceService;
+        this.resourceScoringService = resourceScoringService;
     }
 
-    // GET /api/v1/resources
     @GetMapping
     public ResponseEntity<Page<ResourceResponse>> getAllResources(Pageable pageable) {
         return ResponseEntity.ok(resourceService.getAllResources(pageable));
     }
 
-    // GET /api/v1/resources/{id}
     @GetMapping("/{id}")
     public ResponseEntity<ResourceResponse> getResourceById(@PathVariable Long id) {
         return ResponseEntity.ok(resourceService.getResourceById(id));
     }
 
-    // POST /api/v1/resources  (Admin only)
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ResourceResponse> createResource(@Valid @RequestBody ResourceRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(resourceService.createResource(request));
     }
 
-    // PUT /api/v1/resources/{id}  (Admin only)
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ResourceResponse> updateResource(
             @PathVariable Long id,
             @Valid @RequestBody ResourceRequest request) {
         return ResponseEntity.ok(resourceService.updateResource(id, request));
     }
 
-    // DELETE /api/v1/resources/{id}  (Admin only — soft delete)
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<Void> deleteResource(@PathVariable Long id) {
         resourceService.deleteResource(id);
         return ResponseEntity.noContent().build();
     }
 
-    // GET /api/v1/resources/search?type=LAB&location=Block C&minCapacity=30
     @GetMapping("/search")
     public ResponseEntity<Page<ResourceResponse>> searchResources(
             @RequestParam(required = false) ResourceType type,
@@ -74,13 +79,26 @@ public class ResourceController {
         return ResponseEntity.ok(resourceService.searchResources(type, status, location, minCapacity, pageable));
     }
 
-    // PATCH /api/v1/resources/{id}/status  (Admin only)
+    @GetMapping("/analytics")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public ResponseEntity<ResourceAnalyticsDTO> getAnalytics() {
+        return ResponseEntity.ok(resourceService.getAnalytics());
+    }
+
+    @PostMapping("/recommend")
+    public ResponseEntity<List<ResourceRecommendationResult>> recommend(
+            @RequestBody ResourceRecommendationRequest request) {
+        return ResponseEntity.ok(resourceScoringService.recommend(request));
+    }
+
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ResourceResponse> toggleStatus(@PathVariable Long id) {
         return ResponseEntity.ok(resourceService.toggleStatus(id));
     }
 
-        @PostMapping("/{id}/image")
+    @PostMapping("/{id}/image")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ResourceResponse> uploadImages(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile[] files) throws IOException {
@@ -105,5 +123,4 @@ public class ResourceController {
 
         return ResponseEntity.ok(resourceService.addImageUrls(id, uploadedUrls));
     }
-
 }
