@@ -3,34 +3,45 @@ import { AuthProvider } from './context/AuthContext';
 import Sidebar from './components/common/Sidebar';
 import Navbar from './components/common/Navbar';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import PageErrorBoundary from './components/common/PageErrorBoundary';
 import LoginPage from './pages/auth/LoginPage';
 import OAuthCallback from './pages/auth/OAuthCallback';
+import AccessDeniedPage from './pages/auth/AccessDeniedPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import NotificationHistoryPage from './pages/notifications/NotificationHistoryPage';
 import TicketListPage from './pages/tickets/TicketListPage';
 import TicketCreatePage from './pages/tickets/TicketCreatePage';
 import TicketDetailPage from './pages/tickets/TicketDetailPage';
 import TicketManagePage from './pages/tickets/TicketManagePage';
-import ResourceListPage from './pages/resources/ResourceListPage';
-import ResourceDetailPage from './pages/resources/ResourceDetailPage';
-import ResourceManagePage from './pages/resources/ResourceManagePage';
 import BookingListPage from './pages/bookings/BookingListPage';
 import BookingCreatePage from './pages/bookings/BookingCreatePage';
 import BookingDetailPage from './pages/bookings/BookingDetailPage';
-import BookingAdminDetailPage from './pages/bookings/BookingAdminDetailPage';
 import BookingReviewPage from './pages/bookings/BookingReviewPage';
+import ResourceListPage from './pages/resources/ResourceListPage';
+import ResourceDetailPage from './pages/resources/ResourceDetailPage';
+import ResourceManagePage from './pages/resources/ResourceManagePage';
+import BookingAdminDetailPage from './pages/bookings/BookingAdminDetailPage';
+import ResourceAnalyticsPage from './pages/resources/ResourceAnalyticsPage';
+import ResourceFinderPage from './pages/resources/ResourceFinderPage';
+import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
+import UserManagePage from './pages/admin/UserManagePage';
+
+const ADMIN_ONLY = ['ADMIN'];
+const ADMIN_MANAGER = ['ADMIN', 'MANAGER'];
 
 function DashboardLayout({ children }) {
   return (
-    <div className="app-layout">
-      <Sidebar />
-      <div className="app-shell" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' }}>
-        <Navbar />
-        <main className="app-main" style={{ padding: '0', width: '100%', boxSizing: 'border-box' }}>
-          {children}
-        </main>
+    <PageErrorBoundary>
+      <div className="app-layout">
+        <Sidebar />
+        <div className="app-shell" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', background: 'var(--bg-primary)' }}>
+          <Navbar />
+          <main className="app-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0', width: '100%', boxSizing: 'border-box' }}>
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </PageErrorBoundary>
   );
 }
 
@@ -42,33 +53,39 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<OAuthCallback />} />
+          <Route path="/access-denied" element={<AccessDeniedPage />} />
 
           {/* Protected Main Routes */}
           <Route path="/" element={<ProtectedRoute><DashboardLayout><DashboardPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><NotificationHistoryPage /></DashboardLayout></ProtectedRoute>} />
-          
+
           {/* Ticket Routes */}
           <Route path="/tickets" element={<ProtectedRoute><DashboardLayout><TicketListPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/tickets/new" element={<ProtectedRoute><DashboardLayout><TicketCreatePage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/tickets/manage" element={<ProtectedRoute><DashboardLayout><TicketManagePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/tickets/manage" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><TicketManagePage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute><DashboardLayout><TicketDetailPage /></DashboardLayout></ProtectedRoute>} />
 
           {/* Booking Routes */}
           <Route path="/bookings" element={<ProtectedRoute><DashboardLayout><BookingListPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/bookings/new" element={<ProtectedRoute><DashboardLayout><BookingCreatePage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/bookings/:id" element={<ProtectedRoute><DashboardLayout><BookingDetailPage /></DashboardLayout></ProtectedRoute>} />
-          
+          <Route path="/bookings/manage" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingReviewPage /></DashboardLayout></ProtectedRoute>} />
+
           {/* Resource Routes */}
           <Route path="/resources" element={<ProtectedRoute><DashboardLayout><ResourceListPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/resources/finder" element={<ProtectedRoute><DashboardLayout><ResourceFinderPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/resources/:id" element={<ProtectedRoute><DashboardLayout><ResourceDetailPage /></DashboardLayout></ProtectedRoute>} />
 
           {/* Admin Routes */}
-          <Route path="/admin/resources" element={<ProtectedRoute><DashboardLayout><ResourceManagePage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/admin/bookings" element={<ProtectedRoute><DashboardLayout><BookingReviewPage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/admin/bookings/:id" element={<ProtectedRoute><DashboardLayout><BookingAdminDetailPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/resources" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><ResourceManagePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/resources/analytics" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><ResourceAnalyticsPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/bookings" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingReviewPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/bookings/:id" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingAdminDetailPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/analytics" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><AnalyticsDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute requiredRoles={ADMIN_ONLY}><DashboardLayout><UserManagePage /></DashboardLayout></ProtectedRoute>} />
 
           <Route path="/admin/*" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRoles={ADMIN_MANAGER}>
               <DashboardLayout>
                 <div className="card" style={{ textAlign: 'center' }}>
                   <h2 className="h1">Admin Module</h2>

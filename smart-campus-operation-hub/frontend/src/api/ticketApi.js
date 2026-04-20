@@ -10,6 +10,8 @@ export const updateTicketStatus = (id, status, notes = '', reason = '') =>
     api.patch(`/tickets/${id}/status`, null, { params: { status, resolutionNotes: notes, rejectionReason: reason } }).then(res => res.data);
 export const assignTechnician = (id, techId) => 
     api.patch(`/tickets/${id}/assign`, null, { params: { technicianId: techId } }).then(res => res.data);
+export const reopenTicket = (id, reason) =>
+    api.patch(`/tickets/${id}/reopen`, null, { params: { reason } }).then(res => res.data);
 export const getComments = (ticketId) => api.get(`/tickets/${ticketId}/comments`).then(res => res.data);
 export const addComment = (ticketId, data) => api.post(`/tickets/${ticketId}/comments`, data).then(res => res.data);
 export const editComment = (ticketId, commentId, data) => api.put(`/tickets/${ticketId}/comments/${commentId}`, data).then(res => res.data);

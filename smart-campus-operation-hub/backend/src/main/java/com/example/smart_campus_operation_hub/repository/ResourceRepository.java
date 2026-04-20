@@ -29,4 +29,11 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
             @Param("minCapacity") Integer minCapacity,
             Pageable pageable
     );
+
+    @Query("SELECT r FROM Resource r WHERE r.isDeleted = false AND r.status = :status " +
+           "AND (:type IS NULL OR r.type = :type)")
+    java.util.List<Resource> findActiveResourcesForRecommendation(
+            @Param("status") ResourceStatus status, 
+            @Param("type") ResourceType type
+    );
 }

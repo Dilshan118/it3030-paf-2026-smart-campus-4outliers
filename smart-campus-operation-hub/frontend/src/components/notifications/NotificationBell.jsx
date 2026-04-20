@@ -18,7 +18,7 @@ export default function NotificationBell() {
   const fetchUnreadCount = async () => {
     try {
       const response = await getUnreadCount();
-      setUnreadCount(response.data.data || 0);
+      setUnreadCount(response.data || 0);
     } catch (error) {
       console.error('Failed to fetch unread count:', error);
     }
@@ -61,8 +61,8 @@ export default function NotificationBell() {
             position: 'absolute',
             top: '2px',
             right: '2px',
-            backgroundColor: 'var(--error)',
-            color: '#ffffff',
+            backgroundColor: 'var(--danger)',
+            color: 'var(--text-inverse)',
             fontSize: '0.65rem',
             fontWeight: 700,
             borderRadius: '999px',
@@ -72,6 +72,8 @@ export default function NotificationBell() {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '0 4px',
+            fontFamily: 'var(--font-mono)',
+            boxShadow: '0 4px 8px -2px var(--danger-muted)',
           }}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
