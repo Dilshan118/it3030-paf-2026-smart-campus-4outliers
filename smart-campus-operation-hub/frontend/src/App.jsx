@@ -13,6 +13,10 @@ import TicketListPage from './pages/tickets/TicketListPage';
 import TicketCreatePage from './pages/tickets/TicketCreatePage';
 import TicketDetailPage from './pages/tickets/TicketDetailPage';
 import TicketManagePage from './pages/tickets/TicketManagePage';
+import BookingListPage from './pages/bookings/BookingListPage';
+import BookingCreatePage from './pages/bookings/BookingCreatePage';
+import BookingDetailPage from './pages/bookings/BookingDetailPage';
+import BookingReviewPage from './pages/bookings/BookingReviewPage';
 import ResourceListPage from './pages/resources/ResourceListPage';
 import ResourceDetailPage from './pages/resources/ResourceDetailPage';
 import ResourceManagePage from './pages/resources/ResourceManagePage';
@@ -59,16 +63,10 @@ function App() {
           <Route path="/tickets/:id" element={<ProtectedRoute><DashboardLayout><TicketDetailPage /></DashboardLayout></ProtectedRoute>} />
 
           {/* Booking Routes */}
-          <Route path="/bookings/*" element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <div className="card" style={{ textAlign: 'center' }}>
-                  <h2 className="h1">Bookings Module</h2>
-                  <p style={{ color: 'var(--on-surface-variant)' }}>Coming soon...</p>
-                </div>
-              </DashboardLayout>
-            </ProtectedRoute>
-          } />
+          <Route path="/bookings" element={<ProtectedRoute><DashboardLayout><BookingListPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/bookings/new" element={<ProtectedRoute><DashboardLayout><BookingCreatePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/bookings/:id" element={<ProtectedRoute><DashboardLayout><BookingDetailPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/bookings/manage" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingReviewPage /></DashboardLayout></ProtectedRoute>} />
 
           {/* Resource Routes */}
           <Route path="/resources" element={<ProtectedRoute><DashboardLayout><ResourceListPage /></DashboardLayout></ProtectedRoute>} />
