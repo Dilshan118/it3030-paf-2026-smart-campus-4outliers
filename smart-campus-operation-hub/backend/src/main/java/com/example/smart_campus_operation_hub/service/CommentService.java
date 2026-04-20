@@ -11,6 +11,7 @@ import com.example.smart_campus_operation_hub.repository.CommentRepository;
 import com.example.smart_campus_operation_hub.repository.TicketRepository;
 import com.example.smart_campus_operation_hub.repository.UserRepository;
 import com.example.smart_campus_operation_hub.enums.NotificationType;
+import com.example.smart_campus_operation_hub.enums.TicketStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -45,6 +46,12 @@ public class CommentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", ticketId));
 
         enforceTicketAccess(ticket, authorId, authorRole);
+        enforceDiscussionAllowed(ticket);
+
+        String normalizedContent = content == null ? "" : content.trim();
+        if (normalizedContent.isEmpty()) {
+            throw new BadRequestException("Comment content is required");
+        }
 
         User author = userRepository.findById(authorId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", authorId));
@@ -52,7 +59,7 @@ public class CommentService {
         Comment comment = new Comment();
         comment.setTicket(ticket);
         comment.setAuthor(author);
-        comment.setContent(content);
+        comment.setContent(normalizedContent);
 
         Comment saved = commentRepository.save(comment);
 
@@ -100,12 +107,18 @@ public class CommentService {
         }
 
         enforceTicketAccess(comment.getTicket(), userId, userRole);
+        enforceDiscussionAllowed(comment.getTicket());
 
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new UnauthorizedException("You can only edit your own comments");
         }
 
-        comment.setContent(content);
+        String normalizedContent = content == null ? "" : content.trim();
+        if (normalizedContent.isEmpty()) {
+            throw new BadRequestException("Comment content is required");
+        }
+
+        comment.setContent(normalizedContent);
         Comment saved = commentRepository.save(comment);
 
         return mapToResponse(saved);
@@ -140,6 +153,7 @@ public class CommentService {
         response.setId(comment.getId());
         response.setAuthorId(comment.getAuthor().getId());
         response.setAuthorName(comment.getAuthor().getName());
+        response.setAuthorRole(comment.getAuthor().getRole().name());
         response.setAuthorAvatarUrl(comment.getAuthor().getAvatarUrl());
         response.setContent(comment.getContent());
         response.setCreatedAt(comment.getCreatedAt());
@@ -156,6 +170,12 @@ public class CommentService {
 
         if (!isAdminOrManager && !isOwner && !isAssignedTechnician) {
             throw new UnauthorizedException("You are not allowed to access comments for this ticket");
+        }
+    }
+
+    private void enforceDiscussionAllowed(Ticket ticket) {
+        if (ticket.getStatus() == TicketStatus.CLOSED || ticket.getStatus() == TicketStatus.REJECTED) {
+            throw new BadRequestException("Comments are locked for tickets in status: " + ticket.getStatus());
         }
     }
 }
