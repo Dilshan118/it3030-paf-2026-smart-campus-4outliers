@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { uploadAttachment, deleteAttachment } from '../../api/ticketApi';
 import { ImagePlus, X } from 'lucide-react';
+import { resolveBackendUrl } from '../../utils/urlUtils';
 
 export default function ImageUpload({ ticketId, attachments = [], onUploadSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -55,7 +56,7 @@ export default function ImageUpload({ ticketId, attachments = [], onUploadSucces
             alignItems: 'center', 
             gap: '12px' 
           }}>
-            <a href={att.fileUrl} target="_blank" rel="noreferrer" style={{ fontSize: '13px', textDecoration: 'none', color: 'var(--primary)', fontWeight: '500' }}>
+            <a href={resolveBackendUrl(att.fileUrl)} target="_blank" rel="noreferrer" style={{ fontSize: '13px', textDecoration: 'none', color: 'var(--primary)', fontWeight: '500' }}>
               {att.fileName}
             </a>
             <button 

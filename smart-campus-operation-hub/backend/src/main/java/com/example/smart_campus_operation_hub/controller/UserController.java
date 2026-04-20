@@ -57,4 +57,13 @@ public class UserController {
         User user = userService.updateUserRole(id, role);
         return ResponseEntity.ok(ApiResponse.success(user));
     }
+
+    @DeleteMapping("/admin/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Object>> deleteUser(Authentication authentication,
+                                                          @PathVariable Long id) {
+        Long actorUserId = (Long) authentication.getPrincipal();
+        User deactivatedUser = userService.deactivateUser(id, actorUserId);
+        return ResponseEntity.ok(ApiResponse.success(deactivatedUser, "User deactivated successfully"));
+    }
 }

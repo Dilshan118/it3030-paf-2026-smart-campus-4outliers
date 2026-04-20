@@ -12,17 +12,18 @@ export default function TicketCard({ ticket }) {
       gap: '32px', 
       alignItems: 'center',
       textDecoration: 'none',
-      padding: '32px',
+      padding: '24px 32px',
       cursor: 'pointer',
-      borderRadius: 'var(--radius)',
-      borderBottom: '1px solid rgba(0,0,0,0.03)',
-      boxShadow: 'none',
-      backgroundColor: 'transparent'
+      borderRadius: 'var(--radius-lg)',
+      border: 'none',
+      boxShadow: '0 4px 6px -1px rgba(25, 28, 30, 0.02)',
+      backgroundColor: 'var(--surface-container-lowest)',
+      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
     }}
     onMouseEnter={(e) => {
       e.currentTarget.style.backgroundColor = 'var(--bg-surface)';
       e.currentTarget.style.boxShadow = 'var(--ambient-shadow)';
-      e.currentTarget.style.transform = 'translateX(8px)';
+      e.currentTarget.style.transform = 'translateY(-2px)';
       const icon = e.currentTarget.querySelector('.card-icon');
       if(icon) {
         icon.style.opacity = '1';
@@ -30,9 +31,9 @@ export default function TicketCard({ ticket }) {
       }
     }}
     onMouseLeave={(e) => {
-      e.currentTarget.style.backgroundColor = 'transparent';
-      e.currentTarget.style.boxShadow = 'none';
-      e.currentTarget.style.transform = 'translateX(0)';
+      e.currentTarget.style.backgroundColor = 'var(--surface-container-lowest)';
+      e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(25, 28, 30, 0.02)';
+      e.currentTarget.style.transform = 'translateY(0)';
       const icon = e.currentTarget.querySelector('.card-icon');
       if(icon) {
         icon.style.opacity = '0';

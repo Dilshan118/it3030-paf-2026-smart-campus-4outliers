@@ -11,6 +11,7 @@ import com.example.smart_campus_operation_hub.repository.CommentRepository;
 import com.example.smart_campus_operation_hub.repository.TicketRepository;
 import com.example.smart_campus_operation_hub.repository.UserRepository;
 import com.example.smart_campus_operation_hub.enums.NotificationType;
+import com.example.smart_campus_operation_hub.enums.TicketStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -40,9 +41,17 @@ public class CommentService {
     /**
      * Add a comment to a ticket.
      */
-    public CommentResponse addComment(Long ticketId, String content, Long authorId) {
+    public CommentResponse addComment(Long ticketId, String content, Long authorId, String authorRole) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", ticketId));
+
+        enforceTicketAccess(ticket, authorId, authorRole);
+        enforceDiscussionAllowed(ticket);
+
+        String normalizedContent = content == null ? "" : content.trim();
+        if (normalizedContent.isEmpty()) {
+            throw new BadRequestException("Comment content is required");
+        }
 
         User author = userRepository.findById(authorId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", authorId));
@@ -50,7 +59,7 @@ public class CommentService {
         Comment comment = new Comment();
         comment.setTicket(ticket);
         comment.setAuthor(author);
-        comment.setContent(content);
+        comment.setContent(normalizedContent);
 
         Comment saved = commentRepository.save(comment);
 
@@ -75,11 +84,11 @@ public class CommentService {
     /**
      * Get all comments for a ticket.
      */
-    public List<CommentResponse> getCommentsByTicketId(Long ticketId) {
-        // Enforce that the ticket exists first
-        if (!ticketRepository.existsById(ticketId)) {
-            throw new ResourceNotFoundException("Ticket", ticketId);
-        }
+    public List<CommentResponse> getCommentsByTicketId(Long ticketId, Long callerId, String callerRole) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", ticketId));
+
+        enforceTicketAccess(ticket, callerId, callerRole);
 
         return commentRepository.findByTicketIdOrderByCreatedAtAsc(ticketId)
                 .stream()
@@ -89,7 +98,7 @@ public class CommentService {
     /**
      * Edit a comment. Only the author can edit their comment.
      */
-    public CommentResponse editComment(Long ticketId, Long commentId, String content, Long userId) {
+    public CommentResponse editComment(Long ticketId, Long commentId, String content, Long userId, String userRole) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment", commentId));
 
@@ -97,11 +106,19 @@ public class CommentService {
             throw new BadRequestException("Comment does not belong to the specified ticket");
         }
 
+        enforceTicketAccess(comment.getTicket(), userId, userRole);
+        enforceDiscussionAllowed(comment.getTicket());
+
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new UnauthorizedException("You can only edit your own comments");
         }
 
-        comment.setContent(content);
+        String normalizedContent = content == null ? "" : content.trim();
+        if (normalizedContent.isEmpty()) {
+            throw new BadRequestException("Comment content is required");
+        }
+
+        comment.setContent(normalizedContent);
         Comment saved = commentRepository.save(comment);
 
         return mapToResponse(saved);
@@ -116,6 +133,8 @@ public class CommentService {
         if (!comment.getTicket().getId().equals(ticketId)) {
             throw new BadRequestException("Comment does not belong to the specified ticket");
         }
+
+        enforceTicketAccess(comment.getTicket(), userId, userRole);
 
         boolean isAuthor = comment.getAuthor().getId().equals(userId);
         boolean isAdmin = "ADMIN".equals(userRole);
@@ -134,10 +153,29 @@ public class CommentService {
         response.setId(comment.getId());
         response.setAuthorId(comment.getAuthor().getId());
         response.setAuthorName(comment.getAuthor().getName());
+        response.setAuthorRole(comment.getAuthor().getRole().name());
         response.setAuthorAvatarUrl(comment.getAuthor().getAvatarUrl());
         response.setContent(comment.getContent());
         response.setCreatedAt(comment.getCreatedAt());
         response.setUpdatedAt(comment.getUpdatedAt());
         return response;
+    }
+
+    private void enforceTicketAccess(Ticket ticket, Long callerId, String callerRole) {
+        boolean isAdminOrManager = "ADMIN".equals(callerRole) || "MANAGER".equals(callerRole);
+        boolean isOwner = ticket.getUser().getId().equals(callerId);
+        boolean isAssignedTechnician = "TECHNICIAN".equals(callerRole)
+                && ticket.getAssignedTo() != null
+                && ticket.getAssignedTo().getId().equals(callerId);
+
+        if (!isAdminOrManager && !isOwner && !isAssignedTechnician) {
+            throw new UnauthorizedException("You are not allowed to access comments for this ticket");
+        }
+    }
+
+    private void enforceDiscussionAllowed(Ticket ticket) {
+        if (ticket.getStatus() == TicketStatus.CLOSED || ticket.getStatus() == TicketStatus.REJECTED) {
+            throw new BadRequestException("Comments are locked for tickets in status: " + ticket.getStatus());
+        }
     }
 }

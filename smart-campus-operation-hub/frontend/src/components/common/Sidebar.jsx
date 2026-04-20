@@ -41,11 +41,10 @@ export default function Sidebar() {
           Notifications
         </NavLink>
 
-        <div className="sidebar-link disabled">
+        <NavLink to="/bookings" className={navClassName}>
           <CalendarDays size={20} strokeWidth={1.5} className="sidebar-icon" />
           Bookings
-          <span className="sidebar-badge">SOON</span>
-        </div>
+        </NavLink>
 
         <NavLink to="/resources" end className={navClassName}>
           <Box size={20} strokeWidth={1.5} className="sidebar-icon" />

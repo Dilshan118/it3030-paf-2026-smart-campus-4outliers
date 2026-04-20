@@ -56,9 +56,27 @@ public class BookingController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<BookingResponse>> getBookingById(@PathVariable Long id) {
-        BookingResponse response = bookingService.getBookingById(id);
+    public ResponseEntity<ApiResponse<BookingResponse>> getBookingById(
+            Authentication authentication,
+            @PathVariable Long id) {
+
+        Long userId = (Long) authentication.getPrincipal();
+        String role = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+
+        BookingResponse response = bookingService.getBookingById(id, userId, role);
         return ResponseEntity.ok(ApiResponse.success(response, "Booking retrieved successfully"));
+    }
+
+    @GetMapping("/{id}/qr")
+    public ResponseEntity<ApiResponse<String>> getBookingQr(
+            Authentication authentication,
+            @PathVariable Long id) {
+
+        Long userId = (Long) authentication.getPrincipal();
+        String role = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+
+        String qrCode = bookingService.getBookingQr(id, userId, role);
+        return ResponseEntity.ok(ApiResponse.success(qrCode, "Booking QR retrieved successfully"));
     }
 
     @PutMapping("/{id}")

@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import Sidebar from './components/common/Sidebar';
 import Navbar from './components/common/Navbar';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import PageErrorBoundary from './components/common/PageErrorBoundary';
 import LoginPage from './pages/auth/LoginPage';
 import OAuthCallback from './pages/auth/OAuthCallback';
 import AccessDeniedPage from './pages/auth/AccessDeniedPage';
@@ -13,6 +14,10 @@ import TicketListPage from './pages/tickets/TicketListPage';
 import TicketCreatePage from './pages/tickets/TicketCreatePage';
 import TicketDetailPage from './pages/tickets/TicketDetailPage';
 import TicketManagePage from './pages/tickets/TicketManagePage';
+import BookingListPage from './pages/bookings/BookingListPage';
+import BookingCreatePage from './pages/bookings/BookingCreatePage';
+import BookingDetailPage from './pages/bookings/BookingDetailPage';
+import BookingReviewPage from './pages/bookings/BookingReviewPage';
 import ResourceListPage from './pages/resources/ResourceListPage';
 import ResourceDetailPage from './pages/resources/ResourceDetailPage';
 import ResourceManagePage from './pages/resources/ResourceManagePage';
@@ -26,15 +31,17 @@ const ADMIN_MANAGER = ['ADMIN', 'MANAGER'];
 
 function DashboardLayout({ children }) {
   return (
-    <div className="app-layout">
-      <Sidebar />
-      <div className="app-shell" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', background: 'var(--bg-primary)' }}>
-        <Navbar />
-        <main className="app-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0', width: '100%', boxSizing: 'border-box' }}>
-          {children}
-        </main>
+    <PageErrorBoundary>
+      <div className="app-layout">
+        <Sidebar />
+        <div className="app-shell" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', background: 'var(--bg-primary)' }}>
+          <Navbar />
+          <main className="app-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0', width: '100%', boxSizing: 'border-box' }}>
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </PageErrorBoundary>
   );
 }
 
@@ -59,16 +66,10 @@ function App() {
           <Route path="/tickets/:id" element={<ProtectedRoute><DashboardLayout><TicketDetailPage /></DashboardLayout></ProtectedRoute>} />
 
           {/* Booking Routes */}
-          <Route path="/bookings/*" element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <div className="card" style={{ textAlign: 'center' }}>
-                  <h2 className="h1">Bookings Module</h2>
-                  <p style={{ color: 'var(--on-surface-variant)' }}>Coming soon...</p>
-                </div>
-              </DashboardLayout>
-            </ProtectedRoute>
-          } />
+          <Route path="/bookings" element={<ProtectedRoute><DashboardLayout><BookingListPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/bookings/new" element={<ProtectedRoute><DashboardLayout><BookingCreatePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/bookings/:id" element={<ProtectedRoute><DashboardLayout><BookingDetailPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/bookings/manage" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingReviewPage /></DashboardLayout></ProtectedRoute>} />
 
           {/* Resource Routes */}
           <Route path="/resources" element={<ProtectedRoute><DashboardLayout><ResourceListPage /></DashboardLayout></ProtectedRoute>} />
