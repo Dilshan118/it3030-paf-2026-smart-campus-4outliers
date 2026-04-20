@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import api from '../../api/axiosConfig';
-import { Users, Search, RefreshCw } from 'lucide-react';
+import { Users, Search, RefreshCw, Trash2 } from 'lucide-react';
+import { AuthContext } from '../../context/AuthContext';
 
 export default function UserManagePage() {
+  const { user } = useContext(AuthContext);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deletingUserId, setDeletingUserId] = useState(null);
 
   const ROLES = ['USER', 'TECHNICIAN', 'MANAGER', 'ADMIN'];
 
@@ -37,6 +40,35 @@ export default function UserManagePage() {
     }
   };
 
+  const handleDeleteUser = async (targetUser) => {
+    if (!targetUser) return;
+
+    if (Number(targetUser.id) === Number(user?.id)) {
+      setError('You cannot deactivate your own account.');
+      return;
+    }
+
+    if (!window.confirm(`Deactivate ${targetUser.name || 'this user'}? They will lose platform access immediately.`)) {
+      return;
+    }
+
+    try {
+      setError('');
+      setDeletingUserId(targetUser.id);
+      await api.delete(`/admin/users/${targetUser.id}`);
+      await fetchUsers();
+    } catch (err) {
+      const message = err.response?.data?.message || '';
+      if (message.includes('No static resource') || message.includes('Endpoint not found')) {
+        setError('Delete endpoint is not available in the running backend. Restart/redeploy backend and try again.');
+      } else {
+        setError(message || 'Failed to delete user');
+      }
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
   return (
     <div className="page-container" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
       <style>{`
@@ -47,7 +79,7 @@ export default function UserManagePage() {
           font-size: clamp(2rem, 4vw, 3rem); font-family: var(--font-display); font-weight: 800; letter-spacing: -0.03em; color: var(--text-main); line-height: 1.1;
         }
         .data-row {
-          display: grid; grid-template-columns: minmax(200px, 2fr) minmax(200px, 2fr) 200px;
+          display: grid; grid-template-columns: minmax(180px, 2fr) minmax(220px, 2fr) 140px minmax(240px, 2.2fr);
           gap: 16px; padding: 24px; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.03);
           transition: background 0.2s;
         }
@@ -107,18 +139,24 @@ export default function UserManagePage() {
         ) : (
           <div style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', overflow: 'hidden' }}>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 2fr) minmax(200px, 2fr) 200px', gap: '16px', padding: '16px 24px', background: 'var(--bg-surface-elevated)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 2fr) minmax(220px, 2fr) 140px minmax(240px, 2.2fr)', gap: '16px', padding: '16px 24px', background: 'var(--bg-surface-elevated)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               <div>User Designation</div>
               <div>System Identity</div>
-              <div>Authority Scope</div>
+              <div>Status</div>
+              <div>Authority & Actions</div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {users.map(u => (
-                <div key={u.id} className="data-row">
+              {users.map(u => {
+                const isCurrentUser = Number(u.id) === Number(user?.id);
+                const isInactive = !Boolean(u.isActive);
+                const isDeleting = deletingUserId === u.id;
+
+                return (
+                <div key={u.id} className="data-row" style={{ opacity: isInactive ? 0.65 : 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--accent-muted)', border: '1px solid var(--accent-base)', color: 'var(--accent-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.2rem' }}>
-                      {u.name.charAt(0).toUpperCase()}
+                      {(u.name || '?').charAt(0).toUpperCase()}
                     </div>
                     <span style={{ fontSize: '1.05rem', fontFamily: 'var(--font-body)', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
                       {u.name}
@@ -128,25 +166,78 @@ export default function UserManagePage() {
                   <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                     {u.email}
                   </div>
-                  
+
                   <div>
-                    <select 
-                      value={u.role || 'USER'} 
-                      onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                      style={{ 
-                        width: '100%', padding: '10px 16px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)',
-                        background: 'var(--bg-primary)', fontFamily: 'var(--font-mono)', 
-                        fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', outline: 'none', cursor: 'pointer',
-                        textTransform: 'uppercase', letterSpacing: '0.05em'
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '6px 12px',
+                        borderRadius: '999px',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        background: isInactive ? 'var(--danger-muted)' : 'rgba(16, 185, 129, 0.14)',
+                        color: isInactive ? 'var(--danger)' : '#047857',
                       }}
                     >
-                      {ROLES.map(role => (
-                        <option key={role} value={role}>{role}</option>
-                      ))}
-                    </select>
+                      {isInactive ? 'Inactive' : 'Active'}
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <select 
+                        value={u.role || 'USER'} 
+                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                        disabled={isInactive || isDeleting}
+                        style={{ 
+                          flex: 1, padding: '10px 16px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)',
+                          background: 'var(--bg-primary)', fontFamily: 'var(--font-mono)', 
+                          fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', outline: 'none', cursor: 'pointer',
+                          textTransform: 'uppercase', letterSpacing: '0.05em'
+                        }}
+                      >
+                        {ROLES.map(role => (
+                          <option key={role} value={role}>{role}</option>
+                        ))}
+                      </select>
+
+                      <button
+                        onClick={() => handleDeleteUser(u)}
+                        disabled={isInactive || isDeleting || isCurrentUser}
+                        title={isCurrentUser ? 'You cannot deactivate your own account' : 'Deactivate user'}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '10px 12px',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          cursor: isInactive || isDeleting || isCurrentUser ? 'not-allowed' : 'pointer',
+                          background: isInactive || isDeleting || isCurrentUser ? 'var(--bg-primary)' : 'var(--danger-muted)',
+                          color: isInactive || isDeleting || isCurrentUser ? 'var(--text-muted)' : 'var(--danger)'
+                        }}
+                      >
+                        <Trash2 size={14} /> {isDeleting ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+
+                    {isCurrentUser && (
+                      <div style={{ marginTop: '6px', fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                        Current signed-in admin
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         )}
