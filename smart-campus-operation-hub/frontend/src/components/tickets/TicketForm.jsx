@@ -9,18 +9,44 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel, loadi
     contactInfo: initialData.contactInfo || '',
     resourceId: initialData.resourceId || ''
   });
+  const [formError, setFormError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (formError) setFormError('');
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const description = formData.description.trim();
+    const contactInfo = formData.contactInfo.trim();
+    const parsedResourceId = formData.resourceId === '' ? null : Number(formData.resourceId);
+
+    if (description.length < 10) {
+      setFormError('Please provide at least 10 characters in the description.');
+      return;
+    }
+
+    if ((formData.priority === 'HIGH' || formData.priority === 'CRITICAL') && contactInfo.length < 6) {
+      setFormError('Please add valid contact info for HIGH or CRITICAL tickets.');
+      return;
+    }
+
+    if (parsedResourceId !== null && (!Number.isInteger(parsedResourceId) || parsedResourceId <= 0)) {
+      setFormError('Resource ID must be a positive number.');
+      return;
+    }
+
     const normalized = {
       ...formData,
-      resourceId: formData.resourceId === '' ? null : Number(formData.resourceId),
+      description,
+      contactInfo: contactInfo === '' ? null : contactInfo,
+      resourceId: parsedResourceId,
     };
+
+    setFormError('');
     onSubmit(normalized);
   };
 
@@ -83,7 +109,6 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel, loadi
             name="contactInfo" 
             value={formData.contactInfo} 
             onChange={handleChange} 
-            required 
             className="input-field" 
             style={{ fontSize: '1.05rem', padding: '18px 24px', background: 'var(--bg-primary)' }}
             placeholder="Phone number or Extension" 
@@ -111,8 +136,14 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel, loadi
           <AlertTriangle size={24} color="var(--danger)" />
           <p style={{ margin: 0, color: 'var(--text-main)', fontSize: '0.9rem', lineHeight: '1.5' }}>
             <strong style={{ color: 'var(--danger)', display: 'block' }}>Priority Warning</strong>
-            Critical priority triggers immediate SMS notification to emergency responders. Abuse of this priority level will be logged.
+            Use CRITICAL only for urgent campus-impacting issues. This queues immediate technician dispatch and manager review.
           </p>
+        </div>
+      )}
+
+      {formError && (
+        <div style={{ background: 'var(--danger-muted)', color: 'var(--danger)', padding: '14px 16px', borderRadius: 'var(--radius)', fontSize: '0.9rem', fontWeight: 600 }}>
+          {formError}
         </div>
       )}
 
