@@ -44,7 +44,7 @@ export default function BookingCreatePage() {
       </div>
 
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
-        <div style={{ width: '100%', maxWidth: '800px' }}>
+        <div style={{ width: '100%', paddingBottom: '64px' }}>
           {error && (
             <div style={{ background: 'var(--danger-muted)', color: 'var(--danger)', padding: '16px 24px', borderRadius: 'var(--radius)', marginBottom: '24px', fontFamily: 'var(--font-body)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '12px' }}>
                <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--danger)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold' }}>!</div>
@@ -53,7 +53,7 @@ export default function BookingCreatePage() {
           )}
           
           <div className="card" style={{ padding: 'clamp(32px, 5vw, 64px)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '40px', paddingBottom: '24px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '40px', paddingBottom: '24px', borderBottom: 'none' }}>
               <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'var(--success-muted)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <CalendarPlus size={28} strokeWidth={2} />
               </div>
