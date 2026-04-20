@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { addComment, getComments, deleteComment, editComment } from '../../api/ticketApi';
 import { Trash2, Edit2, Check, X } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
@@ -14,25 +14,48 @@ export default function CommentThread({ ticketId, initialComments = [], onCommen
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
 
+  const normalizeRole = (role) => {
+    if (!role) return null;
+    return role.startsWith('ROLE_') ? role.replace('ROLE_', '') : role;
+  };
+
+  const resolveAuthorRole = (comment) => {
+    const backendRole = normalizeRole(comment?.authorRole);
+    if (backendRole) return backendRole;
+
+    // Fallback for stale backend payloads: use current user role on own comments.
+    if (Number(comment?.authorId) === Number(user?.id)) {
+      return normalizeRole(user?.role);
+    }
+
+    return null;
+  };
+
+  const loadComments = useCallback(async () => {
+    try {
+      setLoadingComments(true);
+      const res = await getComments(ticketId);
+      const items = Array.isArray(res?.data) ? res.data : [];
+      setComments(items);
+    } catch {
+      setComments([]);
+    } finally {
+      setLoadingComments(false);
+    }
+  }, [ticketId]);
+
   useEffect(() => {
     let isMounted = true;
 
-    const loadComments = async () => {
-      try {
-        setLoadingComments(true);
-        const res = await getComments(ticketId);
-        const items = Array.isArray(res?.data) ? res.data : [];
-        if (isMounted) setComments(items);
-      } catch {
-        if (isMounted) setComments([]);
-      } finally {
-        if (isMounted) setLoadingComments(false);
+    const loadIfMounted = async () => {
+      if (isMounted) {
+        await loadComments();
       }
     };
 
-    loadComments();
+    loadIfMounted();
     return () => { isMounted = false; };
-  }, [ticketId]);
+  }, [loadComments]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,10 +63,8 @@ export default function CommentThread({ ticketId, initialComments = [], onCommen
 
     try {
       setLoading(true);
-      const res = await addComment(ticketId, { content: newComment });
-      if (res?.data) {
-        setComments(prev => [...prev, res.data]);
-      }
+      await addComment(ticketId, { content: newComment });
+      await loadComments();
       setNewComment('');
       if (onCommentAdded) onCommentAdded();
     } catch (err) {
@@ -79,6 +100,26 @@ export default function CommentThread({ ticketId, initialComments = [], onCommen
     }
   };
 
+  const formatRoleLabel = (role) => {
+    if (!role) return 'UNKNOWN';
+    return role.replace(/_/g, ' ');
+  };
+
+  const roleBadgeStyles = (role) => {
+    switch (role) {
+      case 'ADMIN':
+        return { background: 'rgba(225, 42, 69, 0.12)', color: 'var(--danger)' };
+      case 'MANAGER':
+        return { background: 'rgba(59, 130, 246, 0.14)', color: '#1d4ed8' };
+      case 'TECHNICIAN':
+        return { background: 'rgba(16, 185, 129, 0.14)', color: '#047857' };
+      case 'USER':
+        return { background: 'rgba(245, 158, 11, 0.16)', color: '#b45309' };
+      default:
+        return { background: 'var(--bg-primary)', color: 'var(--text-muted)' };
+    }
+  };
+
   return (
     <div style={{ marginTop: '40px' }} className="card">
       <h3 style={{ margin: '0 0 16px 0', fontFamily: 'var(--font-display)' }}>Communication Log</h3>
@@ -86,12 +127,29 @@ export default function CommentThread({ ticketId, initialComments = [], onCommen
         {loadingComments && <p style={{ opacity: 0.6, textAlign: 'center', padding: '16px 0' }}>Loading comments...</p>}
         {comments.map(c => {
           const canManage = isAdmin || c.authorId === user?.id;
+          const resolvedRole = resolveAuthorRole(c);
           return (
             <div key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius)' }}>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>
-                  {c.authorName || `User ${c.authorId || 'System'}`}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>
+                    {c.authorName || `User ${c.authorId || 'System'}`}
+                  </div>
+                  <span
+                    style={{
+                        ...roleBadgeStyles(resolvedRole),
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      borderRadius: '999px',
+                      padding: '4px 8px',
+                      fontFamily: 'var(--font-mono)'
+                    }}
+                  >
+                      {formatRoleLabel(resolvedRole)}
+                  </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
