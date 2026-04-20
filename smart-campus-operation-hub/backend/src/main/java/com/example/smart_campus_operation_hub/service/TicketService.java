@@ -4,16 +4,20 @@ import com.example.smart_campus_operation_hub.dto.request.TicketRequest;
 import com.example.smart_campus_operation_hub.dto.response.AttachmentResponse;
 import com.example.smart_campus_operation_hub.dto.response.CommentResponse;
 import com.example.smart_campus_operation_hub.dto.response.TicketResponse;
+import com.example.smart_campus_operation_hub.enums.Role;
 import com.example.smart_campus_operation_hub.exception.ResourceNotFoundException;
 import com.example.smart_campus_operation_hub.exception.UnauthorizedException;
+import com.example.smart_campus_operation_hub.exception.BadRequestException;
 import com.example.smart_campus_operation_hub.model.Attachment;
 import com.example.smart_campus_operation_hub.model.Comment;
 import com.example.smart_campus_operation_hub.model.Resource;
 import com.example.smart_campus_operation_hub.model.Ticket;
 import com.example.smart_campus_operation_hub.model.User;
 import com.example.smart_campus_operation_hub.enums.NotificationType;
+import com.example.smart_campus_operation_hub.enums.TicketCategory;
 import com.example.smart_campus_operation_hub.enums.TicketPriority;
 import com.example.smart_campus_operation_hub.enums.TicketStatus;
+import com.example.smart_campus_operation_hub.repository.CommentRepository;
 import com.example.smart_campus_operation_hub.repository.ResourceRepository;
 import com.example.smart_campus_operation_hub.repository.TicketRepository;
 import com.example.smart_campus_operation_hub.repository.UserRepository;
@@ -24,7 +28,10 @@ import org.springframework.stereotype.Service;
 import jakarta.persistence.criteria.Predicate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 import java.time.LocalDateTime;
 
@@ -38,15 +45,18 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final ResourceRepository resourceRepository;
+    private final CommentRepository commentRepository;
     private final NotificationService notificationService;
 
     public TicketService(TicketRepository ticketRepository,
                          UserRepository userRepository,
                          ResourceRepository resourceRepository,
+                         CommentRepository commentRepository,
                          NotificationService notificationService) {
         this.ticketRepository = ticketRepository;
         this.userRepository = userRepository;
         this.resourceRepository = resourceRepository;
+        this.commentRepository = commentRepository;
         this.notificationService = notificationService;
     }
 
@@ -74,9 +84,9 @@ public class TicketService {
         ticket.setUser(user);
         ticket.setResource(resource);
         ticket.setCategory(request.getCategory());
-        ticket.setDescription(request.getDescription());
+        ticket.setDescription(normalizeDescription(request.getDescription()));
         ticket.setPriority(request.getPriority());
-        ticket.setContactInfo(request.getContactInfo());
+        ticket.setContactInfo(normalizeContactInfo(request.getContactInfo(), request.getPriority()));
         ticket.setStatus(TicketStatus.OPEN);
 
         // 4. Calculate SLA deadline based on priority
@@ -141,6 +151,10 @@ public class TicketService {
      * @return paginated list of tickets
      */
     public Page<TicketResponse> getAllTickets(Long userId, String role, String status, String priority, String category, Pageable pageable) {
+        TicketStatus statusFilter = parseEnumIgnoreCase(status, TicketStatus.class, "status");
+        TicketPriority priorityFilter = parseEnumIgnoreCase(priority, TicketPriority.class, "priority");
+        TicketCategory categoryFilter = parseEnumIgnoreCase(category, TicketCategory.class, "category");
+
         Specification<Ticket> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -153,14 +167,14 @@ public class TicketService {
                 predicates.add(cb.equal(root.get("user").get("id"), userId));
             }
 
-            if (status != null && !status.isEmpty()) {
-                predicates.add(cb.equal(root.get("status"), TicketStatus.valueOf(status.toUpperCase())));
+            if (statusFilter != null) {
+                predicates.add(cb.equal(root.get("status"), statusFilter));
             }
-            if (priority != null && !priority.isEmpty()) {
-                predicates.add(cb.equal(root.get("priority"), TicketPriority.valueOf(priority.toUpperCase())));
+            if (priorityFilter != null) {
+                predicates.add(cb.equal(root.get("priority"), priorityFilter));
             }
-            if (category != null && !category.isEmpty()) {
-                predicates.add(cb.equal(root.get("category"), com.example.smart_campus_operation_hub.enums.TicketCategory.valueOf(category.toUpperCase())));
+            if (categoryFilter != null) {
+                predicates.add(cb.equal(root.get("category"), categoryFilter));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
@@ -195,9 +209,9 @@ public class TicketService {
 
         // Update fields
         ticket.setCategory(request.getCategory());
-        ticket.setDescription(request.getDescription());
+        ticket.setDescription(normalizeDescription(request.getDescription()));
         ticket.setPriority(request.getPriority());
-        ticket.setContactInfo(request.getContactInfo());
+        ticket.setContactInfo(normalizeContactInfo(request.getContactInfo(), request.getPriority()));
 
         // Recalculate SLA if priority changed
         ticket.setSlaDeadline(calculateSlaDeadline(request.getPriority()));
@@ -254,15 +268,28 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
 
-        if ("TECHNICIAN".equals(callerRole)) {
+        boolean isAdminOrManager = "ADMIN".equals(callerRole) || "MANAGER".equals(callerRole);
+        boolean isTechnician = "TECHNICIAN".equals(callerRole);
+
+        if (!isAdminOrManager && !isTechnician) {
+            throw new UnauthorizedException("You are not allowed to update ticket status");
+        }
+
+        if (isTechnician) {
             if (ticket.getAssignedTo() == null || !ticket.getAssignedTo().getId().equals(callerId)) {
-                throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
+                throw new UnauthorizedException(
                         "You can only update status for tickets assigned to you");
             }
             if (newStatus != TicketStatus.IN_PROGRESS && newStatus != TicketStatus.RESOLVED) {
-                throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
+                throw new UnauthorizedException(
                         "Technicians can only mark tickets as in progress or resolved");
             }
+        }
+
+        if ((newStatus == TicketStatus.IN_PROGRESS || newStatus == TicketStatus.RESOLVED)
+            && ticket.getAssignedTo() == null) {
+            throw new BadRequestException(
+                "Assign a technician before changing status to " + newStatus);
         }
 
         TicketStatus current = ticket.getStatus();
@@ -276,32 +303,45 @@ public class TicketService {
         };
 
         if (!valid) {
-            throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+            throw new BadRequestException(
                     "Cannot transition from " + current + " to " + newStatus);
         }
 
-        // Track first response time
-        if (ticket.getFirstResponseAt() == null) {
+        // Track first response when a technician starts work.
+        if (newStatus == TicketStatus.IN_PROGRESS && ticket.getFirstResponseAt() == null) {
             ticket.setFirstResponseAt(LocalDateTime.now());
+        }
+
+        if (newStatus == TicketStatus.IN_PROGRESS) {
+            ticket.setRejectionReason(null);
         }
 
         // Handle RESOLVED — require resolution notes
         if (newStatus == TicketStatus.RESOLVED) {
-            if (resolutionNotes == null || resolutionNotes.isBlank()) {
-                throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
-                        "Resolution notes are required when resolving a ticket");
+            String normalizedNotes = resolutionNotes == null ? "" : resolutionNotes.trim();
+            if (normalizedNotes.length() < 10) {
+                throw new BadRequestException(
+                        "Resolution notes (minimum 10 characters) are required when resolving a ticket");
             }
-            ticket.setResolutionNotes(resolutionNotes);
+            ticket.setResolutionNotes(normalizedNotes);
             ticket.setResolvedAt(LocalDateTime.now());
         }
 
         // Handle REJECTED — require rejection reason
         if (newStatus == TicketStatus.REJECTED) {
-            if (rejectionReason == null || rejectionReason.isBlank()) {
-                throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+            String normalizedReason = rejectionReason == null ? "" : rejectionReason.trim();
+            if (normalizedReason.length() < 10) {
+                throw new BadRequestException(
                         "Rejection reason is required");
             }
-            ticket.setRejectionReason(rejectionReason);
+            ticket.setRejectionReason(normalizedReason);
+            ticket.setAssignedTo(null);
+            ticket.setResolvedAt(null);
+            ticket.setResolutionNotes(null);
+        }
+
+        if (newStatus == TicketStatus.CLOSED && ticket.getResolvedAt() == null) {
+            ticket.setResolvedAt(LocalDateTime.now());
         }
 
         ticket.setStatus(newStatus);
@@ -328,6 +368,58 @@ public class TicketService {
     }
 
     /**
+     * Reopen a resolved/closed ticket when the issue persists.
+     * Owner, ADMIN, or MANAGER can reopen with a reason.
+     */
+    public TicketResponse reopenTicket(Long id, String reason, Long callerId, String callerRole) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
+
+        boolean isAdminOrManager = "ADMIN".equals(callerRole) || "MANAGER".equals(callerRole);
+        boolean isOwner = ticket.getUser().getId().equals(callerId);
+
+        if (!isAdminOrManager && !isOwner) {
+            throw new UnauthorizedException("Only ticket owner or admins can reopen a ticket");
+        }
+
+        if (ticket.getStatus() != TicketStatus.RESOLVED && ticket.getStatus() != TicketStatus.CLOSED) {
+            throw new BadRequestException("Only RESOLVED or CLOSED tickets can be reopened");
+        }
+
+        String normalizedReason = reason == null ? "" : reason.trim();
+        if (normalizedReason.length() < 10) {
+            throw new BadRequestException("Reopen reason must be at least 10 characters");
+        }
+
+        // If a technician is still assigned, reopen directly into active work.
+        ticket.setStatus(ticket.getAssignedTo() != null ? TicketStatus.IN_PROGRESS : TicketStatus.OPEN);
+        ticket.setResolvedAt(null);
+
+        Ticket saved = ticketRepository.save(ticket);
+
+        User actor = userRepository.findById(callerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", callerId));
+
+        Comment auditComment = new Comment();
+        auditComment.setTicket(saved);
+        auditComment.setAuthor(actor);
+        auditComment.setContent("Ticket reopened: " + normalizedReason);
+        commentRepository.save(auditComment);
+
+        if (!saved.getUser().getId().equals(callerId)) {
+            notificationService.send(saved.getUser().getId(), NotificationType.TICKET_STATUS_CHANGED,
+                    "Ticket Reopened", "Ticket #" + saved.getId() + " has been reopened.", saved.getId(), "TICKET");
+        }
+
+        if (saved.getAssignedTo() != null && !saved.getAssignedTo().getId().equals(callerId)) {
+            notificationService.send(saved.getAssignedTo().getId(), NotificationType.TICKET_STATUS_CHANGED,
+                    "Ticket Reopened", "Ticket #" + saved.getId() + " was reopened and needs attention.", saved.getId(), "TICKET");
+        }
+
+        return mapToResponse(saved);
+    }
+
+    /**
      * Assign a technician to a ticket. Admin only.
      * Automatically moves status to IN_PROGRESS.
      */
@@ -335,18 +427,29 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", ticketId));
 
-        if (ticket.getStatus() == TicketStatus.REJECTED || ticket.getStatus() == TicketStatus.CLOSED) {
-            throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+        if (ticket.getStatus() == TicketStatus.REJECTED
+                || ticket.getStatus() == TicketStatus.CLOSED
+                || ticket.getStatus() == TicketStatus.RESOLVED) {
+            throw new BadRequestException(
                 "Cannot assign technician to ticket with status: " + ticket.getStatus());
         }
 
         User technician = userRepository.findById(technicianId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", technicianId));
 
+        User previousAssignee = ticket.getAssignedTo();
+        if (previousAssignee != null && previousAssignee.getId().equals(technicianId)) {
+            return mapToResponse(ticket);
+        }
+
         // Verify the user has TECHNICIAN role
-        if (technician.getRole() != com.example.smart_campus_operation_hub.enums.Role.TECHNICIAN) {
-            throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+        if (technician.getRole() != Role.TECHNICIAN) {
+            throw new BadRequestException(
                     "User " + technician.getName() + " is not a technician");
+        }
+
+        if (!Boolean.TRUE.equals(technician.getIsActive())) {
+            throw new BadRequestException("Cannot assign inactive technician: " + technician.getName());
         }
 
         ticket.setAssignedTo(technician);
@@ -363,10 +466,17 @@ public class TicketService {
         Ticket saved = ticketRepository.save(ticket);
 
         // Notify user and technician
+        String assignmentAction = previousAssignee == null ? "assigned" : "reassigned";
         notificationService.send(saved.getUser().getId(), NotificationType.TICKET_ASSIGNED, 
-            "Technician Assigned", technician.getName() + " has been assigned to your ticket.", saved.getId(), "TICKET");
+            "Technician Assigned", technician.getName() + " has been " + assignmentAction + " to your ticket.", saved.getId(), "TICKET");
         notificationService.send(technician.getId(), NotificationType.TICKET_ASSIGNED, 
             "New Ticket Assigned", "You have been assigned to Ticket #" + saved.getId(), saved.getId(), "TICKET");
+
+        if (previousAssignee != null && !previousAssignee.getId().equals(technician.getId())) {
+            notificationService.send(previousAssignee.getId(), NotificationType.TICKET_ASSIGNED,
+                    "Ticket Reassigned", "Ticket #" + saved.getId() + " was reassigned to " + technician.getName() + ".",
+                    saved.getId(), "TICKET");
+        }
 
         return mapToResponse(saved);
     }
@@ -431,6 +541,7 @@ public class TicketService {
         response.setId(comment.getId());
         response.setAuthorId(comment.getAuthor().getId());
         response.setAuthorName(comment.getAuthor().getName());
+        response.setAuthorRole(comment.getAuthor().getRole().name());
         response.setAuthorAvatarUrl(comment.getAuthor().getAvatarUrl());
         response.setContent(comment.getContent());
         response.setCreatedAt(comment.getCreatedAt());
@@ -461,6 +572,47 @@ public class TicketService {
 
         if (!isAdminOrManager && !isOwner && !isAssignedTechnician) {
             throw new UnauthorizedException("You are not allowed to access this ticket");
+        }
+    }
+
+    private String normalizeDescription(String rawDescription) {
+        String description = rawDescription == null ? "" : rawDescription.trim();
+        if (description.length() < 10) {
+            throw new BadRequestException("Description must be at least 10 characters");
+        }
+        return description;
+    }
+
+    private String normalizeContactInfo(String rawContactInfo, TicketPriority priority) {
+        String contactInfo = rawContactInfo == null ? "" : rawContactInfo.trim();
+
+        if (contactInfo.isEmpty()) {
+            if (priority == TicketPriority.HIGH || priority == TicketPriority.CRITICAL) {
+                throw new BadRequestException("Contact info is required for HIGH or CRITICAL tickets");
+            }
+            return null;
+        }
+
+        if (contactInfo.length() > 255) {
+            throw new BadRequestException("Contact info must not exceed 255 characters");
+        }
+
+        return contactInfo;
+    }
+
+    private <E extends Enum<E>> E parseEnumIgnoreCase(String value, Class<E> enumClass, String fieldName) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        String normalizedValue = value.trim().toUpperCase(Locale.ROOT);
+        try {
+            return Enum.valueOf(enumClass, normalizedValue);
+        } catch (IllegalArgumentException ex) {
+            String allowed = Arrays.stream(enumClass.getEnumConstants())
+                    .map(Enum::name)
+                    .collect(Collectors.joining(", "));
+            throw new BadRequestException("Invalid " + fieldName + " value '" + value + "'. Allowed values: " + allowed);
         }
     }
 }
