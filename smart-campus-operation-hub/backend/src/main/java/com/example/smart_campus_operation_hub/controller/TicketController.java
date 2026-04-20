@@ -121,6 +121,22 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PatchMapping("/{id}/reopen")
+    @PreAuthorize("hasAnyRole('USER','ADMIN','MANAGER')")
+    public ResponseEntity<ApiResponse<Object>> reopenTicket(
+            Authentication authentication,
+            @PathVariable Long id,
+            @RequestParam String reason) {
+
+        Long callerId = (Long) authentication.getPrincipal();
+        String callerRole = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+
+        com.example.smart_campus_operation_hub.dto.response.TicketResponse response =
+                ticketService.reopenTicket(id, reason, callerId, callerRole);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @PostMapping("/{id}/attachments")
     public ResponseEntity<ApiResponse<Object>> uploadAttachment(
             Authentication authentication,
