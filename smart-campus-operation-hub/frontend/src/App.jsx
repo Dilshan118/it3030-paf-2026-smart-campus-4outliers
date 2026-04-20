@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import Sidebar from './components/common/Sidebar';
 import Navbar from './components/common/Navbar';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import PageErrorBoundary from './components/common/PageErrorBoundary';
 import LoginPage from './pages/auth/LoginPage';
 import OAuthCallback from './pages/auth/OAuthCallback';
 import AccessDeniedPage from './pages/auth/AccessDeniedPage';
@@ -30,15 +31,17 @@ const ADMIN_MANAGER = ['ADMIN', 'MANAGER'];
 
 function DashboardLayout({ children }) {
   return (
-    <div className="app-layout">
-      <Sidebar />
-      <div className="app-shell" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', background: 'var(--bg-primary)' }}>
-        <Navbar />
-        <main className="app-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0', width: '100%', boxSizing: 'border-box' }}>
-          {children}
-        </main>
+    <PageErrorBoundary>
+      <div className="app-layout">
+        <Sidebar />
+        <div className="app-shell" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', background: 'var(--bg-primary)' }}>
+          <Navbar />
+          <main className="app-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0', width: '100%', boxSizing: 'border-box' }}>
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </PageErrorBoundary>
   );
 }
 
