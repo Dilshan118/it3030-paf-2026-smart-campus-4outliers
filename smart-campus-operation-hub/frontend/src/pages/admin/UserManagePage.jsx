@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { Users, Search, RefreshCw } from 'lucide-react';
-
-const API_URL = 'http://localhost:8080/api/v1/admin/users';
 
 export default function UserManagePage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const ROLES = ['USER', 'TECHNICIAN', 'MANAGER', 'ADMIN'];
 
@@ -17,10 +16,12 @@ export default function UserManagePage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(API_URL);
+      setError('');
+      const res = await api.get('/admin/users');
       setUsers(res.data.data.content || []);
     } catch (err) {
       console.error('Failed to load users:', err);
+      setError(err.response?.data?.message || 'Failed to load user directory');
     } finally {
       setLoading(false);
     }
@@ -28,10 +29,11 @@ export default function UserManagePage() {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await axios.patch(`${API_URL}/${userId}/role?role=${newRole}`);
+      setError('');
+      await api.patch(`/admin/users/${userId}/role`, null, { params: { role: newRole } });
       fetchUsers();
     } catch (err) {
-      alert('Failed to update role');
+      setError(err.response?.data?.message || 'Failed to update role');
     }
   };
 
@@ -82,6 +84,12 @@ export default function UserManagePage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div style={{ padding: '16px 24px', borderRadius: 'var(--radius)', background: 'var(--danger-muted)', color: 'var(--danger)', fontFamily: 'var(--font-mono)', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <strong>SYS_ERR:</strong> {error}
+        </div>
+      )}
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {loading ? (

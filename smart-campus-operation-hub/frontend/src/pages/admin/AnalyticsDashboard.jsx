@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { Activity, Ticket, Box, CalendarCheck, TrendingUp, BarChart3, ShieldCheck, Clock, Zap } from 'lucide-react';
-
-const API_URL = 'http://localhost:8080/api/v1/admin/analytics';
 
 export default function AnalyticsDashboard() {
   const [metrics, setMetrics] = useState({
@@ -13,6 +11,7 @@ export default function AnalyticsDashboard() {
     totalBookings: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchMetrics();
@@ -21,12 +20,14 @@ export default function AnalyticsDashboard() {
   const fetchMetrics = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(API_URL);
+      setError('');
+      const res = await api.get('/admin/analytics');
       if (res.data && res.data.data) {
         setMetrics(res.data.data);
       }
     } catch (err) {
       console.error('Failed to load metrics:', err);
+      setError(err.response?.data?.message || 'Failed to load analytics metrics');
     } finally {
       setLoading(false);
     }
@@ -219,6 +220,12 @@ export default function AnalyticsDashboard() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div style={{ padding: '16px 24px', borderRadius: 'var(--radius)', background: 'var(--danger-muted)', color: 'var(--danger)', fontFamily: 'var(--font-mono)', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <strong>SYS_ERR:</strong> {error}
+        </div>
+      )}
 
       {loading ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
