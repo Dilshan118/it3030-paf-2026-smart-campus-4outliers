@@ -5,6 +5,7 @@ import com.example.smart_campus_operation_hub.dto.response.AttachmentResponse;
 import com.example.smart_campus_operation_hub.dto.response.CommentResponse;
 import com.example.smart_campus_operation_hub.dto.response.TicketResponse;
 import com.example.smart_campus_operation_hub.exception.ResourceNotFoundException;
+import com.example.smart_campus_operation_hub.exception.UnauthorizedException;
 import com.example.smart_campus_operation_hub.model.Attachment;
 import com.example.smart_campus_operation_hub.model.Comment;
 import com.example.smart_campus_operation_hub.model.Resource;
@@ -104,9 +105,11 @@ public class TicketService {
      * @return ticket details with nested comments and attachments
      * @throws ResourceNotFoundException if ticket does not exist
      */
-    public TicketResponse getTicketById(Long id) {
+    public TicketResponse getTicketById(Long id, Long callerId, String callerRole) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
+
+        enforceTicketAccess(ticket, callerId, callerRole);
 
         TicketResponse response = mapToResponse(ticket);
 
@@ -142,7 +145,10 @@ public class TicketService {
             List<Predicate> predicates = new ArrayList<>();
 
             if ("TECHNICIAN".equals(role)) {
-                predicates.add(cb.equal(root.get("assignedTo").get("id"), userId));
+                predicates.add(cb.or(
+                    cb.equal(root.get("assignedTo").get("id"), userId),
+                    cb.equal(root.get("user").get("id"), userId)
+                ));
             } else if (!"ADMIN".equals(role) && !"MANAGER".equals(role)) {
                 predicates.add(cb.equal(root.get("user").get("id"), userId));
             }
@@ -215,16 +221,19 @@ public class TicketService {
      * @param id     ticket ID
      * @param userId the user attempting the delete
      */
-    public void deleteTicket(Long id, Long userId) {
+    public void deleteTicket(Long id, Long userId, String callerRole) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
 
-        if (!ticket.getUser().getId().equals(userId)) {
+        boolean isAdmin = "ADMIN".equals(callerRole);
+        boolean isOwner = ticket.getUser().getId().equals(userId);
+
+        if (!isOwner && !isAdmin) {
             throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
                     "You can only delete your own tickets");
         }
 
-        if (ticket.getStatus() != TicketStatus.OPEN) {
+        if (!isAdmin && ticket.getStatus() != TicketStatus.OPEN) {
             throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
                     "Cannot delete ticket with status: " + ticket.getStatus());
         }
@@ -250,9 +259,9 @@ public class TicketService {
                 throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
                         "You can only update status for tickets assigned to you");
             }
-            if (newStatus != TicketStatus.RESOLVED) {
+            if (newStatus != TicketStatus.IN_PROGRESS && newStatus != TicketStatus.RESOLVED) {
                 throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
-                        "Technicians can only mark tickets as resolved");
+                        "Technicians can only mark tickets as in progress or resolved");
             }
         }
 
@@ -326,6 +335,11 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", ticketId));
 
+        if (ticket.getStatus() == TicketStatus.REJECTED || ticket.getStatus() == TicketStatus.CLOSED) {
+            throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+                "Cannot assign technician to ticket with status: " + ticket.getStatus());
+        }
+
         User technician = userRepository.findById(technicianId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", technicianId));
 
@@ -336,7 +350,10 @@ public class TicketService {
         }
 
         ticket.setAssignedTo(technician);
-        ticket.setStatus(TicketStatus.IN_PROGRESS);
+
+        if (ticket.getStatus() == TicketStatus.OPEN) {
+            ticket.setStatus(TicketStatus.IN_PROGRESS);
+        }
 
         // Track first response time
         if (ticket.getFirstResponseAt() == null) {
@@ -433,5 +450,17 @@ public class TicketService {
         response.setContentType(attachment.getContentType());
         response.setCreatedAt(attachment.getCreatedAt());
         return response;
+    }
+
+    private void enforceTicketAccess(Ticket ticket, Long callerId, String callerRole) {
+        boolean isAdminOrManager = "ADMIN".equals(callerRole) || "MANAGER".equals(callerRole);
+        boolean isOwner = ticket.getUser().getId().equals(callerId);
+        boolean isAssignedTechnician = "TECHNICIAN".equals(callerRole)
+                && ticket.getAssignedTo() != null
+                && ticket.getAssignedTo().getId().equals(callerId);
+
+        if (!isAdminOrManager && !isOwner && !isAssignedTechnician) {
+            throw new UnauthorizedException("You are not allowed to access this ticket");
+        }
     }
 }
