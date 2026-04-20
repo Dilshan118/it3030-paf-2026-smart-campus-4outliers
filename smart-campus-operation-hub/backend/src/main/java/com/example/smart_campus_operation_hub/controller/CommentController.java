@@ -19,9 +19,15 @@ public class CommentController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Object>> getComments(@PathVariable Long ticketId) {
+    public ResponseEntity<ApiResponse<Object>> getComments(
+            Authentication authentication,
+            @PathVariable Long ticketId) {
+
+        Long callerId = (Long) authentication.getPrincipal();
+        String callerRole = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+
         List<com.example.smart_campus_operation_hub.dto.response.CommentResponse> response =
-                commentService.getCommentsByTicketId(ticketId);
+                commentService.getCommentsByTicketId(ticketId, callerId, callerRole);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -32,8 +38,9 @@ public class CommentController {
             @jakarta.validation.Valid @RequestBody com.example.smart_campus_operation_hub.dto.request.CommentRequest request) {
 
         Long userId = (Long) authentication.getPrincipal();
+        String userRole = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
         com.example.smart_campus_operation_hub.dto.response.CommentResponse response =
-                commentService.addComment(ticketId, request.getContent(), userId);
+            commentService.addComment(ticketId, request.getContent(), userId, userRole);
 
         return ResponseEntity.status(201).body(ApiResponse.success(response));
     }
@@ -46,8 +53,9 @@ public class CommentController {
             @jakarta.validation.Valid @RequestBody com.example.smart_campus_operation_hub.dto.request.CommentRequest request) {
 
         Long userId = (Long) authentication.getPrincipal();
+        String userRole = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
         com.example.smart_campus_operation_hub.dto.response.CommentResponse response =
-                commentService.editComment(ticketId, commentId, request.getContent(), userId);
+            commentService.editComment(ticketId, commentId, request.getContent(), userId, userRole);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }

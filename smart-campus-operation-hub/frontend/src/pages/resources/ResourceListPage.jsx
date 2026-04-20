@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Search, Filter, RotateCcw, Building } from 'lucide-react';
 import { getAllResources, searchResources } from '../../api/resourceApi';
+import { resolveBackendUrl } from '../../utils/urlUtils';
 
 const TYPE_OPTIONS = ['ALL', 'LECTURE_HALL', 'LAB', 'MEETING_ROOM', 'EQUIPMENT'];
 const typeLabel = (type) => type.replace('_', ' ');
@@ -137,7 +138,7 @@ export default function ResourceListPage() {
                 <div style={{ height: '200px', background: 'var(--bg-surface-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                   {resource.imageUrls?.length > 0 || resource.imageUrl ? (
                     <img 
-                      src={`http://localhost:8080${resource.imageUrls?.[0] || resource.imageUrl}`} 
+                      src={resolveBackendUrl(resource.imageUrls?.[0] || resource.imageUrl)} 
                       alt={resource.name} 
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                       onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}

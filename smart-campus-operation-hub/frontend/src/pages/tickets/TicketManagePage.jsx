@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { getTickets, assignTechnician, updateTicketStatus, deleteTicket } from '../../api/ticketApi';
+import React, { useContext, useEffect, useState } from 'react';
+import { getTickets, assignTechnician, updateTicketStatus, deleteTicket, reopenTicket } from '../../api/ticketApi';
 import api from '../../api/axiosConfig';
-import { Briefcase, Activity, CheckCircle, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { Briefcase, Activity, CheckCircle, SlidersHorizontal, Trash2, RotateCcw, FolderCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 
 export default function TicketManagePage() {
+  const { user } = useContext(AuthContext);
   const [tickets, setTickets] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,7 @@ export default function TicketManagePage() {
   useEffect(() => { fetchTickets(); }, []);
 
   const handleAssign = async (ticketId, e) => {
-    const techId = e.target.value;
+    const techId = Number(e.target.value);
     if (!techId) return;
     try {
       setActionError('');
@@ -54,15 +56,51 @@ export default function TicketManagePage() {
     }
   }
 
-  const handleResolve = async (ticketId) => {
+  const handleResolve = async (ticket) => {
+    if (!ticket.assignedToId) {
+      setActionError('Assign a technician before resolving this ticket.');
+      return;
+    }
+
     const notes = window.prompt("Resolution Notes:", "Resolved by admin operations");
-    if (!notes) return;
+    if (!notes || notes.trim().length < 10) {
+      setActionError('Resolution notes must be at least 10 characters.');
+      return;
+    }
+
     try {
       setActionError('');
-      await updateTicketStatus(ticketId, 'RESOLVED', notes, '');
+      await updateTicketStatus(ticket.id, 'RESOLVED', notes.trim(), '');
       await fetchTickets();
     } catch (err) {
       setActionError('Failed to resolve: ' + (err.response?.data?.message || err.message));
+    }
+  }
+
+  const handleCloseTicket = async (ticketId) => {
+    if (!window.confirm('Close this resolved ticket?')) return;
+    try {
+      setActionError('');
+      await updateTicketStatus(ticketId, 'CLOSED', '', '');
+      await fetchTickets();
+    } catch (err) {
+      setActionError('Failed to close: ' + (err.response?.data?.message || err.message));
+    }
+  }
+
+  const handleReopenTicket = async (ticketId) => {
+    const reason = window.prompt('Reason for reopening (minimum 10 characters):', '') || '';
+    if (reason.trim().length < 10) {
+      setActionError('Reopen reason must be at least 10 characters.');
+      return;
+    }
+
+    try {
+      setActionError('');
+      await reopenTicket(ticketId, reason.trim());
+      await fetchTickets();
+    } catch (err) {
+      setActionError('Failed to reopen: ' + (err.response?.data?.message || err.message));
     }
   }
 
@@ -148,13 +186,18 @@ export default function TicketManagePage() {
                   <div><span className={`priority-badge priority-${t.priority.toLowerCase()}`}>{t.priority}</span></div>
                   
                   <div>
+                    {(() => {
+                      const isAssignable = t.status === 'OPEN' || t.status === 'IN_PROGRESS';
+                      return (
                      <select 
                        value={t.assignedToId || ''} 
                        onChange={(e) => handleAssign(t.id, e)}
+                       disabled={!isAssignable}
                        style={{ 
                          width: '100%', padding: '8px 12px', borderRadius: '8px', border: 'none',
                          background: 'var(--bg-surface-elevated)', fontFamily: 'var(--font-mono)', 
-                         fontSize: '0.8rem', color: 'var(--text-main)', outline: 'none', cursor: 'pointer'
+                         fontSize: '0.8rem', color: 'var(--text-main)', outline: 'none', cursor: isAssignable ? 'pointer' : 'not-allowed',
+                         opacity: isAssignable ? 1 : 0.6
                        }}
                      >
                        <option value="">Unassigned</option>
@@ -163,6 +206,8 @@ export default function TicketManagePage() {
 
                        ))}
                      </select>
+                      );
+                    })()}
                   </div>
 
                   <div style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
@@ -172,9 +217,9 @@ export default function TicketManagePage() {
                     >
                       <Briefcase size={16} strokeWidth={2} />
                     </Link>
-                    {t.status !== 'RESOLVED' && t.status !== 'CLOSED' && (
+                    {t.status === 'IN_PROGRESS' && t.assignedToId && (
                       <button 
-                        onClick={() => handleResolve(t.id)}
+                        onClick={() => handleResolve(t)}
                         style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
                         title="Quick Resolve"
                         onMouseOver={(e) => { e.currentTarget.style.background = 'var(--success)'; e.currentTarget.style.color = 'white'; }}
@@ -184,15 +229,41 @@ export default function TicketManagePage() {
                       </button>
                     )}
 
-                    <button 
-                      onClick={() => handleDeleteTicket(t.id)}
-                      style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(225, 42, 69, 0.1)', color: 'var(--danger)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', marginLeft: '8px' }}
-                      title="Delete Ticket"
-                      onMouseOver={(e) => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(225, 42, 69, 0.1)'; e.currentTarget.style.color = 'var(--danger)'; }}
-                    >
-                      <Trash2 size={16} strokeWidth={2} />
-                    </button>
+                    {t.status === 'RESOLVED' && (
+                      <button 
+                        onClick={() => handleCloseTicket(t.id)}
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(42, 20, 180, 0.08)', color: 'var(--accent-base)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                        title="Close Ticket"
+                        onMouseOver={(e) => { e.currentTarget.style.background = 'var(--accent-base)'; e.currentTarget.style.color = 'white'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(42, 20, 180, 0.08)'; e.currentTarget.style.color = 'var(--accent-base)'; }}
+                      >
+                        <FolderCheck size={17} strokeWidth={2} />
+                      </button>
+                    )}
+
+                    {(t.status === 'RESOLVED' || t.status === 'CLOSED') && (
+                      <button 
+                        onClick={() => handleReopenTicket(t.id)}
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.12)', color: '#b45309', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                        title="Reopen Ticket"
+                        onMouseOver={(e) => { e.currentTarget.style.background = '#b45309'; e.currentTarget.style.color = 'white'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(245, 158, 11, 0.12)'; e.currentTarget.style.color = '#b45309'; }}
+                      >
+                        <RotateCcw size={16} strokeWidth={2} />
+                      </button>
+                    )}
+
+                    {user?.role === 'ADMIN' && (
+                      <button 
+                        onClick={() => handleDeleteTicket(t.id)}
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(225, 42, 69, 0.1)', color: 'var(--danger)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', marginLeft: '8px' }}
+                        title="Delete Ticket"
+                        onMouseOver={(e) => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(225, 42, 69, 0.1)'; e.currentTarget.style.color = 'var(--danger)'; }}
+                      >
+                        <Trash2 size={16} strokeWidth={2} />
+                      </button>
+                    )}
 
                   </div>
                 </div>

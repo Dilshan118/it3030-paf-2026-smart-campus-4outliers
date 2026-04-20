@@ -1,4 +1,5 @@
 import { UploadCloud, X, ImageIcon, Clock } from 'lucide-react';
+import { resolveBackendUrl } from '../../utils/urlUtils';
 
 const TYPE_OPTIONS = ['LECTURE_HALL', 'LAB', 'MEETING_ROOM', 'EQUIPMENT'];
 const TYPE_LABELS = { LECTURE_HALL: 'Lecture Hall', LAB: 'Lab', MEETING_ROOM: 'Meeting Room', EQUIPMENT: 'Equipment' };
@@ -256,7 +257,7 @@ export default function ResourceForm({ form, setForm, onSubmit, onCancel, saving
               {form.imageUrls?.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '4px' }}>
                   {form.imageUrls.map((url, idx) => (
-                    <img key={`url-${idx}`} src={`http://localhost:8080${url}`} alt="Resource"
+                    <img key={`url-${idx}`} src={resolveBackendUrl(url)} alt="Resource"
                       style={{ height: '64px', width: '64px', borderRadius: '6px', objectFit: 'cover', border: '1.5px solid var(--border-main)' }} />
                   ))}
                 </div>

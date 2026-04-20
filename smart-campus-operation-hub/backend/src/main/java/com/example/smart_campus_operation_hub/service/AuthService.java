@@ -1,5 +1,6 @@
 package com.example.smart_campus_operation_hub.service;
 
+import com.example.smart_campus_operation_hub.exception.UnauthorizedException;
 import com.example.smart_campus_operation_hub.model.User;
 import com.example.smart_campus_operation_hub.repository.UserRepository;
 import com.example.smart_campus_operation_hub.security.JwtTokenProvider;
@@ -25,6 +26,10 @@ public class AuthService {
 
         User user = userRepository.findByEmail(email)
                 .orElseGet(() -> createNewUser(email, name, avatarUrl, providerId));
+
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new UnauthorizedException("Your account has been deactivated. Please contact an administrator");
+        }
 
         if (avatarUrl != null && !avatarUrl.equals(user.getAvatarUrl())) {
             user.setAvatarUrl(avatarUrl);

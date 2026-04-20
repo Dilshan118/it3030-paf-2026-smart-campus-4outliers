@@ -14,7 +14,7 @@ export default function Navbar() {
       background: 'rgba(255, 255, 255, 0.75)',
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
-      padding: '16px 32px',
+      padding: '16px 48px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',

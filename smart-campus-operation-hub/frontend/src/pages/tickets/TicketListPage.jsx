@@ -95,10 +95,9 @@ export default function TicketListPage() {
 
         {!loading && !error && tickets.length > 0 && (
           <div style={{ 
-            background: 'var(--bg-surface-elevated)', 
-            padding: '8px', 
-            borderRadius: 'var(--radius-lg)',
-            display: 'flex', flexDirection: 'column'
+            display: 'flex', 
+            flexDirection: 'column',
+            gap: '16px'
           }}>
             {tickets.map(t => (
               <TicketCard key={t.id} ticket={t} />
