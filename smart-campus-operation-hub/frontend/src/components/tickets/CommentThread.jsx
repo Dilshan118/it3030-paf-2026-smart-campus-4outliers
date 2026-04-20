@@ -21,7 +21,7 @@ export default function CommentThread({ ticketId, initialComments = [], onCommen
       try {
         setLoadingComments(true);
         const res = await getComments(ticketId);
-        const items = Array.isArray(res.data) ? res.data : [];
+        const items = Array.isArray(res?.data) ? res.data : [];
         if (isMounted) setComments(items);
       } catch {
         if (isMounted) setComments([]);
@@ -41,7 +41,9 @@ export default function CommentThread({ ticketId, initialComments = [], onCommen
     try {
       setLoading(true);
       const res = await addComment(ticketId, { content: newComment });
-      setComments(prev => [...prev, res.data]);
+      if (res?.data) {
+        setComments(prev => [...prev, res.data]);
+      }
       setNewComment('');
       if (onCommentAdded) onCommentAdded();
     } catch (err) {
