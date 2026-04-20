@@ -116,7 +116,7 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel, loadi
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '16px', marginTop: '24px', paddingTop: '32px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+      <div style={{ display: 'flex', gap: '16px', marginTop: '24px', paddingTop: '32px', borderTop: 'none' }}>
         <button type="button" onClick={onCancel} className="btn-secondary" style={{ flex: 1, justifyContent: 'center', fontSize: '1.05rem', padding: '18px' }} disabled={loading}>
           <X size={20} /> Dismiss
         </button>
