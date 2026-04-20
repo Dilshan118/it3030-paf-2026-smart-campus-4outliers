@@ -23,7 +23,7 @@ export default function NotificationHistoryPage() {
     try {
       setLoading(true);
       const response = await getNotifications(page, pageSize);
-      const data = response.data;
+      const data = response?.data;
       setNotifications(data?.content || []);
       setTotalPages(data?.totalPages || 0);
       setTotalElements(data?.totalElements || 0);
