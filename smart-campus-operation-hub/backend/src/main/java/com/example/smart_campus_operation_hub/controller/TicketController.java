@@ -45,8 +45,15 @@ public class TicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Object>> getTicketById(@PathVariable Long id) {
-        com.example.smart_campus_operation_hub.dto.response.TicketResponse response = ticketService.getTicketById(id);
+    public ResponseEntity<ApiResponse<Object>> getTicketById(
+            Authentication authentication,
+            @PathVariable Long id) {
+
+        Long callerId = (Long) authentication.getPrincipal();
+        String callerRole = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+
+        com.example.smart_campus_operation_hub.dto.response.TicketResponse response =
+                ticketService.getTicketById(id, callerId, callerRole);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -79,7 +86,8 @@ public class TicketController {
     public ResponseEntity<ApiResponse<Object>> deleteTicket(Authentication authentication,
                                                              @PathVariable Long id) {
         Long userId = (Long) authentication.getPrincipal();
-        ticketService.deleteTicket(id, userId);
+        String callerRole = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+        ticketService.deleteTicket(id, userId, callerRole);
         return ResponseEntity.ok(ApiResponse.success("Ticket deleted successfully"));
     }
 
@@ -115,11 +123,26 @@ public class TicketController {
 
     @PostMapping("/{id}/attachments")
     public ResponseEntity<ApiResponse<Object>> uploadAttachment(
+            Authentication authentication,
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file) {
 
+        Long callerId = (Long) authentication.getPrincipal();
+        String callerRole = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+
         com.example.smart_campus_operation_hub.model.Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new com.example.smart_campus_operation_hub.exception.ResourceNotFoundException("Ticket", id));
+
+        boolean isAdminOrManager = "ADMIN".equals(callerRole) || "MANAGER".equals(callerRole);
+        boolean isOwner = ticket.getUser().getId().equals(callerId);
+        boolean isAssignedTechnician = "TECHNICIAN".equals(callerRole)
+                && ticket.getAssignedTo() != null
+                && ticket.getAssignedTo().getId().equals(callerId);
+
+        if (!isAdminOrManager && !isOwner && !isAssignedTechnician) {
+            throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
+                    "You are not allowed to modify attachments for this ticket");
+        }
 
         if (ticket.getAttachments().size() >= 3) {
             throw new com.example.smart_campus_operation_hub.exception.BadRequestException("Maximum of 3 attachments allowed per ticket");
@@ -150,14 +173,30 @@ public class TicketController {
 
     @DeleteMapping("/{id}/attachments/{aid}")
     public ResponseEntity<ApiResponse<Object>> deleteAttachment(
+            Authentication authentication,
             @PathVariable Long id,
             @PathVariable Long aid) {
+
+        Long callerId = (Long) authentication.getPrincipal();
+        String callerRole = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
 
         com.example.smart_campus_operation_hub.model.Attachment attachment = attachmentRepository.findById(aid)
                 .orElseThrow(() -> new com.example.smart_campus_operation_hub.exception.ResourceNotFoundException("Attachment", aid));
 
         if (!attachment.getTicket().getId().equals(id)) {
             throw new com.example.smart_campus_operation_hub.exception.BadRequestException("Attachment does not belong to the specified ticket");
+        }
+
+        com.example.smart_campus_operation_hub.model.Ticket ticket = attachment.getTicket();
+        boolean isAdminOrManager = "ADMIN".equals(callerRole) || "MANAGER".equals(callerRole);
+        boolean isOwner = ticket.getUser().getId().equals(callerId);
+        boolean isAssignedTechnician = "TECHNICIAN".equals(callerRole)
+                && ticket.getAssignedTo() != null
+                && ticket.getAssignedTo().getId().equals(callerId);
+
+        if (!isAdminOrManager && !isOwner && !isAssignedTechnician) {
+            throw new com.example.smart_campus_operation_hub.exception.UnauthorizedException(
+                    "You are not allowed to delete attachments for this ticket");
         }
 
         fileStorageService.deleteFile(attachment.getFileUrl());
