@@ -51,6 +51,6 @@ public class UserService {
     }
 
     public List<User> getTechnicians() {
-        return userRepository.findByRole(Role.TECHNICIAN);
+        return userRepository.findByRoleAndIsActiveTrue(Role.TECHNICIAN);
     }
 }
