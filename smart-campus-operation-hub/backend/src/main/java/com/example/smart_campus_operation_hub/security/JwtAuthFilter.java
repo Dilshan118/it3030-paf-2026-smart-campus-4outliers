@@ -1,5 +1,7 @@
 package com.example.smart_campus_operation_hub.security;
 
+import com.example.smart_campus_operation_hub.model.User;
+import com.example.smart_campus_operation_hub.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,9 +20,11 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
-    public JwtAuthFilter(JwtTokenProvider jwtTokenProvider) {
+    public JwtAuthFilter(JwtTokenProvider jwtTokenProvider, UserRepository userRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -33,15 +37,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (token != null && jwtTokenProvider.validateToken(token)) {
             Long userId = jwtTokenProvider.getUserIdFromToken(token);
-            String role = jwtTokenProvider.getRoleFromToken(token);
-
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userId,
-                            null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                    );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            userRepository.findById(userId)
+                .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
+                .ifPresent(this::authenticate);
         }
 
         filterChain.doFilter(request, response);
@@ -53,5 +51,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return bearer.substring(7);
         }
         return null;
+    }
+
+    private void authenticate(User user) {
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        user.getId(),
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+                );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 }
