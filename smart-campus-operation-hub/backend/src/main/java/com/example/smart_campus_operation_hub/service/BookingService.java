@@ -167,10 +167,25 @@ public class BookingService {
     }
 
     // ─── Get Booking By ID ────────────────────────────────────────────
-    public BookingResponse getBookingById(Long id) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
+    public BookingResponse getBookingById(Long id, Long callerId, String callerRole) {
+        Booking booking = getAccessibleBooking(id, callerId, callerRole);
         return toResponse(booking);
+    }
+
+    // ─── Get Booking QR ───────────────────────────────────────────────
+    public String getBookingQr(Long id, Long callerId, String callerRole) {
+        Booking booking = getAccessibleBooking(id, callerId, callerRole);
+
+        if (booking.getStatus() != BookingStatus.APPROVED) {
+            throw new BadRequestException("QR code is available only for APPROVED bookings");
+        }
+
+        if (booking.getQrCode() == null || booking.getQrCode().isBlank()) {
+            booking.setQrCode(generateQrCode(booking));
+            booking = bookingRepository.save(booking);
+        }
+
+        return booking.getQrCode();
     }
 
     // ─── Cancel Booking ───────────────────────────────────────────────
@@ -178,7 +193,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
 
-        boolean isAdmin = role.equals("ADMIN") || role.equals("MANAGER");
+        boolean isAdmin = "ADMIN".equals(role) || "MANAGER".equals(role);
         if (!booking.getUser().getId().equals(userId) && !isAdmin) {
             throw new UnauthorizedException("You can only cancel your own bookings");
         }
@@ -257,6 +272,18 @@ public class BookingService {
         );
 
         return toResponse(saved);
+    }
+
+    private Booking getAccessibleBooking(Long id, Long callerId, String callerRole) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
+
+        boolean isAdminOrManager = "ADMIN".equals(callerRole) || "MANAGER".equals(callerRole);
+        if (!isAdminOrManager && !booking.getUser().getId().equals(callerId)) {
+            throw new UnauthorizedException("You can only view your own bookings");
+        }
+
+        return booking;
     }
 
     // ─── Check Conflicts ─────────────────────────────────────────────
