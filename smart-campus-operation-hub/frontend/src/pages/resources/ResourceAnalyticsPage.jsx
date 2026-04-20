@@ -44,8 +44,80 @@ function CssBar({ value, max, color, height = 6 }) {
   );
 }
 
+class ChartSectionBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.error('Chart section failed to render:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
+
+const DEFAULT_ANALYTICS = {
+  totalResources: 0,
+  activeResources: 0,
+  outOfServiceResources: 0,
+  resourcesByType: {},
+  resourcesByLocation: {},
+  addedThisMonth: 0,
+  activePercentage: 0,
+};
+
+function toNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function toObjectMap(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+  return value;
+}
+
+function safeLabel(value, fallback) {
+  if (value === null || value === undefined) {
+    return fallback;
+  }
+  const normalized = String(value).trim();
+  return normalized.length ? normalized : fallback;
+}
+
+function normalizeAnalyticsPayload(payload) {
+  const raw = payload && typeof payload === 'object' && !Array.isArray(payload)
+    ? (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data) ? payload.data : payload)
+    : null;
+
+  if (!raw) {
+    return null;
+  }
+
+  return {
+    totalResources: toNumber(raw.totalResources),
+    activeResources: toNumber(raw.activeResources),
+    outOfServiceResources: toNumber(raw.outOfServiceResources),
+    resourcesByType: toObjectMap(raw.resourcesByType),
+    resourcesByLocation: toObjectMap(raw.resourcesByLocation),
+    addedThisMonth: toNumber(raw.addedThisMonth),
+    activePercentage: toNumber(raw.activePercentage),
+  };
+}
+
 export default function ResourceAnalyticsPage() {
-  const [data, setData]       = useState(null);
+  const [data, setData]       = useState(DEFAULT_ANALYTICS);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
   const [refreshedAt, setRefreshedAt] = useState(null);
@@ -54,8 +126,18 @@ export default function ResourceAnalyticsPage() {
     setLoading(true);
     setError(null);
     getResourceAnalytics()
-      .then(res => { setData(res.data); setRefreshedAt(new Date()); })
-      .catch(() => setError('Failed to fetch analytics from server.'))
+      .then(res => {
+        const normalized = normalizeAnalyticsPayload(res.data);
+        if (!normalized) {
+          throw new Error('Invalid analytics payload');
+        }
+        setData(normalized);
+        setRefreshedAt(new Date());
+      })
+      .catch(() => {
+        setData(DEFAULT_ANALYTICS);
+        setError('Failed to fetch analytics from server.');
+      })
       .finally(() => setLoading(false));
   };
 
@@ -87,10 +169,12 @@ export default function ResourceAnalyticsPage() {
     resourcesByType, resourcesByLocation, addedThisMonth, activePercentage,
   } = data;
 
-  const typeEntries = Object.entries(resourcesByType  || {}).sort((a, b) => b[1] - a[1]);
-  const locEntries  = Object.entries(resourcesByLocation || {}).sort((a, b) => b[1] - a[1]);
-  const maxType = Math.max(...typeEntries.map(([, v]) => v), 1);
-  const maxLoc  = Math.max(...locEntries.map(([, v]) => v),  1);
+  const typeEntries = Object.entries(resourcesByType || {})
+    .map(([type, count]) => [safeLabel(type, 'UNKNOWN'), toNumber(count)])
+    .sort((a, b) => b[1] - a[1]);
+  const locEntries  = Object.entries(resourcesByLocation || {})
+    .map(([location, count]) => [safeLabel(location, 'UNSPECIFIED'), toNumber(count)])
+    .sort((a, b) => b[1] - a[1]);
 
   // Prepare chart data
   const pieData = typeEntries.map(([type, count]) => {
@@ -103,7 +187,7 @@ export default function ResourceAnalyticsPage() {
     count,
   }));
 
-  const activeRate = Math.min(activePercentage, 100);
+  const activeRate = Math.max(0, Math.min(toNumber(activePercentage), 100));
   const rateColor  = activeRate >= 70 ? 'var(--success)' : activeRate >= 40 ? 'var(--warning)' : 'var(--danger)';
 
   return (
@@ -167,19 +251,27 @@ export default function ResourceAnalyticsPage() {
              <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No location data yet.</p>
           ) : (
             <div style={{ height: '300px', width: '100%', marginTop: '24px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-main)" />
-                  <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={100} axisLine={false} tickLine={false} tick={{fill: 'var(--text-muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }} />
-                  <Tooltip 
-                    cursor={{fill: 'rgba(0,0,0,0.03)'}}
-                    contentStyle={{ background: '#11141b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }} 
-                    itemStyle={{color: '#fff'}}
-                  />
-                  <Bar dataKey="count" fill="var(--info)" radius={[0, 4, 4, 0]} barSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
+              <ChartSectionBoundary
+                fallback={
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
+                    Chart unavailable for this browser session.
+                  </div>
+                }
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-main)" />
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="name" width={100} axisLine={false} tickLine={false} tick={{fill: 'var(--text-muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }} />
+                    <Tooltip 
+                      cursor={{fill: 'rgba(0,0,0,0.03)'}}
+                      contentStyle={{ background: '#11141b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }} 
+                      itemStyle={{color: '#fff'}}
+                    />
+                    <Bar dataKey="count" fill="var(--info)" radius={[0, 4, 4, 0]} barSize={20} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartSectionBoundary>
             </div>
           )}
         </div>
@@ -194,28 +286,36 @@ export default function ResourceAnalyticsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) minmax(180px, auto)', gap: '20px', alignItems: 'center' }}>
               {/* Architecture Pie Chart */}
               <div style={{ height: '240px', width: '100%', position: 'relative' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={4}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                          contentStyle={{ background: '#11141b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', padding: '10px 16px' }} 
-                          itemStyle={{color: '#fff'}}
-                      />
-                    </PieChart>
-                </ResponsiveContainer>
+                <ChartSectionBoundary
+                  fallback={
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
+                      Chart unavailable for this browser session.
+                    </div>
+                  }
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={90}
+                          paddingAngle={4}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                            contentStyle={{ background: '#11141b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', padding: '10px 16px' }} 
+                            itemStyle={{color: '#fff'}}
+                        />
+                      </PieChart>
+                  </ResponsiveContainer>
+                </ChartSectionBoundary>
               </div>
               
               {/* Type legend */}
@@ -239,7 +339,7 @@ export default function ResourceAnalyticsPage() {
                 Infrastructure Health Status
               </span>
               <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 900, color: rateColor }}>
-                {activePercentage.toFixed(1)}% Operational
+                {activeRate.toFixed(1)}% Operational
               </span>
             </div>
             <div style={{ height: '6px', background: 'var(--bg-surface-elevated)', position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
