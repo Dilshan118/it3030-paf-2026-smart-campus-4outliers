@@ -2,14 +2,39 @@ import React, { useEffect, useState } from 'react';
 import api from '../../api/axiosConfig';
 import { Activity, Ticket, Box, CalendarCheck, TrendingUp, BarChart3, ShieldCheck, Clock, Zap } from 'lucide-react';
 
+const DEFAULT_METRICS = {
+  totalTickets: 0,
+  openTickets: 0,
+  resolvedTickets: 0,
+  totalResources: 0,
+  totalBookings: 0,
+};
+
+function toNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeMetricsPayload(payload) {
+  const raw = payload && typeof payload === 'object' && !Array.isArray(payload)
+    ? (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data) ? payload.data : payload)
+    : null;
+
+  if (!raw) {
+    return DEFAULT_METRICS;
+  }
+
+  return {
+    totalTickets: toNumber(raw.totalTickets),
+    openTickets: toNumber(raw.openTickets),
+    resolvedTickets: toNumber(raw.resolvedTickets),
+    totalResources: toNumber(raw.totalResources),
+    totalBookings: toNumber(raw.totalBookings),
+  };
+}
+
 export default function AnalyticsDashboard() {
-  const [metrics, setMetrics] = useState({
-    totalTickets: 0,
-    openTickets: 0,
-    resolvedTickets: 0,
-    totalResources: 0,
-    totalBookings: 0,
-  });
+  const [metrics, setMetrics] = useState(DEFAULT_METRICS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -22,12 +47,11 @@ export default function AnalyticsDashboard() {
       setLoading(true);
       setError('');
       const res = await api.get('/admin/analytics');
-      if (res.data && res.data.data) {
-        setMetrics(res.data.data);
-      }
+      setMetrics(normalizeMetricsPayload(res.data));
     } catch (err) {
       console.error('Failed to load metrics:', err);
       setError(err.response?.data?.message || 'Failed to load analytics metrics');
+      setMetrics(DEFAULT_METRICS);
     } finally {
       setLoading(false);
     }
