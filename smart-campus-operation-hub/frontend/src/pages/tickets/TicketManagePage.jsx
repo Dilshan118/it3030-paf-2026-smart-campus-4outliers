@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { getTickets, assignTechnician, updateTicketStatus, deleteTicket } from '../../api/ticketApi';
 import api from '../../api/axiosConfig';
 import { Briefcase, Activity, CheckCircle, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 
 export default function TicketManagePage() {
+  const { user } = useContext(AuthContext);
   const [tickets, setTickets] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -148,13 +150,18 @@ export default function TicketManagePage() {
                   <div><span className={`priority-badge priority-${t.priority.toLowerCase()}`}>{t.priority}</span></div>
                   
                   <div>
+                    {(() => {
+                      const isAssignable = t.status === 'OPEN' || t.status === 'IN_PROGRESS';
+                      return (
                      <select 
                        value={t.assignedToId || ''} 
                        onChange={(e) => handleAssign(t.id, e)}
+                       disabled={!isAssignable}
                        style={{ 
                          width: '100%', padding: '8px 12px', borderRadius: '8px', border: 'none',
                          background: 'var(--bg-surface-elevated)', fontFamily: 'var(--font-mono)', 
-                         fontSize: '0.8rem', color: 'var(--text-main)', outline: 'none', cursor: 'pointer'
+                         fontSize: '0.8rem', color: 'var(--text-main)', outline: 'none', cursor: isAssignable ? 'pointer' : 'not-allowed',
+                         opacity: isAssignable ? 1 : 0.6
                        }}
                      >
                        <option value="">Unassigned</option>
@@ -163,6 +170,8 @@ export default function TicketManagePage() {
 
                        ))}
                      </select>
+                      );
+                    })()}
                   </div>
 
                   <div style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
@@ -172,7 +181,7 @@ export default function TicketManagePage() {
                     >
                       <Briefcase size={16} strokeWidth={2} />
                     </Link>
-                    {t.status !== 'RESOLVED' && t.status !== 'CLOSED' && (
+                    {t.status === 'IN_PROGRESS' && (
                       <button 
                         onClick={() => handleResolve(t.id)}
                         style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
@@ -184,15 +193,17 @@ export default function TicketManagePage() {
                       </button>
                     )}
 
-                    <button 
-                      onClick={() => handleDeleteTicket(t.id)}
-                      style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(225, 42, 69, 0.1)', color: 'var(--danger)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', marginLeft: '8px' }}
-                      title="Delete Ticket"
-                      onMouseOver={(e) => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(225, 42, 69, 0.1)'; e.currentTarget.style.color = 'var(--danger)'; }}
-                    >
-                      <Trash2 size={16} strokeWidth={2} />
-                    </button>
+                    {user?.role === 'ADMIN' && (
+                      <button 
+                        onClick={() => handleDeleteTicket(t.id)}
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(225, 42, 69, 0.1)', color: 'var(--danger)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', marginLeft: '8px' }}
+                        title="Delete Ticket"
+                        onMouseOver={(e) => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(225, 42, 69, 0.1)'; e.currentTarget.style.color = 'var(--danger)'; }}
+                      >
+                        <Trash2 size={16} strokeWidth={2} />
+                      </button>
+                    )}
 
                   </div>
                 </div>
