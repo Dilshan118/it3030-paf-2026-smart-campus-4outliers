@@ -110,8 +110,8 @@ public class ResourceController {
                 throw new IllegalArgumentException("File size must not exceed 5MB");
 
             String contentType = file.getContentType();
-            if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png") && !contentType.equals("image/webp")))
-                throw new IllegalArgumentException("Only JPG, PNG and WEBP files are allowed");
+            if (contentType == null || !contentType.startsWith("image/"))
+                throw new IllegalArgumentException("Only image files are allowed");
 
             String encodedImage = java.util.Base64.getEncoder().encodeToString(file.getBytes());
             uploadedUrls.add("data:" + contentType + ";base64," + encodedImage);

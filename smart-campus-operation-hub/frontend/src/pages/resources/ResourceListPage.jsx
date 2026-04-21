@@ -1,8 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Search, Filter, RotateCcw, Building } from 'lucide-react';
-import { getAllResources, searchResources } from '../../api/resourceApi';
+import { getAllResources, getResourceById, searchResources } from '../../api/resourceApi';
 import { resolveBackendUrl } from '../../utils/urlUtils';
+
+function LazyThumbnail({ resourceId, name }) {
+  const [src, setSrc] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          observer.disconnect();
+          getResourceById(resourceId)
+            .then(res => {
+              const urls = res?.data?.imageUrls;
+              const legacy = res?.data?.legacyImageUrl;
+              const first = urls?.[0] || legacy;
+              if (first) setSrc(resolveBackendUrl(first));
+              else setFailed(true);
+            })
+            .catch(() => setFailed(true));
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [resourceId]);
+
+  return (
+    <div ref={ref} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {src && !failed ? (
+        <img src={src} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setFailed(true)} />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--text-muted)', opacity: 0.5 }}>
+          <Building size={40} strokeWidth={1} style={{ marginBottom: '8px' }} />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.1em' }}>NO IMAGE</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const TYPE_OPTIONS = ['ALL', 'LECTURE_HALL', 'LAB', 'MEETING_ROOM', 'EQUIPMENT'];
 const typeLabel = (type) => type.replace('_', ' ');
@@ -136,18 +179,15 @@ export default function ResourceListPage() {
                 
                 {/* Image Area */}
                 <div style={{ height: '200px', background: 'var(--bg-surface-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                  {resource.imageUrls?.length > 0 || resource.imageUrl ? (
-                    <img 
-                      src={resolveBackendUrl(resource.imageUrls?.[0] || resource.imageUrl)} 
-                      alt={resource.name} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                    />
-                  ) : null}
-                  <div style={{ display: (resource.imageUrls?.length > 0 || resource.imageUrl) ? 'none' : 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--text-muted)', opacity: 0.5 }}>
-                    <Building size={40} strokeWidth={1} style={{ marginBottom: '8px' }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.1em' }}>NO IMAGE</span>
-                  </div>
+                  {resource.hasImage
+                    ? <LazyThumbnail resourceId={resource.id} name={resource.name} />
+                    : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--text-muted)', opacity: 0.5 }}>
+                        <Building size={40} strokeWidth={1} style={{ marginBottom: '8px' }} />
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.1em' }}>NO IMAGE</span>
+                      </div>
+                    )
+                  }
                   
                   {/* Floating Status */}
                   <div style={{ position: 'absolute', top: '16px', right: '16px', background: 'var(--bg-surface)', padding: '6px 12px', borderRadius: '100px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
