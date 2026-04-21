@@ -1,24 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Bell } from 'lucide-react';
-import { getUnreadCount } from '../../api/notificationApi';
+import { getUnreadCount, getNotifications } from '../../api/notificationApi';
 import NotificationDropdown from './NotificationDropdown';
+import { useToast } from '../../context/ToastContext';
 
 export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const prevCountRef = useRef(0);
+  const { addToast } = useToast();
 
   useEffect(() => {
     fetchUnreadCount();
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
+    // Poll for new notifications every 15 seconds for responsiveness
+    const interval = setInterval(fetchUnreadCount, 15000);
     return () => clearInterval(interval);
   }, []);
 
   const fetchUnreadCount = async () => {
     try {
       const response = await getUnreadCount();
-      setUnreadCount(response.data || 0);
+      const currentCount = response.data || 0;
+      
+      if (currentCount > prevCountRef.current) {
+        // New notification arrived! Fetch the latest one to show in toast
+        try {
+          const listRes = await getNotifications(0, 1);
+          const latest = listRes.data?.content?.[0];
+          if (latest) {
+            addToast(latest.title, 'info', 5000);
+          } else {
+            addToast('New notification received', 'info');
+          }
+        } catch (e) {
+          addToast('New notification received', 'info');
+        }
+      }
+      
+      prevCountRef.current = currentCount;
+      setUnreadCount(currentCount);
     } catch (error) {
       console.error('Failed to fetch unread count:', error);
     }
@@ -33,7 +53,12 @@ export default function NotificationBell() {
   };
 
   const handleNotificationRead = () => {
-    fetchUnreadCount();
+    // Re-fetch count immediately if a notification was read inside dropdown
+    getUnreadCount().then(res => {
+      const c = res.data || 0;
+      prevCountRef.current = c;
+      setUnreadCount(c);
+    }).catch(console.error);
   };
 
   return (
