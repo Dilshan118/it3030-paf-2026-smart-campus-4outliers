@@ -24,9 +24,11 @@ import com.example.smart_campus_operation_hub.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.JoinType;
 import org.springframework.stereotype.Service;
 import jakarta.persistence.criteria.Predicate;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +36,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 
 /**
  * MEMBER 3: Ticket Service
@@ -41,6 +44,18 @@ import java.time.LocalDateTime;
  */
 @Service
 public class TicketService {
+
+    private enum AssigneeFilter {
+        ASSIGNED,
+        UNASSIGNED,
+        MINE
+    }
+
+    private enum SlaStateFilter {
+        BREACHED,
+        DUE_SOON,
+        ON_TRACK
+    }
 
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
@@ -150,12 +165,37 @@ public class TicketService {
      * @param pageable pagination params (page, size, sort)
      * @return paginated list of tickets
      */
-    public Page<TicketResponse> getAllTickets(Long userId, String role, String status, String priority, String category, Pageable pageable) {
+    public Page<TicketResponse> getAllTickets(Long userId,
+                                              String role,
+                                              String status,
+                                              String priority,
+                                              String category,
+                                              String query,
+                                              String assignee,
+                                              String slaState,
+                                              String createdFrom,
+                                              String createdTo,
+                                              Pageable pageable) {
         TicketStatus statusFilter = parseEnumIgnoreCase(status, TicketStatus.class, "status");
         TicketPriority priorityFilter = parseEnumIgnoreCase(priority, TicketPriority.class, "priority");
         TicketCategory categoryFilter = parseEnumIgnoreCase(category, TicketCategory.class, "category");
+        AssigneeFilter assigneeFilter = parseAssigneeFilter(assignee);
+        SlaStateFilter slaStateFilter = parseSlaStateFilter(slaState);
+        LocalDateTime createdFromFilter = parseDateStart(createdFrom, "createdFrom");
+        LocalDateTime createdToFilter = parseDateStart(createdTo, "createdTo");
+        LocalDateTime createdToFilterExclusive = createdToFilter == null
+            ? null
+            : createdToFilter.plusDays(1);
 
-        Specification<Ticket> spec = (root, query, cb) -> {
+        if (createdFromFilter != null
+                && createdToFilterExclusive != null
+                && !createdFromFilter.isBefore(createdToFilterExclusive)) {
+            throw new BadRequestException("createdFrom must be before or equal to createdTo");
+        }
+
+        String searchQuery = query == null ? "" : query.trim();
+
+        Specification<Ticket> spec = (root, criteriaQuery, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if ("TECHNICIAN".equals(role)) {
@@ -176,6 +216,84 @@ public class TicketService {
             if (categoryFilter != null) {
                 predicates.add(cb.equal(root.get("category"), categoryFilter));
             }
+
+                if (!searchQuery.isEmpty()) {
+                String pattern = "%" + searchQuery.toLowerCase(Locale.ROOT) + "%";
+                Predicate inDescription = cb.like(
+                    cb.lower(cb.coalesce(root.get("description"), "")),
+                    pattern
+                );
+                Predicate inContact = cb.like(
+                    cb.lower(cb.coalesce(root.get("contactInfo"), "")),
+                    pattern
+                );
+                Predicate inCategory = cb.like(
+                    cb.lower(root.get("category").as(String.class)),
+                    pattern
+                );
+                Predicate inReporter = cb.like(
+                    cb.lower(cb.coalesce(root.join("user", JoinType.LEFT).get("name"), "")),
+                    pattern
+                );
+                Predicate inAssignee = cb.like(
+                    cb.lower(cb.coalesce(root.join("assignedTo", JoinType.LEFT).get("name"), "")),
+                    pattern
+                );
+                Predicate inResource = cb.like(
+                    cb.lower(cb.coalesce(root.join("resource", JoinType.LEFT).get("name"), "")),
+                    pattern
+                );
+
+                predicates.add(cb.or(
+                    inDescription,
+                    inContact,
+                    inCategory,
+                    inReporter,
+                    inAssignee,
+                    inResource
+                ));
+                }
+
+                if (assigneeFilter != null) {
+                switch (assigneeFilter) {
+                    case ASSIGNED -> predicates.add(cb.isNotNull(root.get("assignedTo")));
+                    case UNASSIGNED -> predicates.add(cb.isNull(root.get("assignedTo")));
+                    case MINE -> predicates.add(cb.equal(root.get("assignedTo").get("id"), userId));
+                }
+                }
+
+                if (slaStateFilter != null) {
+                LocalDateTime now = LocalDateTime.now();
+                Predicate activeStatus = root.get("status").in(TicketStatus.OPEN, TicketStatus.IN_PROGRESS);
+                Predicate hasDeadline = cb.isNotNull(root.get("slaDeadline"));
+
+                switch (slaStateFilter) {
+                    case BREACHED -> predicates.add(cb.and(
+                        activeStatus,
+                        hasDeadline,
+                        cb.lessThan(root.get("slaDeadline"), now)
+                    ));
+                    case DUE_SOON -> predicates.add(cb.and(
+                        activeStatus,
+                        hasDeadline,
+                        cb.greaterThanOrEqualTo(root.get("slaDeadline"), now),
+                        cb.lessThanOrEqualTo(root.get("slaDeadline"), now.plusHours(4))
+                    ));
+                    case ON_TRACK -> predicates.add(cb.and(
+                        activeStatus,
+                        hasDeadline,
+                        cb.greaterThan(root.get("slaDeadline"), now.plusHours(4))
+                    ));
+                }
+                }
+
+                if (createdFromFilter != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), createdFromFilter));
+                }
+
+                if (createdToFilterExclusive != null) {
+                predicates.add(cb.lessThan(root.get("createdAt"), createdToFilterExclusive));
+                }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -598,6 +716,53 @@ public class TicketService {
         }
 
         return contactInfo;
+    }
+
+    private AssigneeFilter parseAssigneeFilter(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        String normalized = value.trim().toUpperCase(Locale.ROOT)
+                .replace('-', '_')
+                .replace(' ', '_');
+
+        try {
+            return AssigneeFilter.valueOf(normalized);
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Invalid assignee value '" + value
+                    + "'. Allowed values: ASSIGNED, UNASSIGNED, MINE");
+        }
+    }
+
+    private SlaStateFilter parseSlaStateFilter(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        String normalized = value.trim().toUpperCase(Locale.ROOT)
+                .replace('-', '_')
+                .replace(' ', '_');
+
+        try {
+            return SlaStateFilter.valueOf(normalized);
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Invalid slaState value '" + value
+                    + "'. Allowed values: BREACHED, DUE_SOON, ON_TRACK");
+        }
+    }
+
+    private LocalDateTime parseDateStart(String value, String fieldName) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            return LocalDate.parse(value.trim()).atStartOfDay();
+        } catch (DateTimeParseException ex) {
+            throw new BadRequestException("Invalid " + fieldName
+                    + " value '" + value + "'. Expected format: yyyy-MM-dd");
+        }
     }
 
     private <E extends Enum<E>> E parseEnumIgnoreCase(String value, Class<E> enumClass, String fieldName) {
