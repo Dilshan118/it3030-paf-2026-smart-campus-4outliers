@@ -59,13 +59,25 @@ export default function Navbar() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
         
         <div style={{ 
-          display: 'flex', alignItems: 'center', gap: '8px', 
-          padding: '8px 16px', background: 'rgba(16, 185, 129, 0.08)', borderRadius: '100px',
-          color: 'var(--success)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 700,
-          border: '1px solid rgba(16, 185, 129, 0.15)'
+          display: 'flex', alignItems: 'center', gap: '10px', 
+          padding: '8px 16px', background: 'var(--success-muted)', borderRadius: '100px',
+          color: 'var(--success)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 800,
+          border: '1px solid rgba(16, 185, 129, 0.1)',
+          boxShadow: '0 4px 12px -2px var(--success-muted)',
+          letterSpacing: '0.05em'
         }}>
-          <Rocket size={14} />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '8px', height: '8px', background: 'var(--success)', borderRadius: '50%' }} />
+            <div style={{ position: 'absolute', width: '12px', height: '12px', background: 'var(--success)', borderRadius: '50%', opacity: 0.4, animation: 'pulse-dot 2s infinite' }} />
+          </div>
           SYSTEM OPTIMAL
+          <style>{`
+            @keyframes pulse-dot {
+              0% { transform: scale(1); opacity: 0.4; }
+              70% { transform: scale(2.5); opacity: 0; }
+              100% { transform: scale(1); opacity: 0; }
+            }
+          `}</style>
         </div>
 
         <NotificationBell />

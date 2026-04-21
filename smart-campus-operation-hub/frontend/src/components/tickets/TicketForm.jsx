@@ -156,9 +156,15 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel, loadi
         </div>
         
         <div style={{ position: 'relative' }} ref={dropdownRef}>
-          <label className="label-text" style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <label className="label-text" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>Associated Resource</span>
-            <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(Optional Sync)</span>
+            {selectedResource ? (
+              <span style={{ color: 'var(--success)', fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--success-muted)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                <Check size={10} strokeWidth={3} /> Verified Link
+              </span>
+            ) : (
+              <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(Optional Sync)</span>
+            )}
           </label>
           
           <div style={{ position: 'relative' }}>
@@ -174,19 +180,27 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel, loadi
                 setSearchTerm('');
               }}
               className="input-field" 
-              style={{ fontSize: '1.05rem', padding: '18px 24px 18px 52px', background: 'var(--bg-primary)' }}
-              placeholder="Search resource name or ID..." 
+              style={{ 
+                fontSize: '1.05rem', 
+                padding: '18px 24px 18px 52px', 
+                background: 'var(--bg-primary)',
+                border: selectedResource ? '2px solid var(--success)' : '2px solid transparent',
+                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+              }}
+              placeholder={selectedResource ? selectedResource.name : "Search resource name or ID..."} 
             />
-            <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
-              <Search size={18} />
+            <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: selectedResource ? 'var(--success)' : 'var(--text-muted)' }}>
+              {selectedResource ? <Zap size={18} fill="var(--success)" strokeWidth={0} /> : <Search size={18} />}
             </div>
             {(formData.resourceId || searchTerm) && (
               <button 
                 type="button" 
                 onClick={clearResource}
-                style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'var(--bg-surface-elevated)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', borderRadius: '50%', display: 'flex', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.background = 'var(--danger-muted)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'var(--bg-surface-elevated)'; }}
               >
-                <X size={16} />
+                <X size={14} />
               </button>
             )}
           </div>
@@ -197,19 +211,27 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel, loadi
               top: '100%', 
               left: 0, 
               right: 0, 
-              background: 'var(--bg-surface-elevated)', 
-              borderRadius: 'var(--radius)', 
-              boxShadow: 'var(--ambient-shadow)', 
+              background: 'rgba(255, 255, 255, 0.9)', 
+              backdropFilter: 'blur(16px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+              borderRadius: '16px', 
+              boxShadow: '0 20px 40px -10px rgba(0,0,0,0.15)', 
               zIndex: 100, 
-              marginTop: '8px', 
-              maxHeight: '260px', 
+              marginTop: '12px', 
+              maxHeight: '280px', 
               overflowY: 'auto',
-              border: '1px solid rgba(255,255,255,0.05)',
-              backdropFilter: 'blur(10px)'
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              animation: 'pageReveal 0.3s cubic-bezier(0.16, 1, 0.3, 1) both',
+              scrollbarWidth: 'thin'
             }}>
+              <div style={{ padding: '12px 20px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                 <div className="animate-spin" style={{ width: 12, height: 12, border: '2px solid var(--accent-muted)', borderTopColor: 'var(--accent-base)', borderRadius: '50%' }} />
+                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Scanning Campus Database...</span>
+              </div>
               {filteredResources.length === 0 ? (
-                <div style={{ padding: '16px 20px', color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center' }}>
-                  No matching resources found.
+                <div style={{ padding: '32px 24px', color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                  <Search size={24} opacity={0.2} />
+                  <span>No matching assets found in this zone.</span>
                 </div>
               ) : (
                 filteredResources.map(resource => (
@@ -217,22 +239,31 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel, loadi
                     key={resource.id} 
                     onClick={() => handleResourceSelect(resource)}
                     style={{ 
-                      padding: '14px 20px', 
+                      padding: '16px 20px', 
                       cursor: 'pointer', 
                       display: 'flex', 
                       justifyContent: 'space-between', 
                       alignItems: 'center',
                       background: formData.resourceId === resource.id ? 'var(--accent-muted)' : 'transparent',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      borderBottom: '1px solid rgba(0,0,0,0.02)'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = formData.resourceId === resource.id ? 'var(--accent-muted)' : 'transparent'}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(42, 20, 180, 0.03)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = formData.resourceId === resource.id ? 'var(--accent-muted)' : 'transparent'; }}
                   >
                     <div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '1rem' }}>{resource.name}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>ID: #{resource.id} • {resource.type}</div>
+                      <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.95rem', letterSpacing: '-0.01em' }}>{resource.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
+                        ID: #{resource.id} • {resource.location}
+                      </div>
                     </div>
-                    {formData.resourceId === resource.id && <Check size={16} color="var(--accent-base)" />}
+                    {formData.resourceId === resource.id ? (
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                         <Check size={12} color="white" strokeWidth={3} />
+                      </div>
+                    ) : (
+                      <span className="badge" style={{ fontSize: '9px', padding: '2px 6px', opacity: 0.6 }}>{resource.type}</span>
+                    )}
                   </div>
                 ))
               )}

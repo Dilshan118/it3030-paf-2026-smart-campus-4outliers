@@ -106,12 +106,21 @@ export default function DashboardPage() {
         .pulse-dot {
           width: 8px; height: 8px; border-radius: 50%;
           background-color: var(--success);
-          box-shadow: 0 0 12px var(--success);
-          animation: pulse-anim 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          position: relative;
         }
-        @keyframes pulse-anim {
-          0%, 100% { opacity: 1; }
-          50% { opacity: .4; }
+        .pulse-dot::after {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          border-radius: 50%;
+          background: var(--success);
+          opacity: 0.4;
+          animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+          0% { transform: scale(1); opacity: 0.4; }
+          70% { transform: scale(2.5); opacity: 0; }
+          100% { transform: scale(1); opacity: 0; }
         }
 
         .dark-hero-card {
@@ -123,6 +132,7 @@ export default function DashboardPage() {
           position: relative;
           overflow: hidden;
           transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .dark-hero-card:hover {
           transform: translateY(-4px);
@@ -140,16 +150,18 @@ export default function DashboardPage() {
 
         .metric-value {
           font-family: var(--font-display);
-          font-size: clamp(2.5rem, 5vw, 4rem);
+          font-size: clamp(2.5rem, 5vw, 4.5rem);
           font-weight: 800;
           line-height: 1;
-          letter-spacing: -0.04em;
+          letter-spacing: -0.05em;
+          text-shadow: 0 10px 20px rgba(0,0,0,0.05);
         }
           
         .glass-btn {
           background: rgba(255,255,255,0.1);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255,255,255,0.2);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255,255,255,0.25);
           color: white;
           padding: 14px 28px;
           border-radius: 100px;
@@ -159,47 +171,53 @@ export default function DashboardPage() {
           text-decoration: none;
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          transition: all 0.3s ease;
-          font-weight: 600;
-          letter-spacing: 0.05em;
+          gap: 10px;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .glass-btn:hover {
           background: rgba(255,255,255,0.2);
-          transform: translateX(4px);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.2);
         }
         
         .quick-action-card {
-          background: var(--surface-container-lowest);
+          background: var(--bg-surface);
           border-radius: var(--radius-lg);
-          padding: 24px;
+          padding: 32px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 20px;
           text-decoration: none;
           color: var(--text-main);
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: var(--ambient-shadow);
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
           position: relative;
           overflow: hidden;
+          border: 1px solid transparent;
         }
         .quick-action-card:hover {
-          background: var(--bg-surface);
-          box-shadow: var(--ambient-shadow);
-          transform: translateY(-4px);
+          box-shadow: var(--ambient-shadow-hover);
+          transform: translateY(-6px);
+          border-color: var(--accent-muted);
         }
         .quick-action-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
+          width: 56px;
+          height: 56px;
+          border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
           background: var(--bg-surface-elevated);
-          transition: transform 0.3s ease;
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
         .quick-action-card:hover .quick-action-icon {
-          transform: scale(1.1) rotate(-5deg);
+          transform: scale(1.1) rotate(-8deg);
+          background: var(--bg-surface);
+          box-shadow: 0 10px 20px rgba(0,0,0,0.05);
         }
       `}</style>
 
