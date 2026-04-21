@@ -149,7 +149,7 @@ export default function UserManagePage() {
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {users.map(u => {
                 const isCurrentUser = Number(u.id) === Number(user?.id);
-                const isInactive = !Boolean(u.isActive);
+                const isInactive = !u.isActive;
                 const isDeleting = deletingUserId === u.id;
 
                 return (
