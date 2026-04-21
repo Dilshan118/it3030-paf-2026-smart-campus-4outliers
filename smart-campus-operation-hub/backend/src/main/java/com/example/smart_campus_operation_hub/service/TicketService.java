@@ -51,6 +51,10 @@ public class TicketService {
         MINE
     }
 
+    private enum ReporterFilter {
+        MINE
+    }
+
     private enum SlaStateFilter {
         BREACHED,
         DUE_SOON,
@@ -172,6 +176,7 @@ public class TicketService {
                                               String category,
                                               String query,
                                               String assignee,
+                                              String reporter,
                                               String slaState,
                                               String createdFrom,
                                               String createdTo,
@@ -180,6 +185,7 @@ public class TicketService {
         TicketPriority priorityFilter = parseEnumIgnoreCase(priority, TicketPriority.class, "priority");
         TicketCategory categoryFilter = parseEnumIgnoreCase(category, TicketCategory.class, "category");
         AssigneeFilter assigneeFilter = parseAssigneeFilter(assignee);
+        ReporterFilter reporterFilter = parseReporterFilter(reporter);
         SlaStateFilter slaStateFilter = parseSlaStateFilter(slaState);
         LocalDateTime createdFromFilter = parseDateStart(createdFrom, "createdFrom");
         LocalDateTime createdToFilter = parseDateStart(createdTo, "createdTo");
@@ -259,6 +265,12 @@ public class TicketService {
                     case ASSIGNED -> predicates.add(cb.isNotNull(root.get("assignedTo")));
                     case UNASSIGNED -> predicates.add(cb.isNull(root.get("assignedTo")));
                     case MINE -> predicates.add(cb.equal(root.get("assignedTo").get("id"), userId));
+                }
+                }
+
+                if (reporterFilter != null) {
+                switch (reporterFilter) {
+                    case MINE -> predicates.add(cb.equal(root.get("user").get("id"), userId));
                 }
                 }
 
@@ -732,6 +744,23 @@ public class TicketService {
         } catch (IllegalArgumentException ex) {
             throw new BadRequestException("Invalid assignee value '" + value
                     + "'. Allowed values: ASSIGNED, UNASSIGNED, MINE");
+        }
+    }
+
+    private ReporterFilter parseReporterFilter(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        String normalized = value.trim().toUpperCase(Locale.ROOT)
+                .replace('-', '_')
+                .replace(' ', '_');
+
+        try {
+            return ReporterFilter.valueOf(normalized);
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Invalid reporter value '" + value
+                    + "'. Allowed values: MINE");
         }
     }
 
