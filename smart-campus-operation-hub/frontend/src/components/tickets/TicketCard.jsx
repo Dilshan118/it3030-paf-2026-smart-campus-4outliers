@@ -1,9 +1,38 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Clock } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Clock, UserRound } from 'lucide-react';
+
+function formatEnum(value) {
+  if (!value) return 'N/A';
+  return value.replace(/_/g, ' ');
+}
+
+function computeSlaState(ticket) {
+  if (!ticket?.slaDeadline) return null;
+  if (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED' || ticket.status === 'REJECTED') return null;
+  const deadline = new Date(ticket.slaDeadline);
+  if (Number.isNaN(deadline.getTime())) return null;
+
+  const diffMs = deadline.getTime() - Date.now();
+  if (diffMs < 0) return 'BREACHED';
+  if (diffMs <= 4 * 60 * 60 * 1000) return 'DUE_SOON';
+  return null;
+}
 
 export default function TicketCard({ ticket }) {
-  const { id, category, priority, status, description, createdAt, title, assignedToId } = ticket;
+  const {
+    id,
+    category,
+    priority,
+    status,
+    description,
+    createdAt,
+    title,
+    assignedToName,
+    assignedToId,
+  } = ticket;
+
+  const slaState = computeSlaState(ticket);
 
   return (
     <Link to={`/tickets/${id}`} className="card" style={{ 
@@ -45,20 +74,54 @@ export default function TicketCard({ ticket }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>#{id}</span>
           <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)', fontFamily: 'var(--font-body)', fontWeight: 700, letterSpacing: '-0.01em' }}>
-            {title || `${category.replace('_', ' ')} Error`}
+            {title || `${formatEnum(category)} Ticket`}
           </h3>
         </div>
         <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.5' }}>
-          {description}
+          {description || 'No description provided.'}
         </p>
       </div>
 
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-        <span className={`status-badge status-${status.toLowerCase()}`}>{status.replace('_', ' ')}</span>
-        <span className={`priority-badge priority-${priority.toLowerCase()}`}>{priority}</span>
-        {assignedToId && (
-          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--accent-muted)', border: '1px solid var(--accent-base)', color: 'var(--accent-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700 }}>
-            {assignedToId.toString().substring(0,2)}
+        <span className={`status-badge status-${(status || 'open').toLowerCase()}`}>{formatEnum(status)}</span>
+        <span className={`priority-badge priority-${(priority || 'low').toLowerCase()}`}>{formatEnum(priority)}</span>
+        {slaState && (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '6px 10px',
+              borderRadius: '999px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.65rem',
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              background: 'var(--danger-muted)',
+              color: 'var(--danger)',
+            }}
+          >
+            <AlertTriangle size={12} /> {slaState === 'BREACHED' ? 'SLA Breached' : 'SLA Risk'}
+          </span>
+        )}
+        {(assignedToName || assignedToId) && (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px',
+            borderRadius: '999px',
+            padding: '6px 10px',
+            background: 'var(--accent-muted)',
+            color: 'var(--accent-base)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.68rem',
+            maxWidth: '120px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            <UserRound size={12} />
+            {assignedToName || `Tech #${assignedToId}`}
           </div>
         )}
       </div>
