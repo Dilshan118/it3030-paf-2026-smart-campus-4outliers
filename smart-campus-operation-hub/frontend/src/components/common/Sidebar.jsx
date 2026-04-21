@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Ticket, CalendarDays, Box, Bell, Users, Settings, Briefcase, Command, TrendingUp, Zap } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
@@ -73,6 +73,16 @@ export default function Sidebar() {
           <NavLink to="/admin/resources" className={navClassName}>
             <Settings size={20} strokeWidth={1.5} className="sidebar-icon" />
             Manage Resources
+          </NavLink>
+
+          <NavLink to="/admin/bookings" className={navClassName}>
+            <CalendarDays size={20} strokeWidth={1.5} className="sidebar-icon" />
+            Booking Review
+          </NavLink>
+
+          <NavLink to="/admin/analytics" className={navClassName}>
+            <TrendingUp size={20} strokeWidth={1.5} className="sidebar-icon" />
+            Analytics Dashboard
           </NavLink>
 
           <NavLink to="/admin/resources/analytics" className={navClassName} style={{ marginLeft: '12px', marginTop: '-2px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>

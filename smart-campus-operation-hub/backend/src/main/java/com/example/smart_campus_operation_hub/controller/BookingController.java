@@ -2,6 +2,7 @@ package com.example.smart_campus_operation_hub.controller;
 
 import com.example.smart_campus_operation_hub.dto.request.BookingRequest;
 import com.example.smart_campus_operation_hub.dto.response.BookingResponse;
+import com.example.smart_campus_operation_hub.enums.BookingStatus;
 import com.example.smart_campus_operation_hub.service.BookingService;
 import com.example.smart_campus_operation_hub.util.ApiResponse;
 import jakarta.validation.Valid;
@@ -40,16 +41,29 @@ public class BookingController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<BookingResponse>>> getAllBookings(
             Authentication authentication,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String date,
             Pageable pageable) {
 
         Long userId = (Long) authentication.getPrincipal();
         String role = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
 
+        BookingStatus bookingStatus = null;
+        if (status != null && !status.isBlank()) {
+            try { bookingStatus = BookingStatus.valueOf(status.toUpperCase()); }
+            catch (IllegalArgumentException ignored) { }
+        }
+        LocalDate localDate = null;
+        if (date != null && !date.isBlank()) {
+            try { localDate = LocalDate.parse(date); }
+            catch (Exception ignored) { }
+        }
+
         Page<BookingResponse> bookings;
         if (role.equals("ADMIN") || role.equals("MANAGER")) {
-            bookings = bookingService.getAllBookings(pageable);
+            bookings = bookingService.getAllBookings(bookingStatus, localDate, pageable);
         } else {
-            bookings = bookingService.getBookingsByUser(userId, pageable);
+            bookings = bookingService.getBookingsByUser(userId, bookingStatus, localDate, pageable);
         }
 
         return ResponseEntity.ok(ApiResponse.success(bookings, "Bookings retrieved successfully"));
@@ -93,12 +107,13 @@ public class BookingController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(
             Authentication authentication,
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @RequestParam(required = false) String reason) {
 
         Long userId = (Long) authentication.getPrincipal();
         String role = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
 
-        BookingResponse response = bookingService.cancelBooking(id, userId, role);
+        BookingResponse response = bookingService.cancelBooking(id, userId, role, reason);
         return ResponseEntity.ok(ApiResponse.success(response, "Booking cancelled successfully"));
     }
 

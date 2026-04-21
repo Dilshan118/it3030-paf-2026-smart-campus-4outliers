@@ -16,7 +16,17 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Page<Booking> findByUserId(Long userId, Pageable pageable);
 
+    Page<Booking> findByUserIdAndStatus(Long userId, BookingStatus status, Pageable pageable);
+
+    Page<Booking> findByUserIdAndDate(Long userId, LocalDate date, Pageable pageable);
+
+    Page<Booking> findByUserIdAndStatusAndDate(Long userId, BookingStatus status, LocalDate date, Pageable pageable);
+
     Page<Booking> findByStatus(BookingStatus status, Pageable pageable);
+
+    Page<Booking> findByDate(LocalDate date, Pageable pageable);
+
+    Page<Booking> findByStatusAndDate(BookingStatus status, LocalDate date, Pageable pageable);
 
     /**
      * Conflict detection query: finds any existing booking that overlaps

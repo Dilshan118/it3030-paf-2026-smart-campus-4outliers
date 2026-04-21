@@ -156,13 +156,27 @@ public class BookingService {
         return toResponse(bookingRepository.save(booking));
     }
 
-    // ─── Get All Bookings ─────────────────────────────────────────────
-    public Page<BookingResponse> getAllBookings(Pageable pageable) {
+    // ─── Get All Bookings (admin) ─────────────────────────────────────
+    public Page<BookingResponse> getAllBookings(BookingStatus status, LocalDate date, Pageable pageable) {
+        if (status != null && date != null) {
+            return bookingRepository.findByStatusAndDate(status, date, pageable).map(this::toResponse);
+        } else if (status != null) {
+            return bookingRepository.findByStatus(status, pageable).map(this::toResponse);
+        } else if (date != null) {
+            return bookingRepository.findByDate(date, pageable).map(this::toResponse);
+        }
         return bookingRepository.findAll(pageable).map(this::toResponse);
     }
 
     // ─── Get User's Own Bookings ──────────────────────────────────────
-    public Page<BookingResponse> getBookingsByUser(Long userId, Pageable pageable) {
+    public Page<BookingResponse> getBookingsByUser(Long userId, BookingStatus status, LocalDate date, Pageable pageable) {
+        if (status != null && date != null) {
+            return bookingRepository.findByUserIdAndStatusAndDate(userId, status, date, pageable).map(this::toResponse);
+        } else if (status != null) {
+            return bookingRepository.findByUserIdAndStatus(userId, status, pageable).map(this::toResponse);
+        } else if (date != null) {
+            return bookingRepository.findByUserIdAndDate(userId, date, pageable).map(this::toResponse);
+        }
         return bookingRepository.findByUserId(userId, pageable).map(this::toResponse);
     }
 
@@ -189,7 +203,7 @@ public class BookingService {
     }
 
     // ─── Cancel Booking ───────────────────────────────────────────────
-    public BookingResponse cancelBooking(Long id, Long userId, String role) {
+    public BookingResponse cancelBooking(Long id, Long userId, String role, String reason) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
 
@@ -204,6 +218,9 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
+        if (reason != null && !reason.isBlank()) {
+            booking.setAdminReason(reason);
+        }
 
         Booking saved = bookingRepository.save(booking);
 
@@ -403,6 +420,7 @@ public class BookingService {
         response.setResourceId(booking.getResource().getId());
         response.setResourceName(booking.getResource().getName());
         response.setResourceLocation(booking.getResource().getLocation());
+        response.setResourceType(booking.getResource().getType().name());
         response.setUserId(booking.getUser().getId());
         response.setUserName(booking.getUser().getName());
         response.setDate(booking.getDate());

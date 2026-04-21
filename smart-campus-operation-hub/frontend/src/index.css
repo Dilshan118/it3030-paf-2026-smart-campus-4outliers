@@ -1,8 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-@import 'swiper/css';
-@import 'swiper/css/navigation';
-@import 'swiper/css/pagination';
 
 :root {
   /* Refined Editorial Colors */
@@ -401,6 +398,26 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--danger);
   background: var(--danger-muted);
 }
+
+.status-pending {
+  color: var(--warning);
+  background: rgba(255, 170, 0, 0.1);
+  border-color: var(--warning);
+}
+
+.status-approved {
+  color: var(--info);
+  background: rgba(0, 221, 255, 0.1);
+  border-color: var(--info);
+}
+
+.status-cancelled {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-muted);
+}
+
+
 .priority-low {
   color: var(--text-muted);
   background: var(--bg-surface-elevated);
