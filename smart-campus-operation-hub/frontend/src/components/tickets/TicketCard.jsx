@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, Clock, UserRound } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Clock, UserRound, Sparkles } from 'lucide-react';
+import { AuthContext } from '../../context/AuthContext';
 
 function formatEnum(value) {
   if (!value) return 'N/A';
@@ -8,6 +9,7 @@ function formatEnum(value) {
 }
 
 export default function TicketCard({ ticket }) {
+  const { user: currentUser } = useContext(AuthContext);
   const {
     id,
     category,
@@ -18,8 +20,12 @@ export default function TicketCard({ ticket }) {
     title,
     assignedToName,
     assignedToId,
+    userId: reporterId,
     slaDeadline
   } = ticket;
+
+  const isAssignedToMe = currentUser?.id === assignedToId;
+  const isReportedByMe = currentUser?.id === reporterId;
 
   const [slaCountdown, setSlaCountdown] = useState(null);
   const [slaState, setSlaState] = useState(null);
@@ -104,6 +110,16 @@ export default function TicketCard({ ticket }) {
           <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)', fontFamily: 'var(--font-body)', fontWeight: 700, letterSpacing: '-0.01em' }}>
             {title || `${formatEnum(category)} Ticket`}
           </h3>
+          {isAssignedToMe && (
+            <span style={{ fontSize: '0.65rem', background: 'var(--accent-base)', color: 'white', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Assigned to You
+            </span>
+          )}
+          {isReportedByMe && !isAssignedToMe && (
+            <span style={{ fontSize: '0.65rem', background: 'var(--bg-surface-elevated)', color: 'var(--accent-base)', border: '1px solid var(--accent-muted)', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Reported by You
+            </span>
+          )}
         </div>
         <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.5' }}>
           {description || 'No description provided.'}
