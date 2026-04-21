@@ -68,38 +68,55 @@ export default function NotificationBell() {
         style={{
           position: 'relative',
           padding: '8px',
-          background: 'none',
+          background: showDropdown ? 'var(--bg-surface-elevated)' : 'none',
           border: 'none',
           cursor: 'pointer',
-          color: 'var(--on-surface-variant)',
+          color: showDropdown ? 'var(--accent-base)' : 'var(--on-surface-variant)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: '8px',
-          transition: 'background-color 0.2s',
+          borderRadius: '10px',
+          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+        onMouseOver={(e) => {
+          if (!showDropdown) {
+            e.currentTarget.style.background = 'var(--bg-surface-elevated)';
+            e.currentTarget.style.color = 'var(--text-main)';
+            e.currentTarget.querySelector('svg').style.transform = 'rotate(15deg)';
+          }
+        }}
+        onMouseOut={(e) => {
+          if (!showDropdown) {
+            e.currentTarget.style.background = 'none';
+            e.currentTarget.style.color = 'var(--on-surface-variant)';
+            e.currentTarget.querySelector('svg').style.transform = 'rotate(0)';
+          }
         }}
         aria-label="Notifications"
       >
-        <Bell size={20} strokeWidth={1.5} />
+        <Bell size={20} strokeWidth={1.5} style={{ transition: 'transform 0.3s ease' }} />
         {unreadCount > 0 && (
-          <span style={{
-            position: 'absolute',
-            top: '2px',
-            right: '2px',
-            backgroundColor: 'var(--danger)',
-            color: 'var(--text-inverse)',
-            fontSize: '0.65rem',
-            fontWeight: 700,
-            borderRadius: '999px',
-            minWidth: '18px',
-            height: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 4px',
-            fontFamily: 'var(--font-mono)',
-            boxShadow: '0 4px 8px -2px var(--danger-muted)',
-          }}>
+          <span 
+            className="notification-pulse"
+            style={{
+              position: 'absolute',
+              top: '2px',
+              right: '2px',
+              backgroundColor: 'var(--danger)',
+              color: 'var(--text-inverse)',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              borderRadius: '999px',
+              minWidth: '18px',
+              height: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 4px',
+              fontFamily: 'var(--font-mono)',
+              border: '2px solid var(--bg-primary)',
+            }}
+          >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}

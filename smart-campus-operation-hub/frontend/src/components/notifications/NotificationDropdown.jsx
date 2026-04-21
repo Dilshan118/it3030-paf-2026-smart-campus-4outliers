@@ -98,13 +98,16 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
         position: 'absolute',
         right: 0,
         marginTop: '12px',
-        width: '360px',
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius)',
-        border: 'none',
-        boxShadow: 'var(--ambient-shadow)',
+        width: '380px',
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(16px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid rgba(255, 255, 255, 0.5)',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
         zIndex: 50,
         overflow: 'hidden',
+        animation: 'pageReveal 0.3s cubic-bezier(0.16, 1, 0.3, 1) both',
       }}
     >
       {/* Header */}
@@ -112,41 +115,48 @@ export default function NotificationDropdown({ onClose, onNotificationRead }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '16px 20px',
-        backgroundColor: 'var(--bg-surface-elevated)',
+        padding: '20px 24px',
+        background: 'rgba(242, 244, 246, 0.5)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
       }}>
-        <h3 className="label-text" style={{ margin: 0, color: 'var(--text-main)', fontWeight: 700 }}>Notifications</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <h3 className="label-text" style={{ margin: 0, color: 'var(--text-main)', fontWeight: 800, fontSize: '0.8rem' }}>Notifications</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {notifications.some(n => !n.isRead) && (
             <button
               onClick={handleMarkAllAsRead}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-base)', fontSize: '0.8rem', fontWeight: 600, padding: 0 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-base)', fontSize: '0.75rem', fontWeight: 700, padding: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}
             >
               Mark all read
             </button>
           )}
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 0, transition: 'color 0.2s' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+            style={{ background: 'var(--bg-surface)', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '4px', borderRadius: '50%', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.transform = 'scale(1)'; }}
           >
-            <X size={18} strokeWidth={1.5} />
+            <X size={16} strokeWidth={2} />
           </button>
         </div>
       </div>
 
       {/* Content */}
-      <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
+      <div style={{ maxHeight: '420px', overflowY: 'auto', scrollbarWidth: 'thin' }}>
         {loading ? (
-          <div style={{ padding: '32px 0', textAlign: 'center' }}>
-            <div className="animate-spin" style={{ width: 24, height: 24, border: '3px solid var(--bg-surface-elevated)', borderTopColor: 'var(--accent-base)', borderRadius: '50%', margin: '0 auto' }} />
-            <p style={{ marginTop: '12px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading...</p>
+          <div style={{ padding: '48px 0', textAlign: 'center' }}>
+            <div className="animate-spin" style={{ width: 28, height: 28, border: '3px solid rgba(42, 20, 180, 0.1)', borderTopColor: 'var(--accent-base)', borderRadius: '50%', margin: '0 auto' }} />
+            <p style={{ marginTop: '16px', color: 'var(--text-muted)', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>Syncing updates...</p>
           </div>
         ) : notifications.length === 0 ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-            <Bell size={32} strokeWidth={1.5} style={{ color: 'var(--text-muted)', opacity: 0.3, margin: '0 auto 16px' }} />
-            <p className="label-text" style={{ color: 'var(--text-muted)' }}>No notifications yet</p>
+          <div style={{ padding: '64px 32px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '30px', background: 'var(--bg-surface-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', position: 'relative' }}>
+              <Bell size={36} strokeWidth={1} style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
+              <div style={{ position: 'absolute', bottom: '20px', right: '20px', width: '12px', height: '12px', borderRadius: '50%', background: 'var(--success)', border: '3px solid white' }} />
+            </div>
+            <h4 style={{ fontSize: '1.1rem', color: 'var(--text-main)', margin: '0 0 8px 0' }}>All Caught Up</h4>
+            <p className="label-text" style={{ color: 'var(--text-muted)', textTransform: 'none', letterSpacing: '0', fontSize: '0.9rem' }}>
+              No new notifications to show right now.
+            </p>
           </div>
         ) : (
           <div>
