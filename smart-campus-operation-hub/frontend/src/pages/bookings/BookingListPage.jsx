@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, X, QrCode } from 'lucide-react';
+import { Plus, X, QrCode, Search } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { AuthContext } from '../../context/AuthContext';
 import { getBookings, cancelBooking } from '../../api/bookingApi';
@@ -151,7 +151,7 @@ export default function BookingListPage() {
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState(null);
   const [actionError, setActionError]   = useState('');
-  const [filters, setFilters]           = useState({ status: '', resourceType: '', date: '' });
+  const [filters, setFilters]           = useState({ status: '', resourceType: '', date: '', resourceName: '' });
   const [cancelModal, setCancelModal]   = useState({ open: false, bookingId: null });
   const [qrModal, setQrModal]           = useState(null);
 
@@ -183,14 +183,15 @@ export default function BookingListPage() {
   // This avoids adding more repository methods and keeps the API surface small.
   const displayed = bookings.filter(b => {
     if (filters.resourceType && b.resourceType !== filters.resourceType) return false;
-    if (filters.date       && b.date        !== filters.date)        return false;
+    if (filters.date         && b.date         !== filters.date)         return false;
+    if (filters.resourceName && !b.resourceName?.toLowerCase().includes(filters.resourceName.toLowerCase())) return false;
     return true;
   });
 
-  const hasActiveFilters = filters.status || filters.resourceType || filters.date;
+  const hasActiveFilters = filters.status || filters.resourceType || filters.date || filters.resourceName;
 
   const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value }));
-  const clearFilters = () => setFilters({ status: '', resourceType: '', date: '' });
+  const clearFilters = () => setFilters({ status: '', resourceType: '', date: '', resourceName: '' });
 
   const openCancelModal  = (id) => setCancelModal({ open: true, bookingId: id });
   const closeCancelModal = ()   => setCancelModal({ open: false, bookingId: null });
@@ -212,8 +213,15 @@ export default function BookingListPage() {
     <div className="page-container">
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
-        <h1 className="h1">My Bookings</h1>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '24px', marginBottom: '48px' }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--accent-base)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '16px', fontWeight: 700 }}>
+            Facility Management
+          </div>
+          <h1 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-main)', lineHeight: 1.1, margin: 0 }}>
+            My <span style={{ color: 'var(--text-muted)' }}>Reservations</span>
+          </h1>
+        </div>
         <Link to="/bookings/new" className="btn-primary" style={{ textDecoration: 'none' }}>
           <Plus size={18} strokeWidth={1.5} /> New Booking
         </Link>
@@ -221,6 +229,21 @@ export default function BookingListPage() {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div style={{ flex: 1, minWidth: '160px' }}>
+          <label className="label-text">Resource Name</label>
+          <div style={{ position: 'relative' }}>
+            <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+            <input
+              type="text"
+              className="input-field"
+              placeholder="Search resource…"
+              value={filters.resourceName}
+              onChange={(e) => handleFilterChange('resourceName', e.target.value)}
+              style={{ paddingLeft: '36px' }}
+            />
+          </div>
+        </div>
+
         <div style={{ flex: 1, minWidth: '140px' }}>
           <label className="label-text">Status</label>
           <select
