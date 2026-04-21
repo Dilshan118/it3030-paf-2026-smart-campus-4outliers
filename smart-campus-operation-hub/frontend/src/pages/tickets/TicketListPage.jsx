@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Filter, LayoutGrid, Rows3, Search, X, CalendarDays, Sparkles } from 'lucide-react';
+import { Plus, Filter, LayoutGrid, Rows3, Search, X, CalendarDays, Sparkles, Briefcase, User as UserIcon, Globe } from 'lucide-react';
 import { getTickets } from '../../api/ticketApi';
 import TicketCard from '../../components/tickets/TicketCard';
+import { AuthContext } from '../../context/AuthContext';
 
 const STATUS_OPTIONS = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'REJECTED'];
 const PRIORITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
@@ -16,6 +17,7 @@ const EMPTY_FILTERS = {
   priority: '',
   category: '',
   assignee: '',
+  reporter: '',
   slaState: '',
   createdFrom: '',
   createdTo: '',
@@ -40,6 +42,7 @@ function cleanFilters(filters) {
 }
 
 export default function TicketListPage() {
+  const { user } = useContext(AuthContext);
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,8 +55,14 @@ export default function TicketListPage() {
   const [size, setSize] = useState(20);
   const [pageInfo, setPageInfo] = useState({ totalPages: 1, totalElements: 0 });
 
+  const currentTab = useMemo(() => {
+    if (filters.assignee === 'MINE') return 'workbench';
+    if (filters.reporter === 'MINE') return 'reports';
+    return 'all';
+  }, [filters]);
+
   const hasActiveFilters = useMemo(
-    () => Object.values(filters).some((value) => value !== '' && value != null),
+    () => Object.entries(filters).some(([k, v]) => v !== '' && v != null && k !== 'assignee' && k !== 'reporter'),
     [filters]
   );
 
@@ -108,6 +117,14 @@ export default function TicketListPage() {
     setFilters({ ...draftFilters });
   };
 
+  useEffect(() => {
+    // Handle query params (e.g. from Dashboard)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reporter') === 'MINE') {
+      applyQuickPreset('MY_REPORTS');
+    }
+  }, []);
+
   const resetFilters = () => {
     setPage(0);
     setDraftFilters({ ...EMPTY_FILTERS });
@@ -117,6 +134,7 @@ export default function TicketListPage() {
   const applyQuickPreset = (preset) => {
     const presets = {
       MY_QUEUE: { ...EMPTY_FILTERS, assignee: 'MINE', status: 'IN_PROGRESS' },
+      MY_REPORTS: { ...EMPTY_FILTERS, reporter: 'MINE' },
       CRITICAL: { ...EMPTY_FILTERS, priority: 'CRITICAL' },
       SLA_RISK: { ...EMPTY_FILTERS, slaState: 'BREACHED' },
       UNASSIGNED: { ...EMPTY_FILTERS, assignee: 'UNASSIGNED', status: 'OPEN' },
@@ -131,6 +149,22 @@ export default function TicketListPage() {
   return (
     <div className="page-container" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
       <style>{`
+        .operations-tabs {
+          display: flex; gap: 4px; background: var(--bg-surface); padding: 4px; border-radius: 100px;
+          margin-bottom: 32px; width: fit-content; box-shadow: var(--ambient-shadow);
+        }
+        .op-tab {
+          padding: 8px 16px; border-radius: 100px; font-size: 0.85rem; font-weight: 700;
+          color: var(--text-muted); cursor: pointer; transition: all 0.3s ease;
+          display: flex; align-items: center; gap: 8px; border: none; background: transparent;
+        }
+        .op-tab.active {
+          background: var(--accent-base); color: white; box-shadow: 0 4px 12px rgba(42, 20, 180, 0.3);
+        }
+        .op-tab:hover:not(.active) {
+          background: var(--bg-surface-elevated); color: var(--text-main);
+        }
+
         .page-header {
           display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 32px; margin-bottom: 48px;
         }
