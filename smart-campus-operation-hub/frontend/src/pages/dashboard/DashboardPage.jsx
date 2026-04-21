@@ -1,16 +1,70 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { CalendarDays, Box, Activity, ArrowUpRight, Clock, ShieldCheck } from 'lucide-react';
+import { CalendarDays, Box, Activity, ArrowUpRight, Clock, ShieldCheck, TicketPlus, PlusCircle, Search } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { getTickets } from '../../api/ticketApi';
+import { getBookings } from '../../api/bookingApi';
+
+function computeSlaState(ticket) {
+  if (!ticket?.slaDeadline) return null;
+  if (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED' || ticket.status === 'REJECTED') return null;
+  const deadline = new Date(ticket.slaDeadline).getTime();
+  if (Number.isNaN(deadline)) return null;
+  const diffMs = deadline - Date.now();
+  if (diffMs < 0) return 'BREACHED';
+  return 'OK';
+}
 
 export default function DashboardPage() {
   const { user } = useContext(AuthContext);
   const [time, setTime] = useState(new Date());
+  
+  const [metrics, setMetrics] = useState({
+    activeTickets: 0,
+    slaScore: 100,
+    activeBookings: 0,
+    loading: true
+  });
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    async function fetchMetrics() {
+      try {
+        const [ticketsRes, bookingsRes] = await Promise.all([
+          getTickets({ size: 100, status: 'OPEN,IN_PROGRESS' }),
+          getBookings({ userId: user?.id, size: 50, status: 'APPROVED' })
+        ]);
+
+        const tickets = ticketsRes?.data?.content || ticketsRes?.data || [];
+        const bookings = bookingsRes?.data?.content || bookingsRes?.data || [];
+        
+        let breached = 0;
+        tickets.forEach(t => {
+          if (computeSlaState(t) === 'BREACHED') breached++;
+        });
+
+        const activeTicketsCount = tickets.length;
+        const slaScore = activeTicketsCount === 0 ? 100 : Math.round(((activeTicketsCount - breached) / activeTicketsCount) * 100);
+
+        setMetrics({
+          activeTickets: activeTicketsCount,
+          slaScore: slaScore,
+          activeBookings: bookings.length,
+          loading: false
+        });
+      } catch (err) {
+        setMetrics(m => ({ ...m, loading: false }));
+      }
+    }
+    fetchMetrics();
+    // Refresh every 30s
+    const refreshTimer = setInterval(fetchMetrics, 30000);
+    return () => clearInterval(refreshTimer);
+  }, [user]);
 
   return (
     <div className="page-container" style={{ paddingBottom: '100px' }}>
@@ -24,9 +78,10 @@ export default function DashboardPage() {
         .bento-main { grid-column: span 8; }
         .bento-side { grid-column: span 4; }
         .bento-half { grid-column: span 6; }
+        .bento-third { grid-column: span 4; }
         
         @media (max-width: 1024px) {
-          .bento-main, .bento-side, .bento-half { grid-column: span 12; }
+          .bento-main, .bento-side, .bento-half, .bento-third { grid-column: span 12; }
         }
         
         .pulse-dot {
@@ -94,6 +149,39 @@ export default function DashboardPage() {
           background: rgba(255,255,255,0.2);
           transform: translateX(4px);
         }
+        
+        .quick-action-card {
+          background: var(--surface-container-lowest);
+          border-radius: var(--radius-lg);
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          text-decoration: none;
+          color: var(--text-main);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          position: relative;
+          overflow: hidden;
+        }
+        .quick-action-card:hover {
+          background: var(--bg-surface);
+          box-shadow: var(--ambient-shadow);
+          transform: translateY(-4px);
+        }
+        .quick-action-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--bg-surface-elevated);
+          transition: transform 0.3s ease;
+        }
+        .quick-action-card:hover .quick-action-icon {
+          transform: scale(1.1) rotate(-5deg);
+        }
       `}</style>
 
       {/* Editorial Header */}
@@ -134,9 +222,11 @@ export default function DashboardPage() {
             <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'auto' }}>
               <div>
                 <span style={{ display: 'block', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>
-                  Module C Pulse
+                  Incident Queue
                 </span>
-                <div className="metric-value">Active Tickets</div>
+                <div className="metric-value">
+                  {metrics.loading ? '...' : metrics.activeTickets}
+                </div>
               </div>
               <div style={{ background: 'rgba(255,255,255,0.1)', padding: '20px', borderRadius: '24px', backdropFilter: 'blur(10px)' }}>
                 <Activity size={40} color="white" />
@@ -146,7 +236,7 @@ export default function DashboardPage() {
             <div style={{ position: 'relative', zIndex: 1, marginTop: '80px', display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px' }}>
               <div>
                 <div style={{ fontSize: '1.25rem', fontFamily: 'var(--font-body)', fontWeight: 600, color: 'rgba(255,255,255,0.9)', marginBottom: '8px' }}>
-                  Queue is currently active.
+                  Active Unresolved Tickets
                 </div>
                 <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.95rem' }}>
                   Technicians are monitoring incoming streams.
@@ -165,55 +255,71 @@ export default function DashboardPage() {
           <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
               <span className="label-text" style={{ margin: 0 }}>Global SLA Score</span>
-              <ShieldCheck size={28} color="var(--success)" />
+              <ShieldCheck size={28} color={metrics.slaScore >= 95 ? 'var(--success)' : (metrics.slaScore >= 80 ? 'var(--warning)' : 'var(--danger)')} />
             </div>
             
             <div className="metric-value" style={{ color: 'var(--text-main)', marginTop: 'auto', marginBottom: '8px' }}>
-              100<span style={{ fontSize: '2.5rem', color: 'var(--success)' }}>%</span>
+              {metrics.loading ? '...' : metrics.slaScore}<span style={{ fontSize: '2.5rem', color: metrics.slaScore >= 95 ? 'var(--success)' : 'var(--text-muted)' }}>%</span>
             </div>
             
             {/* Small decorative mini-graph */}
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '48px', marginTop: '32px', opacity: 0.6 }}>
-              {[40, 70, 45, 90, 65, 100].map((h, i) => (
-                <div key={i} style={{ flex: 1, background: i === 5 ? 'var(--success)' : 'var(--bg-surface-elevated)', height: `${h}%`, borderRadius: '4px 4px 0 0', transition: 'height 1s ease' }} />
+              {[40, 70, 45, 90, 65, metrics.slaScore].map((h, i) => (
+                <div key={i} style={{ flex: 1, background: i === 5 ? (metrics.slaScore >= 95 ? 'var(--success)' : 'var(--accent-base)') : 'var(--bg-surface-elevated)', height: `${h}%`, borderRadius: '4px 4px 0 0', transition: 'height 1s ease' }} />
               ))}
             </div>
           </div>
         </div>
 
-        {/* Facility Bookings - Pending */}
-        <div className="bento-half">
-          <div className="card" style={{ border: '2px dashed var(--bg-surface-elevated)', background: 'transparent', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <div style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: '50%', boxShadow: 'var(--ambient-shadow)' }}>
-              <CalendarDays size={32} color="var(--text-muted)" />
-            </div>
-            <div>
-              <div className="label-text">Module A</div>
-              <h3 style={{ fontSize: '1.5rem', margin: '4px 0 8px', color: 'var(--text-muted)', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>Facility Bookings</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0, fontStyle: 'italic' }}>Awaiting infrastructure deployment.</p>
-            </div>
-            <div style={{ marginLeft: 'auto' }}>
-              <span className="badge" style={{ border: '1px solid var(--text-muted)', color: 'var(--text-muted)', background: 'transparent' }}>PENDING</span>
-            </div>
-          </div>
+        {/* Quick Actions Title */}
+        <div style={{ gridColumn: 'span 12', marginTop: '16px', marginBottom: '-8px' }}>
+          <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Quick Actions</h3>
         </div>
 
-        {/* Resource Sync - Pending */}
-        <div className="bento-half">
-          <div className="card" style={{ border: '2px dashed var(--bg-surface-elevated)', background: 'transparent', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <div style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: '50%', boxShadow: 'var(--ambient-shadow)' }}>
-              <Box size={32} color="var(--text-muted)" />
+        {/* Action 1: Create Ticket */}
+        <NavLink to="/tickets/new" className="bento-third quick-action-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="quick-action-icon" style={{ color: 'var(--danger)' }}>
+              <TicketPlus size={24} />
             </div>
-            <div>
-              <div className="label-text">Module B</div>
-              <h3 style={{ fontSize: '1.5rem', margin: '4px 0 8px', color: 'var(--text-muted)', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>Resource Sync</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0, fontStyle: 'italic' }}>Awaiting hardware node detection.</p>
-            </div>
-            <div style={{ marginLeft: 'auto' }}>
-              <span className="badge" style={{ border: '1px solid var(--text-muted)', color: 'var(--text-muted)', background: 'transparent' }}>PENDING</span>
-            </div>
+            <ArrowUpRight size={20} color="var(--text-muted)" />
           </div>
-        </div>
+          <div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '6px', fontFamily: 'var(--font-body)' }}>Report Incident</h3>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.4 }}>Create a new service ticket for immediate support.</p>
+          </div>
+        </NavLink>
+
+        {/* Action 2: Book Facility */}
+        <NavLink to="/bookings/new" className="bento-third quick-action-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="quick-action-icon" style={{ color: 'var(--accent-base)' }}>
+              <PlusCircle size={24} />
+            </div>
+            <ArrowUpRight size={20} color="var(--text-muted)" />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '6px', fontFamily: 'var(--font-body)' }}>Reserve Facility</h3>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.4 }}>Book labs, halls, or equipment.</p>
+          </div>
+          <div style={{ position: 'absolute', bottom: '24px', right: '24px', background: 'var(--surface-container)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
+            {metrics.loading ? '...' : metrics.activeBookings} Active
+          </div>
+        </NavLink>
+
+        {/* Action 3: Smart Finder */}
+        <NavLink to="/resources/finder" className="bento-third quick-action-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="quick-action-icon" style={{ color: 'var(--info)' }}>
+              <Search size={24} />
+            </div>
+            <ArrowUpRight size={20} color="var(--text-muted)" />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '6px', fontFamily: 'var(--font-body)' }}>Smart Finder</h3>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.4 }}>Locate resources & review schedules.</p>
+          </div>
+        </NavLink>
 
       </div>
     </div>
