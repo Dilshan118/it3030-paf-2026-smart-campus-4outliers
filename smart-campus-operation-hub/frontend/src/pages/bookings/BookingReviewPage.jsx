@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Check, XCircle, QrCode, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Check, XCircle, QrCode, X, Calendar, Search, Plus, RefreshCw } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   BarChart, Bar, PieChart, Pie, Cell,
@@ -20,17 +20,16 @@ const TYPE_META = {
   EQUIPMENT:    { label: 'EQUIPMENT',    color: 'var(--text-muted)',  bg: 'rgba(255,255,255,0.04)' },
 };
 
-// Colors for charts (hex — recharts can't read CSS vars)
-const STATUS_CHART_COLORS = { PENDING: '#ffaa00', APPROVED: '#ccff00', REJECTED: '#ff3300', CANCELLED: '#555555' };
-const TYPE_CHART_COLORS   = ['#00ddff', '#ccff00', '#ffaa00', '#888888'];
+const STATUS_CHART_COLORS = { PENDING: '#ffaa00', APPROVED: '#10b981', REJECTED: '#e12a45', CANCELLED: '#7a7d81' };
+const TYPE_CHART_COLORS   = ['#0ea5e9', '#2a14b4', '#ffaa00', '#7a7d81'];
 
 const TOOLTIP_STYLE = {
-  contentStyle: { background: '#1a1a1a', border: '1px solid #333', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px' },
-  labelStyle: { color: '#fcfcfc' },
-  itemStyle: { color: '#888888' },
+  contentStyle: { background: '#ffffff', border: 'none', borderRadius: '10px', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px' },
+  labelStyle: { color: '#191c1e', fontWeight: 700 },
+  itemStyle: { color: '#7a7d81' },
 };
-const AXIS_TICK = { fill: '#888888', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' };
-const AXIS_LINE = { stroke: '#333333' };
+const AXIS_TICK = { fill: '#7a7d81', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' };
+const AXIS_LINE = { stroke: '#e5e7eb' };
 
 // ── Shared badges ─────────────────────────────────────────────────────────────
 
@@ -52,21 +51,19 @@ function StatusBadge({ status }) {
 function QRModal({ booking, onClose }) {
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="card" style={{ width: '100%', maxWidth: '380px', margin: '16px', padding: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
         <h2 style={{ fontSize: '1rem', alignSelf: 'flex-start', marginBottom: '-8px' }}>Booking QR Code</h2>
-
-        {/* Booking details */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-main)' }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px', background: 'var(--bg-primary)', borderRadius: 'var(--radius)' }}>
           {[
-            ['Resource',      booking.resourceName],
-            ['Location',      booking.resourceLocation],
-            ['Date',          booking.date],
-            ['Time',          `${booking.startTime?.slice(0, 5)} – ${booking.endTime?.slice(0, 5)}`],
-            ['Booking ID',    `#${booking.id}`],
-            ['Requested by',  booking.userName],
+            ['Resource',     booking.resourceName],
+            ['Location',     booking.resourceLocation],
+            ['Date',         booking.date],
+            ['Time',         `${booking.startTime?.slice(0, 5)} – ${booking.endTime?.slice(0, 5)}`],
+            ['Booking ID',   `#${booking.id}`],
+            ['Requested by', booking.userName],
           ].map(([label, value]) => (
             <div key={label} style={{ display: 'flex', gap: '8px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
               <span style={{ color: 'var(--text-muted)', minWidth: '100px', flexShrink: 0 }}>{label}</span>
@@ -74,19 +71,13 @@ function QRModal({ booking, onClose }) {
             </div>
           ))}
         </div>
-
-        {/* White background required for scanners on dark card */}
-        <div style={{ background: '#ffffff', padding: '16px', display: 'inline-block' }}>
+        <div style={{ background: '#ffffff', padding: '16px', display: 'inline-block', borderRadius: '8px' }}>
           <QRCodeSVG value={booking.qrCode} size={200} />
         </div>
-
         <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '10px', textAlign: 'center', letterSpacing: '0.04em' }}>
           Scan at the entrance to verify check-in
         </p>
-
-        <button className="btn-secondary" onClick={onClose} style={{ width: '100%', justifyContent: 'center' }}>
-          Close
-        </button>
+        <button className="btn-secondary" onClick={onClose} style={{ width: '100%', justifyContent: 'center' }}>Close</button>
       </div>
     </div>
   );
@@ -97,18 +88,15 @@ function QRModal({ booking, onClose }) {
 function RejectModal({ bookingId, onConfirm, onClose }) {
   const [reason, setReason] = useState('');
   const textareaRef = useRef(null);
-
   useEffect(() => { textareaRef.current?.focus(); }, []);
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!reason.trim()) return;
     onConfirm(bookingId, reason.trim());
   };
-
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(2px)' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="card" style={{ width: '100%', maxWidth: '440px', margin: '16px', padding: '28px' }}>
@@ -146,6 +134,54 @@ function RejectModal({ bookingId, onConfirm, onClose }) {
 // ── Analytics panel ───────────────────────────────────────────────────────────
 
 function AnalyticsPanel({ allBookings }) {
+  const _now         = new Date();
+  const today        = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
+  const currentMonth = today.slice(0, 7);
+
+  const todayCount   = allBookings.filter(b => b.date === today).length;
+  const monthCount   = allBookings.filter(b => b.date?.startsWith(currentMonth)).length;
+  const pendingCount = allBookings.filter(b => b.status === 'PENDING').length;
+  const approvedN    = allBookings.filter(b => b.status === 'APPROVED').length;
+  const rejectedN    = allBookings.filter(b => b.status === 'REJECTED').length;
+  const approvalRate = approvedN + rejectedN > 0
+    ? Math.round((approvedN / (approvedN + rejectedN)) * 100)
+    : 0;
+
+  const statCards = [
+    {
+      label: 'Bookings Today',
+      value: todayCount,
+      suffix: '',
+      color: '#0ea5e9',
+      bg: 'rgba(14,165,233,0.08)',
+      icon: '📅',
+    },
+    {
+      label: 'Bookings This Month',
+      value: monthCount,
+      suffix: '',
+      color: '#2a14b4',
+      bg: 'rgba(42,20,180,0.08)',
+      icon: '📊',
+    },
+    {
+      label: 'Pending Review',
+      value: pendingCount,
+      suffix: '',
+      color: '#ffaa00',
+      bg: 'rgba(255,170,0,0.08)',
+      icon: '⏳',
+    },
+    {
+      label: 'Approval Rate',
+      value: approvalRate,
+      suffix: '%',
+      color: '#10b981',
+      bg: 'rgba(16,185,129,0.08)',
+      icon: '✅',
+    },
+  ];
+
   if (allBookings.length === 0) {
     return (
       <div className="card" style={{ padding: '64px 32px', textAlign: 'center' }}>
@@ -159,7 +195,7 @@ function AnalyticsPanel({ allBookings }) {
     .map(s => ({ name: s, count: allBookings.filter(b => b.status === s).length }))
     .filter(d => d.count > 0);
 
-  // Peak booking hours by start time
+  // Peak hours
   const hourMap = {};
   allBookings.forEach(b => {
     if (b.startTime) {
@@ -171,7 +207,7 @@ function AnalyticsPanel({ allBookings }) {
     .map(([h, count]) => ({ hour: `${String(h).padStart(2, '0')}:00`, count }))
     .sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
 
-  // Most booked resources (top 5)
+  // Top 5 resources
   const resourceMap = {};
   allBookings.forEach(b => {
     if (b.resourceName) resourceMap[b.resourceName] = (resourceMap[b.resourceName] || 0) + 1;
@@ -181,7 +217,7 @@ function AnalyticsPanel({ allBookings }) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
-  // Bookings by resource type — uses b.resourceType from the DTO
+  // By resource type
   const typeData = ['LAB', 'LECTURE_HALL', 'MEETING_ROOM', 'EQUIPMENT']
     .map((t, i) => ({
       name: t.replace(/_/g, ' '),
@@ -190,90 +226,110 @@ function AnalyticsPanel({ allBookings }) {
     }))
     .filter(d => d.value > 0);
 
-  const cardStyle   = { padding: '20px 24px' };
-  const chartTitle  = { fontFamily: 'var(--font-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '16px' };
+  const chartTitle = {
+    fontFamily: 'var(--font-mono)', fontSize: '11px', textTransform: 'uppercase',
+    letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '20px', fontWeight: 700,
+  };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-      {/* Status breakdown */}
-      <div className="card" style={cardStyle}>
-        <div style={chartTitle}>Booking Status Breakdown</div>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={statusData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-            <XAxis dataKey="name" tick={AXIS_TICK} axisLine={AXIS_LINE} tickLine={false} />
-            <YAxis allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
-            <Tooltip {...TOOLTIP_STYLE} />
-            <Bar dataKey="count" radius={[2, 2, 0, 0]}>
-              {statusData.map(entry => (
-                <Cell key={entry.name} fill={STATUS_CHART_COLORS[entry.name] ?? '#888'} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+      {/* ── Stat cards ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+        {statCards.map(card => (
+          <div key={card.label} className="card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '12px', border: `1px solid ${card.color}22`, background: card.bg }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: card.color, fontWeight: 700 }}>
+              {card.label}
+            </div>
+            <div style={{ fontSize: 'clamp(2rem, 3vw, 2.8rem)', fontWeight: 800, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', color: 'var(--text-main)', lineHeight: 1 }}>
+              {card.value}<span style={{ fontSize: '1.2rem', color: card.color }}>{card.suffix}</span>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Bookings by resource type */}
-      <div className="card" style={cardStyle}>
-        <div style={chartTitle}>Bookings by Resource Type</div>
-        {typeData.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
-            Resource type data not available. Ensure bookings have a resource type set.
-          </p>
-        ) : (
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie data={typeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} paddingAngle={3}>
-                {typeData.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip {...TOOLTIP_STYLE} />
-              <Legend iconType="square" wrapperStyle={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: '#888888' }} />
-            </PieChart>
-          </ResponsiveContainer>
-        )}
-      </div>
+      {/* ── Charts 2-column grid ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '16px' }}>
 
-      {/* Peak booking hours */}
-      <div className="card" style={cardStyle}>
-        <div style={chartTitle}>Peak Booking Hours</div>
-        {hourData.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>No time data available.</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={hourData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-              <XAxis dataKey="hour" tick={AXIS_TICK} axisLine={AXIS_LINE} tickLine={false} />
+        {/* Status breakdown */}
+        <div className="card" style={{ padding: '28px' }}>
+          <div style={chartTitle}>Booking Status Breakdown</div>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={statusData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+              <XAxis dataKey="name" tick={AXIS_TICK} axisLine={AXIS_LINE} tickLine={false} />
               <YAxis allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
               <Tooltip {...TOOLTIP_STYLE} />
-              <Bar dataKey="count" fill="#00ddff" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                {statusData.map(entry => (
+                  <Cell key={entry.name} fill={STATUS_CHART_COLORS[entry.name] ?? '#888'} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
-        )}
-      </div>
+        </div>
 
-      {/* Most booked resources (horizontal bar) */}
-      <div className="card" style={cardStyle}>
-        <div style={chartTitle}>Most Booked Resources (Top 5)</div>
-        {resourceData.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>No resource data available.</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={resourceData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
-              <XAxis type="number" allowDecimals={false} tick={AXIS_TICK} axisLine={AXIS_LINE} tickLine={false} />
-              <YAxis type="category" dataKey="name" width={120} tick={{ ...AXIS_TICK, textAnchor: 'end' }} axisLine={false} tickLine={false} />
-              <Tooltip {...TOOLTIP_STYLE} />
-              <Bar dataKey="count" fill="#ccff00" radius={[0, 2, 2, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
+        {/* Bookings by resource type */}
+        <div className="card" style={{ padding: '28px' }}>
+          <div style={chartTitle}>Bookings by Resource Type</div>
+          {typeData.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+              Resource type data not available.
+            </p>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie data={typeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} innerRadius={40} paddingAngle={3}>
+                  {typeData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip {...TOOLTIP_STYLE} />
+                <Legend iconType="circle" wrapperStyle={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: '#7a7d81' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
 
+        {/* Peak booking hours */}
+        <div className="card" style={{ padding: '28px' }}>
+          <div style={chartTitle}>Peak Booking Hours</div>
+          {hourData.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>No time data available.</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={hourData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                <XAxis dataKey="hour" tick={AXIS_TICK} axisLine={AXIS_LINE} tickLine={false} />
+                <YAxis allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
+                <Tooltip {...TOOLTIP_STYLE} />
+                <Bar dataKey="count" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Most booked resources */}
+        <div className="card" style={{ padding: '28px' }}>
+          <div style={chartTitle}>Most Booked Resources (Top 5)</div>
+          {resourceData.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>No resource data available.</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={resourceData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+                <XAxis type="number" allowDecimals={false} tick={AXIS_TICK} axisLine={AXIS_LINE} tickLine={false} />
+                <YAxis type="category" dataKey="name" width={130} tick={{ ...AXIS_TICK, textAnchor: 'end' }} axisLine={false} tickLine={false} />
+                <Tooltip {...TOOLTIP_STYLE} />
+                <Bar dataKey="count" fill="#10b981" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+      </div>
     </div>
   );
 }
 
-// ── Layout ────────────────────────────────────────────────────────────────────
+// ── Layout constants ──────────────────────────────────────────────────────────
 
 const COLS = 'minmax(0,2fr) 140px 100px 150px minmax(0,1fr) 120px 170px';
 
@@ -286,21 +342,20 @@ const ACTION_BTN = {
   background: 'transparent', border: 'none', cursor: 'pointer',
   display: 'inline-flex', alignItems: 'center', gap: '4px',
   fontFamily: 'var(--font-mono)', fontSize: '12px', padding: '4px 8px',
+  borderRadius: '6px', transition: 'background 0.15s',
 };
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function BookingReviewPage() {
-  // Fetches ALL bookings (no userId param → admin view).
-  // All three filters are applied client-side so the analytics tab always
-  // has the full dataset regardless of what the BOOKINGS tab is showing.
+  const navigate = useNavigate();
 
-  const [allBookings, setAllBookings]   = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState(null);
-  const [actionError, setActionError]   = useState('');
+  const [allBookings, setAllBookings] = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState(null);
+  const [actionError, setActionError] = useState('');
 
-  const [filters, setFilters]     = useState({ status: 'PENDING', resourceType: '', date: '' });
+  const [filters, setFilters]     = useState({ status: 'PENDING', resourceType: '', date: '', resourceName: '' });
   const [activeTab, setActiveTab] = useState('BOOKINGS');
   const [rejectModal, setRejectModal] = useState({ open: false, bookingId: null });
   const [qrModal, setQrModal]         = useState(null);
@@ -311,7 +366,6 @@ export default function BookingReviewPage() {
     setLoading(true);
     setError(null);
     try {
-      // No userId, no status → backend returns ALL bookings (admin view)
       const res = await getBookings({ page: 0, size: 500 });
       setAllBookings(res.data?.content ?? res.data ?? []);
     } catch (err) {
@@ -321,18 +375,23 @@ export default function BookingReviewPage() {
     }
   };
 
-  // All three filters are client-side
-  const displayed = allBookings.filter(b => {
-    if (filters.status && filters.status !== 'ALL' && b.status !== filters.status) return false;
-    if (filters.resourceType && b.resourceType !== filters.resourceType)             return false;
-    if (filters.date         && b.date          !== filters.date)                    return false;
-    return true;
-  });
+  // Filter + sort: most recent first (date desc, then startTime desc)
+  const displayed = allBookings
+    .filter(b => {
+      if (filters.status && filters.status !== 'ALL' && b.status !== filters.status) return false;
+      if (filters.resourceType && b.resourceType !== filters.resourceType)             return false;
+      if (filters.date && b.date !== filters.date)                                     return false;
+      if (filters.resourceName && !b.resourceName?.toLowerCase().includes(filters.resourceName.toLowerCase())) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (b.date !== a.date) return b.date?.localeCompare(a.date);
+      return (b.startTime ?? '').localeCompare(a.startTime ?? '');
+    });
 
-  // "Clear" resets to the default PENDING view, not all-unfiltered
-  const hasActiveFilters = filters.status !== 'PENDING' || filters.resourceType || filters.date;
+  const hasActiveFilters = filters.status !== 'PENDING' || filters.resourceType || filters.date || filters.resourceName;
   const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value }));
-  const clearFilters = () => setFilters({ status: 'PENDING', resourceType: '', date: '' });
+  const clearFilters = () => setFilters({ status: 'PENDING', resourceType: '', date: '', resourceName: '' });
 
   const openRejectModal  = (id) => setRejectModal({ open: true, bookingId: id });
   const closeRejectModal = ()   => setRejectModal({ open: false, bookingId: null });
@@ -358,53 +417,115 @@ export default function BookingReviewPage() {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="page-container">
+    <div className="page-container" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+      <style>{`
+        .brp-data-row {
+          display: grid;
+          grid-template-columns: ${COLS};
+          gap: 16px; padding: 16px 20px; align-items: center;
+          border-bottom: 1px solid rgba(0,0,0,0.04);
+          transition: background 0.15s;
+        }
+        .brp-data-row:hover { background: rgba(42, 20, 180, 0.02); }
+        .brp-data-row:last-child { border-bottom: none; }
+        .brp-date-input::-webkit-calendar-picker-indicator {
+          opacity: 1;
+          cursor: pointer;
+          filter: invert(50%);
+        }
+      `}</style>
 
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-        <h1 className="h1">Booking Review</h1>
-        {!loading && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--text-muted)', alignSelf: 'center' }}>
-            {allBookings.length} total
-          </span>
-        )}
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '24px', marginBottom: '48px' }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--accent-base)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '16px', fontWeight: 700 }}>
+            Central Administration
+          </div>
+          <h1 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.6rem)', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-main)', lineHeight: 1.1, margin: 0 }}>
+            Reservation <span style={{ color: 'var(--text-muted)' }}>Portal</span>
+          </h1>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {!loading && (
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)' }}>
+              {allBookings.length} total records
+            </span>
+          )}
+          <button onClick={fetchAll} className="btn-secondary" title="Refresh">
+            <RefreshCw size={16} strokeWidth={1.8} /> Sync
+          </button>
+          <button
+            onClick={() => navigate('/bookings/new')}
+            className="btn-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Plus size={16} strokeWidth={2.5} /> New Booking
+          </button>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border-main)', marginBottom: '28px' }}>
+      {/* ── Tabs ── */}
+      <div style={{ display: 'flex', borderBottom: '2px solid var(--bg-surface-elevated)', marginBottom: '32px' }}>
         {['BOOKINGS', 'ANALYTICS'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             style={{
-              padding: '10px 24px', background: 'transparent', border: 'none',
+              padding: '10px 28px', background: 'transparent', border: 'none',
               borderBottom: activeTab === tab ? '2px solid var(--accent-base)' : '2px solid transparent',
               color: activeTab === tab ? 'var(--accent-base)' : 'var(--text-muted)',
               fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700,
-              letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer',
-              marginBottom: '-1px',
+              letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer',
+              marginBottom: '-2px', transition: 'color 0.15s',
             }}
           >
             {tab}
             {tab === 'BOOKINGS' && !loading && (
-              <span style={{ marginLeft: '6px', fontWeight: 400, opacity: 0.6 }}>({displayed.length})</span>
+              <span style={{ marginLeft: '8px', fontWeight: 400, opacity: 0.55 }}>({displayed.length})</span>
             )}
           </button>
         ))}
       </div>
 
-      {loading && <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>Loading bookings...</p>}
-      {error   && <p style={{ color: 'var(--danger)',     fontFamily: 'var(--font-mono)' }}>Error: {error}</p>}
+      {loading && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '300px' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '3px solid rgba(0,0,0,0.06)', borderTopColor: 'var(--accent-base)', animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      )}
+      {error && (
+        <div style={{ padding: '16px 24px', borderRadius: 'var(--radius)', background: 'var(--danger-muted)', color: 'var(--danger)', fontFamily: 'var(--font-mono)', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <strong>ERR:</strong> {error}
+        </div>
+      )}
 
       {/* ── BOOKINGS tab ── */}
       {!loading && !error && activeTab === 'BOOKINGS' && (
         <>
           {/* Filters */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <div style={{ flex: 1, minWidth: '140px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '28px' }}>
+
+            {/* Resource name search */}
+            <div>
+              <label className="label-text">Resource Name</label>
+              <div style={{ position: 'relative' }}>
+                <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Search resource…"
+                  value={filters.resourceName}
+                  onChange={(e) => handleFilterChange('resourceName', e.target.value)}
+                  style={{ paddingLeft: '36px' }}
+                />
+              </div>
+            </div>
+
+            {/* Status */}
+            <div>
               <label className="label-text">Status</label>
               <select
                 className="input-field"
@@ -415,7 +536,8 @@ export default function BookingReviewPage() {
               </select>
             </div>
 
-            <div style={{ flex: 1, minWidth: '160px' }}>
+            {/* Resource Type */}
+            <div>
               <label className="label-text">Resource Type</label>
               <select
                 className="input-field"
@@ -426,86 +548,112 @@ export default function BookingReviewPage() {
               </select>
             </div>
 
-            <div style={{ flex: 1, minWidth: '160px' }}>
+            {/* Date — with visible calendar icon */}
+            <div>
               <label className="label-text">Date</label>
-              <input
-                type="date"
-                className="input-field"
-                value={filters.date}
-                onChange={(e) => handleFilterChange('date', e.target.value)}
-                style={{ colorScheme: 'dark' }}
-              />
+              <div style={{ position: 'relative' }}>
+                <Calendar size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none', zIndex: 1 }} />
+                <input
+                  type="date"
+                  className="input-field brp-date-input"
+                  value={filters.date}
+                  onChange={(e) => handleFilterChange('date', e.target.value)}
+                  style={{ paddingLeft: '36px', colorScheme: 'light' }}
+                />
+              </div>
             </div>
 
-            {hasActiveFilters && (
-              <button className="btn-secondary" onClick={clearFilters} style={{ alignSelf: 'flex-end' }}>
-                <X size={14} strokeWidth={1.5} /> Clear
-              </button>
-            )}
+            {/* Clear button */}
+            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+              {hasActiveFilters && (
+                <button className="btn-secondary" onClick={clearFilters} style={{ width: '100%', justifyContent: 'center' }}>
+                  <X size={14} strokeWidth={1.5} /> Clear
+                </button>
+              )}
+            </div>
           </div>
 
           {actionError && (
-            <div style={{ padding: '12px 16px', marginBottom: '16px', border: '1px solid var(--danger)', background: 'var(--danger-muted)', color: 'var(--danger)', fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
-              {actionError}
+            <div style={{ padding: '12px 20px', marginBottom: '16px', borderRadius: 'var(--radius)', background: 'var(--danger-muted)', color: 'var(--danger)', fontFamily: 'var(--font-mono)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <strong>ERR:</strong> {actionError}
             </div>
           )}
 
           {displayed.length === 0 ? (
-            <div className="card" style={{ padding: '64px 32px', textAlign: 'center' }}>
-              <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+            <div className="card" style={{ padding: '72px 32px', textAlign: 'center' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'var(--bg-surface-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: 'var(--text-muted)' }}>
+                <Calendar size={28} strokeWidth={1.5} />
+              </div>
+              <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
                 No bookings match the selected filters.
               </p>
             </div>
           ) : (
-            <div className="card" style={{ padding: '8px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '8px 16px', ...COL_HEADER }}>
-                <div>Resource</div><div>Type</div><div>Date</div><div>Time</div>
-                <div>Requested By</div><div>Status</div>
+            <div style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', overflow: 'hidden' }}>
+              {/* Column headers */}
+              <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '14px 20px', background: 'var(--bg-surface-elevated)', ...COL_HEADER }}>
+                <div>Resource</div>
+                <div>Type</div>
+                <div>Date</div>
+                <div>Time</div>
+                <div>Requested By</div>
+                <div>Status</div>
                 <div style={{ textAlign: 'right' }}>Actions</div>
               </div>
 
-              {displayed.map((b, i) => (
-                <div key={b.id} style={{
-                  display: 'grid', gridTemplateColumns: COLS, gap: '16px',
-                  padding: '14px 16px', alignItems: 'center',
-                  borderTop: '1px solid var(--border-main)',
-                  background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
-                }}>
-                  <Link to={`/admin/bookings/${b.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                    <span style={{ fontWeight: 600 }}>{b.resourceName}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{b.resourceLocation}</span>
-                  </Link>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {displayed.map((b) => (
+                  <div key={b.id} className="brp-data-row">
+                    <Link to={`/admin/bookings/${b.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{b.resourceName}</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{b.resourceLocation}</span>
+                    </Link>
 
-                  <TypeBadge type={b.resourceType} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>{b.date}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>{b.startTime?.slice(0, 5)} – {b.endTime?.slice(0, 5)}</span>
+                    <TypeBadge type={b.resourceType} />
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>{b.userName}</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>#{b.id}</span>
-                  </div>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--text-main)' }}>{b.date}</span>
 
-                  <StatusBadge status={b.status} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
+                      {b.startTime?.slice(0, 5)} – {b.endTime?.slice(0, 5)}
+                    </span>
 
-                  <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                    {b.status === 'APPROVED' && b.qrCode && (
-                      <button onClick={() => setQrModal(b)} style={{ ...ACTION_BTN, color: 'var(--info)' }} title="View QR code">
-                        <QrCode size={13} strokeWidth={1.5} /> QR
-                      </button>
-                    )}
-                    {b.status === 'PENDING' && (
-                      <>
-                        <button onClick={() => handleApprove(b.id)} style={{ ...ACTION_BTN, color: 'var(--accent-base)' }}>
-                          <Check size={13} strokeWidth={1.5} /> Approve
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 600 }}>{b.userName}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>#{b.id}</span>
+                    </div>
+
+                    <StatusBadge status={b.status} />
+
+                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                      {b.status === 'APPROVED' && b.qrCode && (
+                        <button onClick={() => setQrModal(b)} style={{ ...ACTION_BTN, color: 'var(--info)' }} title="View QR code">
+                          <QrCode size={13} strokeWidth={1.5} /> QR
                         </button>
-                        <button onClick={() => openRejectModal(b.id)} style={{ ...ACTION_BTN, color: 'var(--danger)' }}>
-                          <XCircle size={13} strokeWidth={1.5} /> Reject
-                        </button>
-                      </>
-                    )}
+                      )}
+                      {b.status === 'PENDING' && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(b.id)}
+                            style={{ ...ACTION_BTN, color: '#10b981', background: 'rgba(16,185,129,0.08)' }}
+                            onMouseOver={e => e.currentTarget.style.background = 'rgba(16,185,129,0.16)'}
+                            onMouseOut={e  => e.currentTarget.style.background = 'rgba(16,185,129,0.08)'}
+                          >
+                            <Check size={13} strokeWidth={2} /> Approve
+                          </button>
+                          <button
+                            onClick={() => openRejectModal(b.id)}
+                            style={{ ...ACTION_BTN, color: 'var(--danger)', background: 'var(--danger-muted)' }}
+                            onMouseOver={e => e.currentTarget.style.background = 'rgba(225,42,69,0.16)'}
+                            onMouseOut={e  => e.currentTarget.style.background = 'var(--danger-muted)'}
+                          >
+                            <XCircle size={13} strokeWidth={1.5} /> Reject
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </>
