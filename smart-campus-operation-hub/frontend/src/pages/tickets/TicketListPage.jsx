@@ -262,6 +262,28 @@ export default function TicketListPage() {
         </div>
       </div>
 
+      {user?.role === 'TECHNICIAN' && (
+        <div className="operations-tabs">
+          <button 
+            className={`op-tab ${currentTab === 'all' ? 'active' : ''}`}
+            onClick={() => { setPage(0); setFilters(EMPTY_FILTERS); setDraftFilters(EMPTY_FILTERS); }}
+          >
+            <Globe size={16} /> All Items
+          </button>
+          <button 
+            className={`op-tab ${currentTab === 'workbench' ? 'active' : ''}`}
+            onClick={() => applyQuickPreset('MY_QUEUE')}
+          >
+            <Briefcase size={16} /> My Workbench
+          </button>
+          <button 
+            className={`op-tab ${currentTab === 'reports' ? 'active' : ''}`}
+            onClick={() => applyQuickPreset('MY_REPORTS')}
+          >
+            <UserIcon size={16} /> My Requests
+          </button>
+        </div>
+      )}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '18px' }}>
         <button className="quick-chip" onClick={() => applyQuickPreset('MY_QUEUE')}>My Queue</button>
         <button className="quick-chip" onClick={() => applyQuickPreset('CRITICAL')}>Critical Queue</button>
