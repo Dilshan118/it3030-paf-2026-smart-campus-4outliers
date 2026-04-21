@@ -154,142 +154,132 @@ export default function BookingCreatePage() {
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 40px 0' }}>
+    <div className="page-container">
+
+      {/* ── Back link + heading ── */}
       <Link
         to="/bookings"
         style={{
           display: 'inline-flex', alignItems: 'center', gap: '8px',
-          marginBottom: '24px', color: 'var(--text-muted)',
+          marginBottom: '28px', color: 'var(--text-muted)',
           textDecoration: 'none', fontFamily: 'var(--font-mono)', fontSize: '13px',
         }}
       >
         <ArrowLeft size={16} strokeWidth={1.5} /> Back to Bookings
       </Link>
 
-      <div className="card">
-        <h1 className="h1" style={{ fontSize: '1.8rem', marginBottom: '28px' }}>New Booking</h1>
+      <h1 className="h1" style={{ fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', marginBottom: '32px' }}>New Booking</h1>
 
-        {/* ── Error banner ─────────────────────────────────────────── */}
-        {error && (
-          <div style={{
-            display: 'flex', gap: '12px', alignItems: 'flex-start',
-            padding: '14px 16px', marginBottom: '24px',
-            border: '1px solid var(--danger)', backgroundColor: 'var(--danger-muted)',
-          }}>
-            <AlertCircle size={15} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: '1px' }} />
-            <span style={{ color: 'var(--danger)', fontFamily: 'var(--font-mono)', fontSize: '13px', lineHeight: 1.6 }}>
-              {error}
-            </span>
-          </div>
-        )}
+      {/* ── Error banner ── */}
+      {error && (
+        <div style={{
+          display: 'flex', gap: '12px', alignItems: 'flex-start',
+          padding: '14px 18px', marginBottom: '28px', borderRadius: 'var(--radius)',
+          border: '1px solid var(--danger)', backgroundColor: 'var(--danger-muted)',
+        }}>
+          <AlertCircle size={15} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: '1px' }} />
+          <span style={{ color: 'var(--danger)', fontFamily: 'var(--font-mono)', fontSize: '13px', lineHeight: 1.6 }}>
+            {error}
+          </span>
+        </div>
+      )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <form onSubmit={handleSubmit}>
+        {/* ═══ Two-column card grid ═══ */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }}>
 
-          {/* ── Resource selector ─────────────────────────────────── */}
-          <div>
-            <label className="label-text">Resource</label>
+          {/* ── LEFT CARD: Resource + Availability ── */}
+          <div className="card" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 700 }}>
+              Resource Selection
+            </div>
 
-            <div ref={dropdownRef} style={{ position: 'relative' }}>
-              {/* Trigger button */}
-              <button
-                type="button"
-                onClick={() => !resourcesLoading && setDropdownOpen(v => !v)}
-                disabled={resourcesLoading}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center',
-                  justifyContent: 'space-between', gap: '10px',
-                  padding: '10px 14px',
-                  background: 'var(--bg-surface)', border: '1px solid var(--border-main)',
-                  color: selectedResource ? 'var(--text-main)' : 'var(--text-muted)',
-                  fontFamily: 'var(--font-body)', fontSize: '14px',
-                  cursor: resourcesLoading ? 'not-allowed' : 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                {resourcesLoading ? (
-                  <span>Loading resources…</span>
-                ) : selectedResource ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                    <TypeBadge type={selectedResource.type} />
-                    <span style={{ fontWeight: 500 }}>{selectedResource.name}</span>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-                      — {selectedResource.location}
-                    </span>
-                  </span>
-                ) : (
-                  <span>Select a resource</span>
-                )}
-                <ChevronDown
-                  size={14}
+            <div>
+              <label className="label-text">Resource</label>
+              <div ref={dropdownRef} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => !resourcesLoading && setDropdownOpen(v => !v)}
+                  disabled={resourcesLoading}
                   style={{
-                    color: 'var(--text-muted)', flexShrink: 0,
-                    transform: dropdownOpen ? 'rotate(180deg)' : 'none',
-                    transition: 'transform 0.15s',
+                    width: '100%', display: 'flex', alignItems: 'center',
+                    justifyContent: 'space-between', gap: '10px', padding: '10px 14px',
+                    background: 'var(--bg-primary)', border: '1px solid var(--bg-surface-elevated)',
+                    borderRadius: 'var(--radius)', color: selectedResource ? 'var(--text-main)' : 'var(--text-muted)',
+                    fontFamily: 'var(--font-body)', fontSize: '14px',
+                    cursor: resourcesLoading ? 'not-allowed' : 'pointer', textAlign: 'left',
                   }}
-                />
-              </button>
+                >
+                  {resourcesLoading ? (
+                    <span>Loading resources…</span>
+                  ) : selectedResource ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <TypeBadge type={selectedResource.type} />
+                      <span style={{ fontWeight: 600 }}>{selectedResource.name}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>— {selectedResource.location}</span>
+                    </span>
+                  ) : (
+                    <span>Select a resource…</span>
+                  )}
+                  <ChevronDown
+                    size={14}
+                    style={{ color: 'var(--text-muted)', flexShrink: 0, transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+                  />
+                </button>
 
-              {/* Dropdown list */}
-              {dropdownOpen && (
-                <div style={{
-                  position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200,
-                  background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-main)',
-                  maxHeight: '264px', overflowY: 'auto',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
-                }}>
-                  {resources.length === 0 ? (
-                    <div style={{ padding: '12px 14px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
-                      No active resources found
-                    </div>
-                  ) : resources.map((r, i) => {
-                    const isSelected = String(r.id) === String(formData.resourceId);
-                    return (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => {
-                          setFormData(prev => ({ ...prev, resourceId: String(r.id) }));
-                          setDropdownOpen(false);
-                        }}
-                        style={{
-                          width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                          padding: '10px 14px', textAlign: 'left', cursor: 'pointer',
-                          background: isSelected ? 'rgba(204,255,0,0.06)' : 'transparent',
-                          border: 'none',
-                          borderBottom: i < resources.length - 1 ? '1px solid var(--border-main)' : 'none',
-                          color: 'var(--text-main)', fontFamily: 'var(--font-body)', fontSize: '14px',
-                          transition: 'background 0.1s',
-                        }}
-                        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-                        onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
-                      >
-                        <TypeBadge type={r.type} />
-                        <span style={{ fontWeight: 500 }}>{r.name}</span>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>— {r.location}</span>
-                        {r.capacity != null && (
-                          <span style={{
-                            marginLeft: 'auto', color: 'var(--text-muted)',
-                            fontFamily: 'var(--font-mono)', fontSize: '11px', flexShrink: 0,
-                          }}>
-                            {r.capacity} seats
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+                {dropdownOpen && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200,
+                    background: 'var(--bg-surface)', borderRadius: 'var(--radius)',
+                    maxHeight: '300px', overflowY: 'auto',
+                    boxShadow: '0 16px 48px rgba(0,0,0,0.12)',
+                    border: '1px solid var(--bg-surface-elevated)',
+                  }}>
+                    {resources.length === 0 ? (
+                      <div style={{ padding: '12px 14px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
+                        No active resources found
+                      </div>
+                    ) : resources.map((r, i) => {
+                      const isSelected = String(r.id) === String(formData.resourceId);
+                      return (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => { setFormData(prev => ({ ...prev, resourceId: String(r.id) })); setDropdownOpen(false); }}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                            padding: '10px 14px', textAlign: 'left', cursor: 'pointer',
+                            background: isSelected ? 'var(--accent-muted)' : 'transparent',
+                            border: 'none',
+                            borderBottom: i < resources.length - 1 ? '1px solid var(--bg-surface-elevated)' : 'none',
+                            color: 'var(--text-main)', fontFamily: 'var(--font-body)', fontSize: '14px',
+                            transition: 'background 0.1s',
+                          }}
+                          onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-surface-elevated)'; }}
+                          onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+                        >
+                          <TypeBadge type={r.type} />
+                          <span style={{ fontWeight: 500 }}>{r.name}</span>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>— {r.location}</span>
+                          {r.capacity != null && (
+                            <span style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '11px', flexShrink: 0 }}>
+                              {r.capacity} seats
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Availability windows */}
-            {availability && (
-              <div style={{
-                marginTop: '8px', padding: '10px 12px',
-                background: 'rgba(0,221,255,0.04)', border: '1px solid rgba(0,221,255,0.2)',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '7px' }}>
+            {availability ? (
+              <div style={{ padding: '14px 16px', background: 'rgba(14,165,233,0.06)', borderRadius: 'var(--radius)', border: '1px solid rgba(14,165,233,0.18)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                   <Clock size={11} style={{ color: 'var(--info)' }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--info)', letterSpacing: '0.08em' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--info)', letterSpacing: '0.1em', fontWeight: 700 }}>
                     AVAILABILITY HOURS
                   </span>
                 </div>
@@ -297,70 +287,97 @@ export default function BookingCreatePage() {
                   {availability.map(({ day, range }) => (
                     <span key={day} style={{
                       fontFamily: 'var(--font-mono)', fontSize: '11px',
-                      padding: '2px 8px', border: '1px solid var(--border-main)',
+                      padding: '3px 10px', borderRadius: '6px',
                       background: 'var(--bg-surface)', color: 'var(--text-muted)',
+                      border: '1px solid var(--bg-surface-elevated)',
                     }}>
-                      <span style={{ color: 'var(--text-main)' }}>{day}</span>{' '}{range}
+                      <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{day}</span>{' '}{range}
                     </span>
                   ))}
                 </div>
               </div>
+            ) : (
+              <div style={{ padding: '14px 16px', background: 'var(--bg-primary)', borderRadius: 'var(--radius)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+                Select a resource to see availability hours.
+              </div>
             )}
+
+            {/* Expected Attendees — lives in left card */}
+            <div>
+              <label className="label-text" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Users size={12} style={{ color: 'var(--text-muted)' }} />
+                Expected Attendees
+                {selectedResource && (
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '12px' }}>
+                    {selectedResource.type === 'EQUIPMENT'
+                      ? '(not required for equipment)'
+                      : selectedResource.capacity != null
+                        ? `(max ${selectedResource.capacity})`
+                        : '(required)'}
+                  </span>
+                )}
+              </label>
+              <input
+                type="number"
+                name="expectedAttendees"
+                value={formData.expectedAttendees}
+                onChange={handleChange}
+                min={1}
+                max={selectedResource?.capacity ?? undefined}
+                placeholder={selectedResource?.capacity != null ? `Max capacity: ${selectedResource.capacity}` : 'e.g. 12'}
+                className="input-field"
+              />
+            </div>
           </div>
 
-          {/* ── Date ─────────────────────────────────────────────────── */}
-          <div>
-            <label className="label-text" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Calendar size={12} style={{ color: 'var(--text-muted)' }} />
-              Date
-            </label>
-            <input
-              type="date"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-              min={todayISO}
-              required
-              className="input-field"
-              style={{ colorScheme: 'dark', cursor: 'pointer' }}
-            />
-          </div>
+          {/* ── RIGHT CARD: Schedule + Purpose ── */}
+          <div className="card" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 700 }}>
+              Schedule & Details
+            </div>
 
-          {/* ── Time ──────────────────────────────────────────────────── */}
-          <div>
+            {/* Date */}
+            <div>
+              <label className="label-text" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Calendar size={12} style={{ color: 'var(--text-muted)' }} /> Date
+              </label>
+              <input
+                type="date"
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
+                min={todayISO}
+                required
+                className="input-field"
+                style={{ colorScheme: 'light', cursor: 'pointer' }}
+              />
+            </div>
+
+            {/* Start + End time */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
                 <label className="label-text" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Clock size={12} style={{ color: 'var(--text-muted)' }} />
-                  Start Time
+                  <Clock size={12} style={{ color: 'var(--text-muted)' }} /> Start Time
                 </label>
                 <select
                   name="startTime"
                   value={formData.startTime}
                   onChange={(e) => {
                     const newStart = e.target.value;
-                    setFormData(prev => ({
-                      ...prev,
-                      startTime: newStart,
-                      // clear end time if it's no longer after the new start
-                      endTime: prev.endTime > newStart ? prev.endTime : '',
-                    }));
+                    setFormData(prev => ({ ...prev, startTime: newStart, endTime: prev.endTime > newStart ? prev.endTime : '' }));
                   }}
                   required
                   className="input-field"
                   style={{ appearance: 'none', cursor: 'pointer' }}
                 >
                   <option value="">— select —</option>
-                  {TIME_SLOTS.map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
+                  {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
 
               <div>
                 <label className="label-text" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Clock size={12} style={{ color: 'var(--text-muted)' }} />
-                  End Time
+                  <Clock size={12} style={{ color: 'var(--text-muted)' }} /> End Time
                 </label>
                 <select
                   name="endTime"
@@ -372,102 +389,62 @@ export default function BookingCreatePage() {
                   disabled={!formData.startTime}
                 >
                   <option value="">— select —</option>
-                  {TIME_SLOTS
-                    .filter(t => !formData.startTime || t > formData.startTime)
-                    .map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
+                  {TIME_SLOTS.filter(t => !formData.startTime || t > formData.startTime).map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
                 </select>
               </div>
             </div>
 
             {/* Duration hint */}
             {duration && (
-              <div style={{
-                marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '11px',
-                color: 'var(--text-muted)',
-              }}>
-                Duration: <span style={{ color: 'var(--accent-base)' }}>{duration}</span>
+              <div style={{ marginTop: '-8px', fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)' }}>
+                Duration: <span style={{ color: 'var(--accent-base)', fontWeight: 600 }}>{duration}</span>
               </div>
             )}
-          </div>
 
-          {/* ── Purpose ───────────────────────────────────────────────── */}
-          <div>
-            <label className="label-text">Purpose</label>
-            <textarea
-              name="purpose"
-              value={formData.purpose}
-              onChange={handleChange}
-              required
-              minLength={10}
-              maxLength={500}
-              rows={4}
-              placeholder="Describe the purpose of this booking (10–500 characters)"
-              className="input-field"
-              style={{ resize: 'vertical' }}
-            />
-            <div style={{
-              textAlign: 'right', marginTop: '4px',
-              fontFamily: 'var(--font-mono)', fontSize: '11px',
-              color: formData.purpose.length > 450 ? 'var(--warning)' : 'var(--text-muted)',
-            }}>
-              {formData.purpose.length}/500
+            {/* Purpose */}
+            <div style={{ flex: 1 }}>
+              <label className="label-text">Purpose</label>
+              <textarea
+                name="purpose"
+                value={formData.purpose}
+                onChange={handleChange}
+                required
+                minLength={10}
+                maxLength={500}
+                rows={6}
+                placeholder="Describe the purpose of this booking (10–500 characters)"
+                className="input-field"
+                style={{ resize: 'vertical' }}
+              />
+              <div style={{ textAlign: 'right', marginTop: '4px', fontFamily: 'var(--font-mono)', fontSize: '11px', color: formData.purpose.length > 450 ? 'var(--warning)' : 'var(--text-muted)' }}>
+                {formData.purpose.length}/500
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* ── Expected Attendees ────────────────────────────────────── */}
-          <div>
-            <label className="label-text" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Users size={12} style={{ color: 'var(--text-muted)' }} />
-              Expected Attendees
-              {selectedResource && (
-                <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '12px' }}>
-                  {selectedResource.type === 'EQUIPMENT'
-                    ? '(not required for equipment)'
-                    : selectedResource.capacity != null
-                      ? `(max ${selectedResource.capacity})`
-                      : '(required)'}
-                </span>
-              )}
-            </label>
-            <input
-              type="number"
-              name="expectedAttendees"
-              value={formData.expectedAttendees}
-              onChange={handleChange}
-              min={1}
-              max={selectedResource?.capacity ?? undefined}
-              placeholder={
-                selectedResource?.capacity != null
-                  ? `Max capacity: ${selectedResource.capacity}`
-                  : 'e.g. 12'
-              }
-              className="input-field"
-            />
-          </div>
-
-          {/* ── Actions ──────────────────────────────────────────────── */}
-          <div style={{ display: 'flex', gap: '12px', paddingTop: '8px' }}>
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={submitting || resourcesLoading}
-              style={{ flex: 1, justifyContent: 'center' }}
-            >
-              {submitting ? 'Submitting…' : 'Submit Booking'}
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => navigate('/bookings')}
-              style={{ justifyContent: 'center' }}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
+        {/* ── Submit row ── */}
+        <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => navigate('/bookings')}
+            style={{ justifyContent: 'center' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={submitting || resourcesLoading}
+            style={{ justifyContent: 'center', minWidth: '160px' }}
+          >
+            {submitting ? 'Submitting…' : 'Submit Booking'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
