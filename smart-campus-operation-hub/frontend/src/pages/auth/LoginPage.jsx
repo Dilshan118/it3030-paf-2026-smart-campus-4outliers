@@ -1,8 +1,14 @@
 import React from 'react';
 import { Building2, Info, KeyRound } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 export default function LoginPage() {
+  const location = useLocation();
+
   const handleGoogleLogin = () => {
+    const from = location.state?.from?.pathname || '/';
+    localStorage.setItem('auth_redirect', from);
+
     const base = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:8080';
     window.location.href = `${base}/oauth2/authorization/google`;
   };
