@@ -140,7 +140,7 @@ class TicketServiceTest {
         when(ticketRepository.save(any(Ticket.class))).thenReturn(mockTicket);
 
         // Act
-        TicketResponse response = ticketService.assignTechnician(100L, 2L);
+        ticketService.assignTechnician(100L, 2L);
 
         // Assert
         assertNotNull(mockTicket.getAssignedTo());
