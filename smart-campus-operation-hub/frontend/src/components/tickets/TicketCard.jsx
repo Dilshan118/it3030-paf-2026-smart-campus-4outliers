@@ -1,22 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowRight, Clock, UserRound } from 'lucide-react';
 
 function formatEnum(value) {
   if (!value) return 'N/A';
   return value.replace(/_/g, ' ');
-}
-
-function computeSlaState(ticket) {
-  if (!ticket?.slaDeadline) return null;
-  if (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED' || ticket.status === 'REJECTED') return null;
-  const deadline = new Date(ticket.slaDeadline);
-  if (Number.isNaN(deadline.getTime())) return null;
-
-  const diffMs = deadline.getTime() - Date.now();
-  if (diffMs < 0) return 'BREACHED';
-  if (diffMs <= 4 * 60 * 60 * 1000) return 'DUE_SOON';
-  return null;
 }
 
 export default function TicketCard({ ticket }) {
@@ -30,9 +18,49 @@ export default function TicketCard({ ticket }) {
     title,
     assignedToName,
     assignedToId,
+    slaDeadline
   } = ticket;
 
-  const slaState = computeSlaState(ticket);
+  const [slaCountdown, setSlaCountdown] = useState(null);
+  const [slaState, setSlaState] = useState(null);
+
+  useEffect(() => {
+    if (!slaDeadline || status === 'RESOLVED' || status === 'CLOSED' || status === 'REJECTED') {
+      setSlaState(null);
+      setSlaCountdown(null);
+      return;
+    }
+
+    const calculateSla = () => {
+      const deadline = new Date(slaDeadline).getTime();
+      if (Number.isNaN(deadline)) return;
+
+      const diffMs = deadline - Date.now();
+      
+      if (diffMs < 0) {
+        setSlaState('BREACHED');
+        const absDiff = Math.abs(diffMs);
+        const hours = Math.floor(absDiff / (1000 * 60 * 60));
+        const mins = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
+        setSlaCountdown(`Breached ${hours}h ${mins}m ago`);
+      } else {
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        
+        if (diffMs <= 4 * 60 * 60 * 1000) {
+          setSlaState('DUE_SOON');
+        } else {
+          setSlaState('ON_TRACK');
+        }
+        setSlaCountdown(`${hours}h ${mins}m left`);
+      }
+    };
+
+    calculateSla();
+    const intervalId = setInterval(calculateSla, 60000); // update every minute
+
+    return () => clearInterval(intervalId);
+  }, [slaDeadline, status]);
 
   return (
     <Link to={`/tickets/${id}`} className="card" style={{ 
@@ -82,28 +110,31 @@ export default function TicketCard({ ticket }) {
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
         <span className={`status-badge status-${(status || 'open').toLowerCase()}`}>{formatEnum(status)}</span>
         <span className={`priority-badge priority-${(priority || 'low').toLowerCase()}`}>{formatEnum(priority)}</span>
+        
         {slaState && (
           <span
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '6px',
               padding: '6px 10px',
               borderRadius: '999px',
               fontFamily: 'var(--font-mono)',
               fontSize: '0.65rem',
               letterSpacing: '0.05em',
               textTransform: 'uppercase',
-              background: 'var(--danger-muted)',
-              color: 'var(--danger)',
+              background: slaState === 'BREACHED' ? 'var(--danger-muted)' : (slaState === 'DUE_SOON' ? 'rgba(234, 179, 8, 0.1)' : 'var(--success-muted)'),
+              color: slaState === 'BREACHED' ? 'var(--danger)' : (slaState === 'DUE_SOON' ? 'var(--warning)' : 'var(--success)'),
             }}
           >
-            <AlertTriangle size={12} /> {slaState === 'BREACHED' ? 'SLA Breached' : 'SLA Risk'}
+            {slaState !== 'ON_TRACK' && <AlertTriangle size={12} />} 
+            {slaCountdown}
           </span>
         )}
+        
         {(assignedToName || assignedToId) && (
           <div style={{
             display: 'inline-flex',
@@ -139,3 +170,4 @@ export default function TicketCard({ ticket }) {
     </Link>
   );
 }
+
