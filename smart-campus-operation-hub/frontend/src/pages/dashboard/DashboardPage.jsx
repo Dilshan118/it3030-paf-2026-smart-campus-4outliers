@@ -23,6 +23,8 @@ export default function DashboardPage() {
     activeTickets: 0,
     slaScore: 100,
     activeBookings: 0,
+    myAssigned: 0,
+    myReported: 0,
     loading: true
   });
 
@@ -34,12 +36,27 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchMetrics() {
       try {
-        const [ticketsRes, bookingsRes] = await Promise.all([
-          getTickets({ size: 100, status: 'OPEN,IN_PROGRESS' }),
-          getBookings({ userId: user?.id, size: 50, status: 'APPROVED' })
-        ]);
+        const isTech = user?.role === 'TECHNICIAN';
+        
+        let ticketsRes, bookingsRes, myReportedRes;
+
+        if (isTech) {
+          // Fetch assigned, reported, and bookings
+          [ticketsRes, myReportedRes, bookingsRes] = await Promise.all([
+            getTickets({ assignee: 'MINE', status: 'OPEN,IN_PROGRESS' }),
+            getTickets({ reporter: 'MINE', status: 'OPEN,IN_PROGRESS' }),
+            getBookings({ userId: user?.id, size: 50, status: 'APPROVED' })
+          ]);
+        } else {
+          // Standard fetch
+          [ticketsRes, bookingsRes] = await Promise.all([
+            getTickets({ size: 100, status: 'OPEN,IN_PROGRESS' }),
+            getBookings({ userId: user?.id, size: 50, status: 'APPROVED' })
+          ]);
+        }
 
         const tickets = ticketsRes?.data?.content || ticketsRes?.data || [];
+        const reported = myReportedRes?.data?.content || myReportedRes?.data || [];
         const bookings = bookingsRes?.data?.content || bookingsRes?.data || [];
         
         let breached = 0;
@@ -54,6 +71,8 @@ export default function DashboardPage() {
           activeTickets: activeTicketsCount,
           slaScore: slaScore,
           activeBookings: bookings.length,
+          myAssigned: isTech ? activeTicketsCount : 0,
+          myReported: isTech ? reported.length : 0,
           loading: false
         });
       } catch (err) {
@@ -222,10 +241,10 @@ export default function DashboardPage() {
             <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'auto' }}>
               <div>
                 <span style={{ display: 'block', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>
-                  Incident Queue
+                  {user?.role === 'TECHNICIAN' ? 'Assigned Workbench' : 'Incident Queue'}
                 </span>
                 <div className="metric-value">
-                  {metrics.loading ? '...' : metrics.activeTickets}
+                  {metrics.loading ? '...' : (user?.role === 'TECHNICIAN' ? metrics.myAssigned : metrics.activeTickets)}
                 </div>
               </div>
               <div style={{ background: 'rgba(255,255,255,0.1)', padding: '20px', borderRadius: '24px', backdropFilter: 'blur(10px)' }}>
@@ -236,39 +255,59 @@ export default function DashboardPage() {
             <div style={{ position: 'relative', zIndex: 1, marginTop: '80px', display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px' }}>
               <div>
                 <div style={{ fontSize: '1.25rem', fontFamily: 'var(--font-body)', fontWeight: 600, color: 'rgba(255,255,255,0.9)', marginBottom: '8px' }}>
-                  Active Unresolved Tickets
+                  {user?.role === 'TECHNICIAN' ? 'Incident Tasks Prepared' : 'Active Unresolved Tickets'}
                 </div>
                 <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.95rem' }}>
-                  Technicians are monitoring incoming streams.
+                  {user?.role === 'TECHNICIAN' ? 'Prioritize assignments and maintain peak performance.' : 'Technicians are monitoring incoming streams.'}
                 </div>
               </div>
               
               <NavLink to="/tickets" className="glass-btn">
-                Manage Queue <ArrowUpRight size={18} />
+                {user?.role === 'TECHNICIAN' ? 'Start Working' : 'Manage Queue'} <ArrowUpRight size={18} />
               </NavLink>
             </div>
           </div>
         </div>
 
-        {/* SLA Health Side Card */}
+        {/* SLA / Personal Reports Side Card */}
         <div className="bento-side">
-          <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-              <span className="label-text" style={{ margin: 0 }}>Global SLA Score</span>
-              <ShieldCheck size={28} color={metrics.slaScore >= 95 ? 'var(--success)' : (metrics.slaScore >= 80 ? 'var(--warning)' : 'var(--danger)')} />
+          {user?.role === 'TECHNICIAN' ? (
+            <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                <span className="label-text" style={{ margin: 0 }}>My Reported Issues</span>
+                <Box size={28} color="var(--accent-base)" />
+              </div>
+              
+              <div className="metric-value" style={{ color: 'var(--text-main)', marginTop: 'auto', marginBottom: '8px' }}>
+                {metrics.loading ? '...' : metrics.myReported}
+              </div>
+              
+              <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '32px' }}>
+                Self-reported incidents currently being tracked.
+              </div>
+              
+              <NavLink to="/tickets?reporter=MINE" className="btn btn-secondary" style={{ width: '100%', textAlign: 'center' }}>
+                View My reports
+              </NavLink>
             </div>
-            
-            <div className="metric-value" style={{ color: 'var(--text-main)', marginTop: 'auto', marginBottom: '8px' }}>
-              {metrics.loading ? '...' : metrics.slaScore}<span style={{ fontSize: '2.5rem', color: metrics.slaScore >= 95 ? 'var(--success)' : 'var(--text-muted)' }}>%</span>
+          ) : (
+            <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                <span className="label-text" style={{ margin: 0 }}>Global SLA Score</span>
+                <ShieldCheck size={28} color={metrics.slaScore >= 95 ? 'var(--success)' : (metrics.slaScore >= 80 ? 'var(--warning)' : 'var(--danger)')} />
+              </div>
+              
+              <div className="metric-value" style={{ color: 'var(--text-main)', marginTop: 'auto', marginBottom: '8px' }}>
+                {metrics.loading ? '...' : metrics.slaScore}<span style={{ fontSize: '2.5rem', color: metrics.slaScore >= 95 ? 'var(--success)' : 'var(--text-muted)' }}>%</span>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '48px', marginTop: '32px', opacity: 0.6 }}>
+                {[40, 70, 45, 90, 65, metrics.slaScore].map((h, i) => (
+                  <div key={i} style={{ flex: 1, background: i === 5 ? (metrics.slaScore >= 95 ? 'var(--success)' : 'var(--accent-base)') : 'var(--bg-surface-elevated)', height: `${h}%`, borderRadius: '4px 4px 0 0', transition: 'height 1s ease' }} />
+                ))}
+              </div>
             </div>
-            
-            {/* Small decorative mini-graph */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '48px', marginTop: '32px', opacity: 0.6 }}>
-              {[40, 70, 45, 90, 65, metrics.slaScore].map((h, i) => (
-                <div key={i} style={{ flex: 1, background: i === 5 ? (metrics.slaScore >= 95 ? 'var(--success)' : 'var(--accent-base)') : 'var(--bg-surface-elevated)', height: `${h}%`, borderRadius: '4px 4px 0 0', transition: 'height 1s ease' }} />
-              ))}
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Quick Actions Title */}
