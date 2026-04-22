@@ -117,8 +117,8 @@ export default function ResourceDetailPage() {
                     ))}
                   </Swiper>
                 )
-              : resource.imageUrl 
-              ? <img src={resolveBackendUrl(resource.imageUrl)} alt={resource.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.onerror = null; e.target.parentNode.innerHTML = '<span style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem;">NO IMAGE AVAILABLE</span>'; }} />
+              : resource.legacyImageUrl 
+              ? <img src={resolveBackendUrl(resource.legacyImageUrl)} alt={resource.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.onerror = null; e.target.parentNode.innerHTML = '<span style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem;">NO IMAGE AVAILABLE</span>'; }} />
               : <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>NO IMAGE AVAILABLE</span>
             }
           </div>

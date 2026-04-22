@@ -9,14 +9,27 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    
+    const handleStorageChange = (e) => {
+      if (e.key === 'token' && !e.newValue) {
+        // Token was removed in another tab
+        setUser(null);
+        window.location.href = '/login';
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
     if (!token) {
       setLoading(false);
-      return;
+      return () => window.removeEventListener('storage', handleStorageChange);
     }
+
     api.get('/users/me')
       .then(res => setUser(res.data.data))
       .catch(() => localStorage.removeItem('token'))
       .finally(() => setLoading(false));
+
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const login = (token) => {

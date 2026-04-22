@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { createTicket } from '../../api/ticketApi';
 import TicketForm from '../../components/tickets/TicketForm';
 import { ChevronLeft, FileText, Zap } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 
 export default function TicketCreatePage() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -14,6 +16,7 @@ export default function TicketCreatePage() {
       setLoading(true);
       setError(null);
       await createTicket(data);
+      addToast('Ticket raised successfully', 'success');
       navigate('/tickets');
     } catch (err) {
       setError(err.response?.data?.message || err.message);

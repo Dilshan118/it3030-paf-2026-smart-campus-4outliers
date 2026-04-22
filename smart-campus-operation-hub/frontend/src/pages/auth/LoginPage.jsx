@@ -15,6 +15,9 @@ export default function LoginPage() {
     : null;
 
   const handleGoogleLogin = () => {
+    const from = location.state?.from?.pathname || '/';
+    localStorage.setItem('auth_redirect', from);
+
     const base = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:8080';
     window.location.href = `${base}/oauth2/authorization/google`;
   };

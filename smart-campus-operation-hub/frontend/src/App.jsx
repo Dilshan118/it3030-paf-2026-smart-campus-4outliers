@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import Sidebar from './components/common/Sidebar';
 import Navbar from './components/common/Navbar';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -57,47 +58,49 @@ function App() {
           <Route path="/access-denied" element={<AccessDeniedPage />} />
           <Route path="/pending-approval" element={<PendingApprovalPage />} />
 
-          {/* Protected Main Routes */}
-          <Route path="/" element={<ProtectedRoute><DashboardLayout><DashboardPage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><NotificationHistoryPage /></DashboardLayout></ProtectedRoute>} />
+            {/* Protected Main Routes */}
+            <Route path="/" element={<ProtectedRoute><DashboardLayout><DashboardPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><NotificationHistoryPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/notifications/preferences" element={<ProtectedRoute><DashboardLayout><NotificationPreferencesPage /></DashboardLayout></ProtectedRoute>} />
 
-          {/* Ticket Routes */}
-          <Route path="/tickets" element={<ProtectedRoute><DashboardLayout><TicketListPage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/tickets/new" element={<ProtectedRoute><DashboardLayout><TicketCreatePage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/tickets/manage" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><TicketManagePage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/tickets/:id" element={<ProtectedRoute><DashboardLayout><TicketDetailPage /></DashboardLayout></ProtectedRoute>} />
+            {/* Ticket Routes */}
+            <Route path="/tickets" element={<ProtectedRoute><DashboardLayout><TicketListPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/tickets/new" element={<ProtectedRoute><DashboardLayout><TicketCreatePage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/tickets/manage" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><TicketManagePage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/tickets/:id" element={<ProtectedRoute><DashboardLayout><TicketDetailPage /></DashboardLayout></ProtectedRoute>} />
 
-          {/* Booking Routes */}
-          <Route path="/bookings" element={<ProtectedRoute><DashboardLayout><BookingListPage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/bookings/new" element={<ProtectedRoute><DashboardLayout><BookingCreatePage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/bookings/:id" element={<ProtectedRoute><DashboardLayout><BookingDetailPage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/bookings/manage" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingReviewPage /></DashboardLayout></ProtectedRoute>} />
+            {/* Booking Routes */}
+            <Route path="/bookings" element={<ProtectedRoute><DashboardLayout><BookingListPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/bookings/new" element={<ProtectedRoute><DashboardLayout><BookingCreatePage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/bookings/:id" element={<ProtectedRoute><DashboardLayout><BookingDetailPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/bookings/manage" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingReviewPage /></DashboardLayout></ProtectedRoute>} />
 
-          {/* Resource Routes */}
-          <Route path="/resources" element={<ProtectedRoute><DashboardLayout><ResourceListPage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/resources/finder" element={<ProtectedRoute><DashboardLayout><ResourceFinderPage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/resources/:id" element={<ProtectedRoute><DashboardLayout><ResourceDetailPage /></DashboardLayout></ProtectedRoute>} />
+            {/* Resource Routes */}
+            <Route path="/resources" element={<ProtectedRoute><DashboardLayout><ResourceListPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/resources/finder" element={<ProtectedRoute><DashboardLayout><ResourceFinderPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/resources/:id" element={<ProtectedRoute><DashboardLayout><ResourceDetailPage /></DashboardLayout></ProtectedRoute>} />
 
-          {/* Admin Routes */}
-          <Route path="/admin/resources" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><ResourceManagePage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/admin/resources/analytics" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><ResourceAnalyticsPage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/admin/bookings" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingReviewPage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/admin/bookings/:id" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingAdminDetailPage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/admin/analytics" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><AnalyticsDashboard /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/admin/users" element={<ProtectedRoute requiredRoles={ADMIN_ONLY}><DashboardLayout><UserManagePage /></DashboardLayout></ProtectedRoute>} />
+            {/* Admin Routes */}
+            <Route path="/admin/resources" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><ResourceManagePage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/admin/resources/analytics" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><ResourceAnalyticsPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/admin/bookings" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingReviewPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/admin/bookings/:id" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingAdminDetailPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/admin/analytics" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><AnalyticsDashboard /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute requiredRoles={ADMIN_ONLY}><DashboardLayout><UserManagePage /></DashboardLayout></ProtectedRoute>} />
 
-          <Route path="/admin/*" element={
-            <ProtectedRoute requiredRoles={ADMIN_MANAGER}>
-              <DashboardLayout>
-                <div className="card" style={{ textAlign: 'center' }}>
-                  <h2 className="h1">Admin Module</h2>
-                  <p style={{ color: 'var(--on-surface-variant)' }}>Coming soon...</p>
-                </div>
-              </DashboardLayout>
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </Router>
+            <Route path="/admin/*" element={
+              <ProtectedRoute requiredRoles={ADMIN_MANAGER}>
+                <DashboardLayout>
+                  <div className="card" style={{ textAlign: 'center' }}>
+                    <h2 className="h1">Admin Module</h2>
+                    <p style={{ color: 'var(--on-surface-variant)' }}>Coming soon...</p>
+                  </div>
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 }

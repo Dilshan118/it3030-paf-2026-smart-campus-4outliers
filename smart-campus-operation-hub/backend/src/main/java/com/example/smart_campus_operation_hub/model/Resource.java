@@ -40,7 +40,7 @@ public class Resource {
 
     @ElementCollection
     @CollectionTable(name = "resource_images", joinColumns = @JoinColumn(name = "resource_id"))
-    @Column(name = "image_url")
+    @Column(name = "image_data", columnDefinition="TEXT")
     private List<String> imageUrls = new ArrayList<>();
 
     @Column(name = "image_url", insertable = false, updatable = false)
@@ -103,3 +103,4 @@ public class Resource {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }
+

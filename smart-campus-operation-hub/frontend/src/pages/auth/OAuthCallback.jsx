@@ -14,8 +14,13 @@ export default function OAuthCallback() {
       navigate('/login');
       return;
     }
+    
     login(token)
-      .then(() => navigate('/'))
+      .then(() => {
+        const redirectUrl = localStorage.getItem('auth_redirect') || '/';
+        localStorage.removeItem('auth_redirect');
+        navigate(redirectUrl);
+      })
       .catch(() => {
         localStorage.removeItem('token');
         navigate('/login');

@@ -33,13 +33,32 @@ public class TicketController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String priority,
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String assignee,
+            @RequestParam(required = false) String reporter,
+            @RequestParam(required = false) String slaState,
+            @RequestParam(required = false) String createdFrom,
+            @RequestParam(required = false) String createdTo,
             org.springframework.data.domain.Pageable pageable) {
 
         Long userId = (Long) authentication.getPrincipal();
         String role = authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
 
         org.springframework.data.domain.Page<com.example.smart_campus_operation_hub.dto.response.TicketResponse> response =
-                ticketService.getAllTickets(userId, role, status, priority, category, pageable);
+                ticketService.getAllTickets(
+                        userId,
+                        role,
+                        status,
+                        priority,
+                        category,
+                        query,
+                        assignee,
+                        reporter,
+                        slaState,
+                        createdFrom,
+                        createdTo,
+                        pageable
+                );
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
