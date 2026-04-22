@@ -284,25 +284,25 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .sidebar-brand {
-  padding: 56px 22px 30px;
+  padding: 44px 38px 24px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 26px;
+  justify-content: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
   position: relative;
   z-index: 1;
 }
 
 .sidebar-logo {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   background: #ffffff; /* Bright contrast block */
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15); /* Light ambient shadow */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Light ambient shadow */
   transition: transform 0.4s ease;
 }
 .sidebar-logo:hover {
@@ -319,9 +319,9 @@ h1, h2, h3, h4, h5, h6 {
 .sidebar-brand-title {
   font-family: var(--font-display);
   font-weight: 800;
-  letter-spacing: -0.03em; /* Tight tracking */
+  letter-spacing: -0.02em; /* Tight tracking */
   color: #ffffff;
-  font-size: 1.5rem; /* Increased size for prominence */
+  font-size: 1.25rem; /* Better alignment match for text */
   line-height: 1;
 }
 
@@ -329,8 +329,8 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-mono);
   font-weight: 600;
   letter-spacing: 0.22em;
-  font-size: 0.75rem; /* Increased size */
-  color: rgba(255, 255, 255, 0.75); /* Softer white */
+  font-size: 0.65rem; /* Integrated feel */
+  color: rgba(255, 255, 255, 0.65); /* Softer white */
   text-transform: uppercase;
 }
 

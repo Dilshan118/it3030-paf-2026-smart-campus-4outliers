@@ -16,7 +16,7 @@ export default function Sidebar() {
     <nav className="sidebar">
       <div className="sidebar-brand">
         <div className="sidebar-logo">
-          <Building2 color="var(--accent-base)" size={24} strokeWidth={2.5} />
+          <Building2 color="var(--accent-base)" size={20} strokeWidth={2.5} />
         </div>
         <div className="sidebar-brand-text">
           <span className="sidebar-brand-title">SMART</span>
