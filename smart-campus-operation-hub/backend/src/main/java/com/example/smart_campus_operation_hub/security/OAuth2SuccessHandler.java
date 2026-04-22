@@ -37,6 +37,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             response.sendRedirect(frontendUrl + "/pending-approval");
         } catch (UnauthorizedException e) {
             response.sendRedirect(frontendUrl + "/login?error=access_denied");
+        } catch (Exception e) {
+            System.err.println("[OAuth2SuccessHandler] Unexpected error during login: " + e.getMessage());
+            e.printStackTrace();
+            response.sendRedirect(frontendUrl + "/login?error=server_error");
         }
     }
 }
