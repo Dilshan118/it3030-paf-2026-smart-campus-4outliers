@@ -365,90 +365,87 @@ export default function TicketDetailPage() {
           line-height: 1.55;
         }
 
-        .ticket-detail-page .lifecycle-timeline {
+        .ticket-detail-page .horizontal-lifecycle {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-top: 32px;
+          padding-top: 32px;
+          border-top: 1px solid var(--bg-surface-elevated);
           position: relative;
-          padding: 8px 0;
         }
-        
-        .ticket-detail-page .lifecycle-timeline::before {
+
+        .ticket-detail-page .horizontal-lifecycle::before {
           content: '';
           position: absolute;
-          left: 11px;
-          top: 16px;
-          bottom: 16px;
-          width: 2px;
+          top: 48px;
+          left: 40px;
+          right: 40px;
+          height: 2px;
           background: var(--bg-surface-elevated);
-          border-radius: 2px;
           z-index: 1;
         }
 
-        .ticket-detail-page .lifecycle-node {
+        .ticket-detail-page .hz-node {
           position: relative;
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-bottom: 24px;
           z-index: 2;
-        }
-        .ticket-detail-page .lifecycle-node:last-child {
-          margin-bottom: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          background: transparent;
         }
 
-        .ticket-detail-page .node-icon {
-          width: 24px;
-          height: 24px;
+        .ticket-detail-page .hz-icon {
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
+          background: var(--bg-surface-elevated);
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--bg-surface-elevated);
           color: transparent;
-          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: all 0.4s ease;
+          border: 4px solid #ffffff; /* Cutout effect */
         }
-
-        .ticket-detail-page .lifecycle-node.done .node-icon {
+        
+        .ticket-detail-page .hz-node.done .hz-icon {
           background: var(--success);
           color: white;
-          box-shadow: 0 0 12px -2px rgba(16, 185, 129, 0.4);
         }
-
-        .ticket-detail-page .lifecycle-node.current .node-icon {
-          background: var(--bg-surface);
-          border: 2px solid var(--accent-base);
+        
+        .ticket-detail-page .hz-node.current .hz-icon {
+          background: #ffffff;
+          border-color: var(--accent-base);
+          border-width: 2px;
           box-shadow: 0 0 0 4px var(--accent-muted);
         }
-        .ticket-detail-page .lifecycle-node.current .node-icon::after {
+        
+        .ticket-detail-page .hz-node.current .hz-icon::after {
           content: '';
-          width: 8px;
-          height: 8px;
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
           background: var(--accent-base);
         }
-
-        .ticket-detail-page .lifecycle-node.rejected .node-icon {
+        
+        .ticket-detail-page .hz-node.rejected .hz-icon {
           background: var(--danger);
           color: white;
-          box-shadow: 0 0 12px -2px rgba(225, 42, 69, 0.4);
         }
 
-        .ticket-detail-page .node-text {
-          font-size: 0.86rem;
+        .ticket-detail-page .hz-text {
+          font-size: 0.8rem;
           font-family: var(--font-mono);
           font-weight: 600;
           color: var(--text-muted);
-          transition: color 0.3s ease;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
         }
-
-        .ticket-detail-page .lifecycle-node.done .node-text {
-          color: var(--text-main);
-        }
-        .ticket-detail-page .lifecycle-node.current .node-text {
-          color: var(--accent-base);
-          font-weight: 700;
-        }
-        .ticket-detail-page .lifecycle-node.rejected .node-text {
-          color: var(--danger);
-        }
+        
+        .ticket-detail-page .hz-node.done .hz-text { color: var(--text-main); }
+        .ticket-detail-page .hz-node.current .hz-text { color: var(--accent-base); font-weight: 700; }
+        .ticket-detail-page .hz-node.rejected .hz-text { color: var(--danger); }
 
         @media (max-width: 1100px) {
           .ticket-detail-page .ticket-shell {
@@ -457,6 +454,17 @@ export default function TicketDetailPage() {
         }
 
         @media (max-width: 720px) {
+          .ticket-detail-page .horizontal-lifecycle::before {
+            display: none;
+          }
+          .ticket-detail-page .horizontal-lifecycle {
+            flex-direction: column;
+            gap: 20px;
+            align-items: flex-start;
+          }
+          .ticket-detail-page .hz-node {
+            flex-direction: row;
+          }
           .ticket-detail-page .hero-head {
             flex-direction: column;
           }
@@ -494,6 +502,31 @@ export default function TicketDetailPage() {
               {formatEnum(ticket.priority)}
             </span>
           </div>
+        </div>
+
+        {/* Horizontal Lifecycle */}
+        <div className="horizontal-lifecycle">
+          {ticket.status === 'REJECTED' ? (
+            <>
+              <div className="hz-node done">
+                <div className="hz-icon"><CheckCircle2 size={16} /></div>
+                <span className="hz-text">Opened</span>
+              </div>
+              <div className="hz-node rejected">
+                <div className="hz-icon"><XCircle size={16} /></div>
+                <span className="hz-text">Rejected</span>
+              </div>
+            </>
+          ) : (
+            lifecycleStages.map((stage) => (
+              <div key={stage.stage} className={`hz-node ${stage.state}`}>
+                <div className="hz-icon" title={formatEnum(stage.stage)}>
+                  {stage.state === 'done' && <CheckCircle2 size={16} strokeWidth={3} />}
+                </div>
+                <span className="hz-text">{formatEnum(stage.stage)}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -569,9 +602,6 @@ export default function TicketDetailPage() {
               </div>
             </>
           )}
-
-          <CommentThread ticketId={id} initialComments={ticket.comments || []} onCommentAdded={fetchTicket} />
-          <ImageUpload ticketId={id} attachments={ticket.attachments || []} onUploadSuccess={fetchTicket} />
         </div>
 
         {showSidebar && (
@@ -625,7 +655,7 @@ export default function TicketDetailPage() {
                     </button>
                   )}
                   {canReject && (
-                    <button className="btn-secondary" onClick={() => handleUpdateStatus('REJECTED')} style={{ width: '100%', justifyContent: 'center', color: 'var(--danger)', background: 'var(--danger-muted)' }}>
+                     <button className="btn-secondary" onClick={() => handleUpdateStatus('REJECTED')} style={{ width: '100%', justifyContent: 'center', color: 'var(--danger)', background: 'var(--danger-muted)' }}>
                       Reject Request
                     </button>
                   )}
@@ -640,42 +670,20 @@ export default function TicketDetailPage() {
                     </button>
                   )}
                   {canReopen && (
-                    <button className="btn-secondary" onClick={handleReopen} style={{ width: '100%', justifyContent: 'center' }}>
+                     <button className="btn-secondary" onClick={handleReopen} style={{ width: '100%', justifyContent: 'center' }}>
                       Reopen Ticket
                     </button>
                   )}
                 </div>
               </div>
             )}
-
-            <div className="card" style={{ padding: '28px' }}>
-              <h3 className="label-text" style={{ marginBottom: '20px' }}>Lifecycle</h3>
-              {ticket.status === 'REJECTED' ? (
-                <div className="lifecycle-timeline">
-                  <div className="lifecycle-node done">
-                    <div className="node-icon"><CheckCircle2 size={14} /></div>
-                    <span className="node-text">Opened</span>
-                  </div>
-                  <div className="lifecycle-node rejected">
-                    <div className="node-icon"><XCircle size={14} /></div>
-                    <span className="node-text">Rejected</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="lifecycle-timeline">
-                  {lifecycleStages.map((stage) => (
-                    <div key={stage.stage} className={`lifecycle-node ${stage.state}`}>
-                      <div className="node-icon">
-                        {stage.state === 'done' && <CheckCircle2 size={14} strokeWidth={3} />}
-                      </div>
-                      <span className="node-text">{formatEnum(stage.stage)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </aside>
         )}
+      </div>
+
+      <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <CommentThread ticketId={id} initialComments={ticket.comments || []} onCommentAdded={fetchTicket} />
+        <ImageUpload ticketId={id} attachments={ticket.attachments || []} onUploadSuccess={fetchTicket} />
       </div>
     </div>
   );
