@@ -10,7 +10,6 @@ import OAuthCallback from './pages/auth/OAuthCallback';
 import AccessDeniedPage from './pages/auth/AccessDeniedPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import NotificationHistoryPage from './pages/notifications/NotificationHistoryPage';
-import NotificationPreferencesPage from './pages/notifications/NotificationPreferencesPage';
 import TicketListPage from './pages/tickets/TicketListPage';
 import TicketCreatePage from './pages/tickets/TicketCreatePage';
 import TicketDetailPage from './pages/tickets/TicketDetailPage';
