@@ -37,18 +37,24 @@ export default function DashboardPage() {
     async function fetchMetrics() {
       try {
         const isTech = user?.role === 'TECHNICIAN';
+        const isStandard = user?.role === 'USER';
         
         let ticketsRes, bookingsRes, myReportedRes;
 
         if (isTech) {
-          // Fetch assigned, reported, and bookings
           [ticketsRes, myReportedRes, bookingsRes] = await Promise.all([
             getTickets({ assignee: 'MINE', status: 'OPEN,IN_PROGRESS' }),
             getTickets({ reporter: 'MINE', status: 'OPEN,IN_PROGRESS' }),
             getBookings({ userId: user?.id, size: 50, status: 'APPROVED' })
           ]);
+        } else if (isStandard) {
+          [myReportedRes, bookingsRes] = await Promise.all([
+            getTickets({ reporter: 'MINE', status: 'OPEN,IN_PROGRESS' }),
+            getBookings({ userId: user?.id, size: 50, status: 'APPROVED' })
+          ]);
+          ticketsRes = { data: [] }; // Don't fetch global queue for standard users
         } else {
-          // Standard fetch
+          // Admin/Manager
           [ticketsRes, bookingsRes] = await Promise.all([
             getTickets({ size: 100, status: 'OPEN,IN_PROGRESS' }),
             getBookings({ userId: user?.id, size: 50, status: 'APPROVED' })
@@ -65,14 +71,14 @@ export default function DashboardPage() {
         });
 
         const activeTicketsCount = tickets.length;
-        const slaScore = activeTicketsCount === 0 ? 100 : Math.round(((activeTicketsCount - breached) / activeTicketsCount) * 100);
+        const slaScore = activeTicketsCount === 0 && !isStandard ? 100 : Math.round(((activeTicketsCount - breached) / Math.max(activeTicketsCount, 1)) * 100);
 
         setMetrics({
           activeTickets: activeTicketsCount,
           slaScore: slaScore,
           activeBookings: bookings.length,
           myAssigned: isTech ? activeTicketsCount : 0,
-          myReported: isTech ? reported.length : 0,
+          myReported: isTech || isStandard ? reported.length : 0,
           loading: false
         });
       } catch (err) {
@@ -222,31 +228,38 @@ export default function DashboardPage() {
       `}</style>
 
       {/* Editorial Header */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '32px' }}>
-        <div style={{ maxWidth: '700px' }}>
-          <h1 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-base)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>
-            System Overview
-          </h1>
-          <h2 style={{ fontSize: '3rem', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-main)', lineHeight: 1.1, marginBottom: '16px' }}>
-            Domain status is <span style={{ color: 'var(--success)' }}>Nominal</span>.
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '32px' }}>
+        <div style={{ maxWidth: '800px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+            <h1 style={{ fontSize: '1.1rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-base)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0, fontWeight: 700 }}>
+              Welcome back, {user?.name?.split(' ')[0]}
+            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-surface-elevated)', padding: '6px 12px', borderRadius: '100px', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontWeight: 600 }}>
+              <div className="pulse-dot" style={{ transform: 'scale(0.8)' }}></div>
+              LIVE UPDATE 
+            </div>
+          </div>
+          <h2 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-main)', lineHeight: 1.1, marginBottom: '20px' }}>
+            {user?.role === 'ADMIN' || user?.role === 'MANAGER' ? (
+              <>Operations are <span style={{ color: metrics.slaScore >= 90 ? 'var(--success)' : (metrics.slaScore >= 70 ? 'var(--warning)' : 'var(--danger)') }}>{metrics.slaScore >= 90 ? 'running smoothly' : (metrics.slaScore >= 70 ? 'active' : 'needing attention')}</span>.</>
+            ) : user?.role === 'TECHNICIAN' ? (
+              <>Your workbench is <span style={{ color: 'var(--accent-base)' }}>ready</span>.</>
+            ) : (
+              <>Your requests are <span style={{ color: 'var(--success)' }}>in good hands</span>.</>
+            )}
           </h2>
-          <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)', lineHeight: 1.6, fontWeight: 500 }}>
-            Welcome to the Smart Campus Operation Hub, {user?.name}. Manage your facilities, review analytics, and monitor global SLA performance in real-time.
+          <p style={{ fontSize: '1.15rem', color: 'var(--text-muted)', lineHeight: 1.6, fontWeight: 500, maxWidth: '600px' }}>
+            {user?.role === 'ADMIN' || user?.role === 'MANAGER' 
+              ? 'Track daily facility requests, reserve campus spaces, and keep an eye on overall health in one convenient hub.'
+              : user?.role === 'TECHNICIAN'
+              ? 'Access prioritized assigned jobs, manage active maintenance, and reserve necessary facilities.'
+              : 'Keep track of your reported issues, reserve campus facilities seamlessly, and monitor your scheduled bookings.'}
           </p>
         </div>
 
-        {/* Live Status Widget */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-surface)', padding: '16px 24px', borderRadius: '100px', boxShadow: 'var(--ambient-shadow)' }}>
-            <div className="pulse-dot"></div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Live Connection
-            </span>
-          </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', marginRight: '16px', fontWeight: 600 }}>
-            <Clock size={16} />
-            {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-          </div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, background: 'var(--bg-surface)', padding: '16px 24px', borderRadius: 'var(--radius)', boxShadow: 'var(--ambient-shadow)' }}>
+          <Clock size={18} color="var(--accent-base)" />
+          {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
 
@@ -259,10 +272,10 @@ export default function DashboardPage() {
             <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'auto' }}>
               <div>
                 <span style={{ display: 'block', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>
-                  {user?.role === 'TECHNICIAN' ? 'Assigned Workbench' : 'Incident Queue'}
+                  {user?.role === 'TECHNICIAN' ? 'Your Task List' : (user?.role === 'USER' ? 'Your Support Requests' : 'Open Support Requests')}
                 </span>
                 <div className="metric-value">
-                  {metrics.loading ? '...' : (user?.role === 'TECHNICIAN' ? metrics.myAssigned : metrics.activeTickets)}
+                  {metrics.loading ? '-' : (user?.role === 'TECHNICIAN' || user?.role === 'USER' ? (user?.role === 'TECHNICIAN' ? metrics.myAssigned : metrics.myReported) : metrics.activeTickets)}
                 </div>
               </div>
               <div style={{ background: 'rgba(255,255,255,0.1)', padding: '20px', borderRadius: '24px', backdropFilter: 'blur(10px)' }}>
@@ -273,15 +286,15 @@ export default function DashboardPage() {
             <div style={{ position: 'relative', zIndex: 1, marginTop: '80px', display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px' }}>
               <div>
                 <div style={{ fontSize: '1.25rem', fontFamily: 'var(--font-body)', fontWeight: 600, color: 'rgba(255,255,255,0.9)', marginBottom: '8px' }}>
-                  {user?.role === 'TECHNICIAN' ? 'Incident Tasks Prepared' : 'Active Unresolved Tickets'}
+                  {user?.role === 'TECHNICIAN' ? 'Assigned Jobs' : (user?.role === 'USER' ? 'Active Reported Issues' : 'Active Facility Requests')}
                 </div>
                 <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.95rem' }}>
-                  {user?.role === 'TECHNICIAN' ? 'Prioritize assignments and maintain peak performance.' : 'Technicians are monitoring incoming streams.'}
+                  {user?.role === 'TECHNICIAN' ? 'Access your assigned jobs to keep the campus running.' : (user?.role === 'USER' ? 'Track the progress of your submitted tickets.' : 'Our teams are currently reviewing these requests.')}
                 </div>
               </div>
               
               <NavLink to="/tickets" className="glass-btn">
-                {user?.role === 'TECHNICIAN' ? 'Start Working' : 'Manage Queue'} <ArrowUpRight size={18} />
+                {user?.role === 'TECHNICIAN' ? 'View My Tasks' : (user?.role === 'USER' ? 'Track Progress' : 'Manage Requests')} <ArrowUpRight size={18} />
               </NavLink>
             </div>
           </div>
