@@ -13,6 +13,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByProviderId(String providerId);
     boolean existsByEmail(String email);
     Page<User> findByIsActiveTrue(Pageable pageable);
+    Page<User> findByIsActiveFalseAndRejectedAtIsNull(Pageable pageable);
     List<User> findByRole(Role role);
     List<User> findByRoleAndIsActiveTrue(Role role);
     long countByRoleAndIsActiveTrue(Role role);

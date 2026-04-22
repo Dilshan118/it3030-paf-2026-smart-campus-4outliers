@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -75,6 +76,30 @@ public class UserService {
 
         targetUser.setIsActive(false);
         return userRepository.save(targetUser);
+    }
+
+    public Page<User> getPendingUsers(Pageable pageable) {
+        return userRepository.findByIsActiveFalseAndRejectedAtIsNull(pageable);
+    }
+
+    public User approveUser(Long targetUserId, Role role) {
+        User user = requireUser(targetUserId);
+        if (Boolean.TRUE.equals(user.getIsActive())) {
+            throw new BadRequestException("User is already active");
+        }
+        user.setIsActive(true);
+        user.setRole(role != null ? role : Role.USER);
+        user.setRejectedAt(null);
+        return userRepository.save(user);
+    }
+
+    public User rejectUser(Long targetUserId) {
+        User user = requireUser(targetUserId);
+        if (Boolean.TRUE.equals(user.getIsActive())) {
+            throw new BadRequestException("Cannot reject an already active user");
+        }
+        user.setRejectedAt(LocalDateTime.now());
+        return userRepository.save(user);
     }
 
     public List<User> getTechnicians() {

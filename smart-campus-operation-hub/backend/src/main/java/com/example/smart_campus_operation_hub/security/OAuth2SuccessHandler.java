@@ -1,5 +1,7 @@
 package com.example.smart_campus_operation_hub.security;
 
+import com.example.smart_campus_operation_hub.exception.PendingApprovalException;
+import com.example.smart_campus_operation_hub.exception.UnauthorizedException;
 import com.example.smart_campus_operation_hub.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,7 +30,17 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        String token = authService.handleOAuth2Login(oAuth2User);
-        response.sendRedirect(frontendUrl + "/auth/callback?token=" + token);
+        try {
+            String token = authService.handleOAuth2Login(oAuth2User);
+            response.sendRedirect(frontendUrl + "/auth/callback?token=" + token);
+        } catch (PendingApprovalException e) {
+            response.sendRedirect(frontendUrl + "/pending-approval");
+        } catch (UnauthorizedException e) {
+            response.sendRedirect(frontendUrl + "/login?error=access_denied");
+        } catch (Exception e) {
+            System.err.println("[OAuth2SuccessHandler] Unexpected error during login: " + e.getMessage());
+            e.printStackTrace();
+            response.sendRedirect(frontendUrl + "/login?error=server_error");
+        }
     }
 }

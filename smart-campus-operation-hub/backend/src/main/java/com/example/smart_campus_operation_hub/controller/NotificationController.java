@@ -3,6 +3,7 @@ package com.example.smart_campus_operation_hub.controller;
 import com.example.smart_campus_operation_hub.dto.request.NotificationPrefRequest;
 import com.example.smart_campus_operation_hub.dto.response.NotificationPreferenceResponse;
 import com.example.smart_campus_operation_hub.dto.response.NotificationResponse;
+import com.example.smart_campus_operation_hub.enums.NotificationType;
 import com.example.smart_campus_operation_hub.service.NotificationService;
 import com.example.smart_campus_operation_hub.util.ApiResponse;
 import org.springframework.data.domain.Page;
@@ -64,6 +65,15 @@ public class NotificationController {
         Long userId = (Long) authentication.getPrincipal();
         notificationService.deleteNotification(id, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/test")
+    public ResponseEntity<ApiResponse<Object>> sendTestNotification(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        NotificationResponse response = notificationService.send(
+                userId, NotificationType.USER_APPROVAL_REQUEST,
+                "Test Notification", "Bell is working correctly.", null, null);
+        return ResponseEntity.ok(ApiResponse.success(response, "Test notification sent"));
     }
 
     @GetMapping("/preferences")
