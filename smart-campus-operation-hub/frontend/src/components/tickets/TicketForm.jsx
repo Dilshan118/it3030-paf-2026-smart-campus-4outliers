@@ -279,6 +279,7 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel, loadi
           )}
         </div>
       </div>
+    </div>
 
       {formData.priority === 'CRITICAL' && (
         <div style={{ background: 'var(--danger-muted)', padding: '20px 24px', borderRadius: 'var(--radius)', display: 'flex', gap: '16px', alignItems: 'center' }}>
