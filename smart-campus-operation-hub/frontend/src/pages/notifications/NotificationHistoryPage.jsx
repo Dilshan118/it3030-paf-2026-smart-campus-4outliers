@@ -187,6 +187,22 @@ export default function NotificationHistoryPage() {
               <Check size={18} strokeWidth={2} /> Mark All Read
             </button>
           )}
+
+          <Link
+            to="/notifications/preferences"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '44px', height: '44px', borderRadius: '12px',
+              background: 'var(--bg-surface)', color: 'var(--text-muted)',
+              boxShadow: 'var(--ambient-shadow)', textDecoration: 'none',
+              transition: 'all 0.2s', flexShrink: 0,
+            }}
+            title="Notification Preferences"
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent-base)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <Filter size={18} strokeWidth={2} />
+          </Link>
         </div>
       </div>
 
