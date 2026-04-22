@@ -150,11 +150,12 @@ export default function TicketListPage() {
     <div className="page-container" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
       <style>{`
         .operations-tabs {
-          display: flex; gap: 4px; background: var(--bg-surface); padding: 4px; border-radius: 100px;
-          margin-bottom: 32px; width: fit-content; box-shadow: var(--ambient-shadow);
+          display: flex; gap: 4px; background: var(--bg-surface); padding: 6px; border-radius: 100px;
+          margin-bottom: 32px; width: 100%; box-shadow: var(--ambient-shadow);
         }
         .op-tab {
-          padding: 8px 16px; border-radius: 100px; font-size: 0.85rem; font-weight: 700;
+          flex: 1; justify-content: center;
+          padding: 12px 16px; border-radius: 100px; font-size: 0.9rem; font-weight: 700;
           color: var(--text-muted); cursor: pointer; transition: all 0.3s ease;
           display: flex; align-items: center; gap: 8px; border: none; background: transparent;
         }
