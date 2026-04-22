@@ -9,7 +9,6 @@ import OAuthCallback from './pages/auth/OAuthCallback';
 import AccessDeniedPage from './pages/auth/AccessDeniedPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import NotificationHistoryPage from './pages/notifications/NotificationHistoryPage';
-import NotificationPreferencesPage from './pages/notifications/NotificationPreferencesPage';
 import TicketListPage from './pages/tickets/TicketListPage';
 import TicketCreatePage from './pages/tickets/TicketCreatePage';
 import TicketDetailPage from './pages/tickets/TicketDetailPage';
@@ -59,7 +58,6 @@ function App() {
           {/* Protected Main Routes */}
           <Route path="/" element={<ProtectedRoute><DashboardLayout><DashboardPage /></DashboardLayout></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><NotificationHistoryPage /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/notifications/preferences" element={<ProtectedRoute><DashboardLayout><NotificationPreferencesPage /></DashboardLayout></ProtectedRoute>} />
 
           {/* Ticket Routes */}
           <Route path="/tickets" element={<ProtectedRoute><DashboardLayout><TicketListPage /></DashboardLayout></ProtectedRoute>} />
