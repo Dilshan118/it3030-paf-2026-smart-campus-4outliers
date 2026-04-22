@@ -114,15 +114,31 @@ public class TicketService {
         // 5. Save and return
         Ticket saved = ticketRepository.save(ticket);
 
-        // 6. Send Notification
+        // 6. Notify creator
         notificationService.send(
                 userId,
-                com.example.smart_campus_operation_hub.enums.NotificationType.TICKET_CREATED,
+                NotificationType.TICKET_CREATED,
                 "Ticket #" + saved.getId() + " Submitted Successfully",
                 "Your request regarding '" + saved.getCategory() + "' has been logged and is pending review.",
                 saved.getId(),
                 "TICKET"
         );
+
+        // 7. Notify all active admins and managers
+        List<User> reviewers = new ArrayList<>();
+        reviewers.addAll(userRepository.findByRoleAndIsActiveTrue(Role.ADMIN));
+        reviewers.addAll(userRepository.findByRoleAndIsActiveTrue(Role.MANAGER));
+        for (User reviewer : reviewers) {
+            if (reviewer.getId().equals(userId)) continue;
+            try {
+                notificationService.send(reviewer.getId(), NotificationType.TICKET_CREATED,
+                        "New Incident Ticket: " + saved.getCategory(),
+                        user.getName() + " submitted a " + saved.getPriority() + " priority ticket.",
+                        saved.getId(), "TICKET");
+            } catch (Exception e) {
+                System.err.println("[TicketService] Failed to notify reviewer " + reviewer.getEmail() + ": " + e.getMessage());
+            }
+        }
 
         return mapToResponse(saved);
     }
@@ -492,6 +508,10 @@ public class TicketService {
         } else {
             notificationService.send(saved.getUser().getId(), NotificationType.TICKET_STATUS_CHANGED,
                 "Ticket Status Updated", "Your ticket status changed to " + newStatus, saved.getId(), "TICKET");
+            if (saved.getAssignedTo() != null && !saved.getAssignedTo().getId().equals(saved.getUser().getId())) {
+                notificationService.send(saved.getAssignedTo().getId(), NotificationType.TICKET_STATUS_CHANGED,
+                    "Ticket Status Updated", "Ticket #" + saved.getId() + " status changed to " + newStatus, saved.getId(), "TICKET");
+            }
         }
 
         return mapToResponse(saved);

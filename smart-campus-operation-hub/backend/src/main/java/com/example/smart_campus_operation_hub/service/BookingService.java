@@ -17,10 +17,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.example.smart_campus_operation_hub.enums.NotificationType;
+import com.example.smart_campus_operation_hub.enums.Role;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -92,7 +94,7 @@ public class BookingService {
 
         Booking saved = bookingRepository.save(booking);
 
-        // 9. Send Notification
+        // 9. Send Notification to creator
         notificationService.send(
                 userId,
                 NotificationType.BOOKING_CREATED,
@@ -101,6 +103,22 @@ public class BookingService {
                 saved.getId(),
                 "BOOKING"
         );
+
+        // 10. Notify all active admins and managers
+        List<User> reviewers = new ArrayList<>();
+        reviewers.addAll(userRepository.findByRoleAndIsActiveTrue(Role.ADMIN));
+        reviewers.addAll(userRepository.findByRoleAndIsActiveTrue(Role.MANAGER));
+        for (User reviewer : reviewers) {
+            if (reviewer.getId().equals(userId)) continue;
+            try {
+                notificationService.send(reviewer.getId(), NotificationType.BOOKING_CREATED,
+                        "New Booking Request",
+                        user.getName() + " requested \"" + resource.getName() + "\" on " + request.getDate(),
+                        saved.getId(), "BOOKING");
+            } catch (Exception e) {
+                System.err.println("[BookingService] Failed to notify reviewer " + reviewer.getEmail() + ": " + e.getMessage());
+            }
+        }
 
         return toResponse(saved);
     }
