@@ -1,5 +1,6 @@
 package com.example.smart_campus_operation_hub.service;
 
+import com.example.smart_campus_operation_hub.enums.Role;
 import com.example.smart_campus_operation_hub.exception.PendingApprovalException;
 import com.example.smart_campus_operation_hub.exception.UnauthorizedException;
 import com.example.smart_campus_operation_hub.model.User;
@@ -29,10 +30,14 @@ public class AuthService {
                 .orElseGet(() -> createNewUser(email, name, avatarUrl, providerId));
 
         if (!Boolean.TRUE.equals(user.getIsActive())) {
-            if (user.getRejectedAt() != null) {
+            if (user.getRole() == Role.ADMIN) {
+                user.setIsActive(true);
+                user = userRepository.save(user);
+            } else if (user.getRejectedAt() != null) {
                 throw new UnauthorizedException("Your access request was declined. Please contact an administrator.");
+            } else {
+                throw new PendingApprovalException("Your account is awaiting admin approval.");
             }
-            throw new PendingApprovalException("Your account is awaiting admin approval.");
         }
 
         if (avatarUrl != null && !avatarUrl.equals(user.getAvatarUrl())) {
