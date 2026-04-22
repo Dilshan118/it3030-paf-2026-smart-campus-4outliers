@@ -49,19 +49,19 @@ function DashboardLayout({ children }) {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/auth/callback" element={<OAuthCallback />} />
-          <Route path="/access-denied" element={<AccessDeniedPage />} />
-          <Route path="/pending-approval" element={<PendingApprovalPage />} />
+    <ToastProvider>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<OAuthCallback />} />
+            <Route path="/access-denied" element={<AccessDeniedPage />} />
+            <Route path="/pending-approval" element={<PendingApprovalPage />} />
 
             {/* Protected Main Routes */}
             <Route path="/" element={<ProtectedRoute><DashboardLayout><DashboardPage /></DashboardLayout></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><NotificationHistoryPage /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/notifications/preferences" element={<ProtectedRoute><DashboardLayout><NotificationPreferencesPage /></DashboardLayout></ProtectedRoute>} />
 
             {/* Ticket Routes */}
             <Route path="/tickets" element={<ProtectedRoute><DashboardLayout><TicketListPage /></DashboardLayout></ProtectedRoute>} />
@@ -100,8 +100,8 @@ function App() {
             } />
           </Routes>
         </Router>
-      </ToastProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 
