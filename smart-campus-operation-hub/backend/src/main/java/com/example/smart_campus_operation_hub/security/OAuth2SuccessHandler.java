@@ -1,13 +1,34 @@
 package com.example.smart_campus_operation_hub.security;
 
-/**
- * MEMBER 4: OAuth2 Success Handler
- * TODO: Handle successful Google OAuth2 login
- *       - Extract user info from OAuth2User
- *       - Find or create user in DB
- *       - Generate JWT
- *       - Redirect to frontend with token
- */
-public class OAuth2SuccessHandler {
-    // TODO: implement AuthenticationSuccessHandler
+import com.example.smart_campus_operation_hub.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+
+@Component
+public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
+
+    private final AuthService authService;
+
+    @Value("${frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
+    public OAuth2SuccessHandler(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        Authentication authentication) throws IOException {
+        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+        String token = authService.handleOAuth2Login(oAuth2User);
+        response.sendRedirect(frontendUrl + "/auth/callback?token=" + token);
+    }
 }

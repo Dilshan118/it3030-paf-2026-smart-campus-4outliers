@@ -9,6 +9,7 @@ import com.example.smart_campus_operation_hub.exception.BadRequestException;
 import com.example.smart_campus_operation_hub.model.Resource;
 import com.example.smart_campus_operation_hub.model.Ticket;
 import com.example.smart_campus_operation_hub.model.User;
+import com.example.smart_campus_operation_hub.repository.CommentRepository;
 import com.example.smart_campus_operation_hub.repository.ResourceRepository;
 import com.example.smart_campus_operation_hub.repository.TicketRepository;
 import com.example.smart_campus_operation_hub.repository.UserRepository;
@@ -39,6 +40,9 @@ class TicketServiceTest {
 
     @Mock
     private ResourceRepository resourceRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Mock
     private NotificationService notificationService;
@@ -79,11 +83,12 @@ class TicketServiceTest {
     @Test
     void testUpdateTicketStatus_OpenToInProgress_Success() {
         // Arrange
+        mockTicket.setAssignedTo(mockTechnician);
         when(ticketRepository.findById(100L)).thenReturn(Optional.of(mockTicket));
         when(ticketRepository.save(any(Ticket.class))).thenReturn(mockTicket);
 
         // Act
-        TicketResponse response = ticketService.updateTicketStatus(100L, TicketStatus.IN_PROGRESS, null, null);
+        TicketResponse response = ticketService.updateTicketStatus(100L, TicketStatus.IN_PROGRESS, null, null, 2L, "TECHNICIAN");
 
         // Assert
         assertEquals(TicketStatus.IN_PROGRESS.name(), response.getStatus());
@@ -99,7 +104,7 @@ class TicketServiceTest {
 
         // Act & Assert
         assertThrows(BadRequestException.class, () -> {
-            ticketService.updateTicketStatus(100L, TicketStatus.CLOSED, null, null);
+            ticketService.updateTicketStatus(100L, TicketStatus.CLOSED, null, null, 1L, "MANAGER");
         });
     }
 
@@ -107,12 +112,24 @@ class TicketServiceTest {
     void testUpdateTicketStatus_ResolvedWithoutNotes_ThrowsException() {
         // Arrange
         mockTicket.setStatus(TicketStatus.IN_PROGRESS);
+        mockTicket.setAssignedTo(mockTechnician);
         when(ticketRepository.findById(100L)).thenReturn(Optional.of(mockTicket));
 
         // Act & Assert
         assertThrows(BadRequestException.class, () -> {
-            ticketService.updateTicketStatus(100L, TicketStatus.RESOLVED, "", null);
+            ticketService.updateTicketStatus(100L, TicketStatus.RESOLVED, "", null, 2L, "TECHNICIAN");
         });
+    }
+
+    @Test
+    void testUpdateTicketStatus_OpenToInProgress_WithoutAssignee_ThrowsException() {
+        // Arrange
+        mockTicket.setAssignedTo(null);
+        when(ticketRepository.findById(100L)).thenReturn(Optional.of(mockTicket));
+
+        // Act & Assert
+        assertThrows(BadRequestException.class, () ->
+                ticketService.updateTicketStatus(100L, TicketStatus.IN_PROGRESS, null, null, 1L, "MANAGER"));
     }
 
     @Test
@@ -123,7 +140,7 @@ class TicketServiceTest {
         when(ticketRepository.save(any(Ticket.class))).thenReturn(mockTicket);
 
         // Act
-        TicketResponse response = ticketService.assignTechnician(100L, 2L);
+        ticketService.assignTechnician(100L, 2L);
 
         // Assert
         assertNotNull(mockTicket.getAssignedTo());
@@ -131,4 +148,34 @@ class TicketServiceTest {
         assertEquals(TicketStatus.IN_PROGRESS, mockTicket.getStatus());
         verify(notificationService, times(2)).send(anyLong(), eq(NotificationType.TICKET_ASSIGNED), anyString(), anyString(), eq(100L), eq("TICKET"));
     }
+
+    @Test
+    void testAssignTechnician_ResolvedTicket_ThrowsException() {
+        // Arrange
+        mockTicket.setStatus(TicketStatus.RESOLVED);
+        when(ticketRepository.findById(100L)).thenReturn(Optional.of(mockTicket));
+
+        // Act & Assert
+        assertThrows(BadRequestException.class, () -> ticketService.assignTechnician(100L, 2L));
+    }
+
+    @Test
+    void testReopenTicket_ResolvedTicketByOwner_Success() {
+        // Arrange
+        mockTicket.setStatus(TicketStatus.RESOLVED);
+        mockTicket.setAssignedTo(mockTechnician);
+
+        when(ticketRepository.findById(100L)).thenReturn(Optional.of(mockTicket));
+        when(ticketRepository.save(any(Ticket.class))).thenReturn(mockTicket);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
+
+        // Act
+        TicketResponse response = ticketService.reopenTicket(100L, "Issue came back after temporary fix", 1L, "USER");
+
+        // Assert
+        assertEquals(TicketStatus.IN_PROGRESS.name(), response.getStatus());
+        verify(commentRepository).save(any(com.example.smart_campus_operation_hub.model.Comment.class));
+    }
 }
+
+

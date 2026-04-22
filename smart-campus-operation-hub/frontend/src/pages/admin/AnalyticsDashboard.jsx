@@ -1,18 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { Activity, Ticket, Box, CalendarCheck, TrendingUp, BarChart3, ShieldCheck, Clock, Zap } from 'lucide-react';
 
-const API_URL = 'http://localhost:8080/api/v1/admin/analytics';
+const DEFAULT_METRICS = {
+  totalTickets: 0,
+  openTickets: 0,
+  resolvedTickets: 0,
+  totalResources: 0,
+  totalBookings: 0,
+};
+
+function toNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeMetricsPayload(payload) {
+  const raw = payload && typeof payload === 'object' && !Array.isArray(payload)
+    ? (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data) ? payload.data : payload)
+    : null;
+
+  if (!raw) {
+    return DEFAULT_METRICS;
+  }
+
+  return {
+    totalTickets: toNumber(raw.totalTickets),
+    openTickets: toNumber(raw.openTickets),
+    resolvedTickets: toNumber(raw.resolvedTickets),
+    totalResources: toNumber(raw.totalResources),
+    totalBookings: toNumber(raw.totalBookings),
+  };
+}
 
 export default function AnalyticsDashboard() {
-  const [metrics, setMetrics] = useState({
-    totalTickets: 0,
-    openTickets: 0,
-    resolvedTickets: 0,
-    totalResources: 0,
-    totalBookings: 0,
-  });
+  const [metrics, setMetrics] = useState(DEFAULT_METRICS);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchMetrics();
@@ -21,12 +45,13 @@ export default function AnalyticsDashboard() {
   const fetchMetrics = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(API_URL);
-      if (res.data && res.data.data) {
-        setMetrics(res.data.data);
-      }
+      setError('');
+      const res = await api.get('/admin/analytics');
+      setMetrics(normalizeMetricsPayload(res.data));
     } catch (err) {
       console.error('Failed to load metrics:', err);
+      setError(err.response?.data?.message || 'Failed to load analytics metrics');
+      setMetrics(DEFAULT_METRICS);
     } finally {
       setLoading(false);
     }
@@ -219,6 +244,12 @@ export default function AnalyticsDashboard() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div style={{ padding: '16px 24px', borderRadius: 'var(--radius)', background: 'var(--danger-muted)', color: 'var(--danger)', fontFamily: 'var(--font-mono)', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <strong>SYS_ERR:</strong> {error}
+        </div>
+      )}
 
       {loading ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

@@ -9,10 +9,23 @@ export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // TEMPORARY: For development, just redirect to login
-    // TODO: Handle actual OAuth callback with token/code from URL params
-    navigate('/login');
-  }, [navigate]);
+    const token = searchParams.get('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    
+    login(token)
+      .then(() => {
+        const redirectUrl = localStorage.getItem('auth_redirect') || '/';
+        localStorage.removeItem('auth_redirect');
+        navigate(redirectUrl);
+      })
+      .catch(() => {
+        localStorage.removeItem('token');
+        navigate('/login');
+      });
+  }, []);
 
   return <LoadingSpinner />;
 }

@@ -18,6 +18,7 @@ public class ResourceResponse {
     private String availabilityWindows;
     private ResourceStatus status;
     private List<String> imageUrls;
+    private boolean hasImage;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -32,18 +33,30 @@ public class ResourceResponse {
         dto.description = r.getDescription();
         dto.availabilityWindows = r.getAvailabilityWindows();
         dto.status = r.getStatus();
-        
+
         List<String> urls = new ArrayList<>();
         if (r.getImageUrls() != null && !r.getImageUrls().isEmpty()) {
-            urls.addAll(r.getImageUrls());
+            for (String url : r.getImageUrls()) {
+                if (url != null && !url.trim().isEmpty()) {
+                    urls.add(url);
+                }
+            }
         }
         if (r.getLegacyImageUrl() != null && !r.getLegacyImageUrl().trim().isEmpty() && !urls.contains(r.getLegacyImageUrl())) {
             urls.add(r.getLegacyImageUrl());
         }
         dto.imageUrls = urls;
-        
+        dto.hasImage = !urls.isEmpty();
+
         dto.createdAt = r.getCreatedAt();
         dto.updatedAt = r.getUpdatedAt();
+        return dto;
+    }
+
+    // List factory — no image data, only a flag; callers lazy-load images individually
+    public static ResourceResponse forList(Resource r) {
+        ResourceResponse dto = from(r);
+        dto.imageUrls = new ArrayList<>();
         return dto;
     }
 
@@ -57,6 +70,7 @@ public class ResourceResponse {
     public String getAvailabilityWindows() { return availabilityWindows; }
     public ResourceStatus getStatus() { return status; }
     public List<String> getImageUrls() { return imageUrls; }
+    public boolean isHasImage() { return hasImage; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

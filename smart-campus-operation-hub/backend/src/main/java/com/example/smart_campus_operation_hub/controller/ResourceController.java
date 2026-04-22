@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,44 +34,41 @@ public class ResourceController {
     private final ResourceScoringService resourceScoringService;
 
     public ResourceController(ResourceService resourceService, ResourceScoringService resourceScoringService) {
-        this.resourceService        = resourceService;
+        this.resourceService = resourceService;
         this.resourceScoringService = resourceScoringService;
     }
 
-    // GET /api/v1/resources
     @GetMapping
     public ResponseEntity<Page<ResourceResponse>> getAllResources(Pageable pageable) {
         return ResponseEntity.ok(resourceService.getAllResources(pageable));
     }
 
-    // GET /api/v1/resources/{id}
     @GetMapping("/{id}")
     public ResponseEntity<ResourceResponse> getResourceById(@PathVariable Long id) {
         return ResponseEntity.ok(resourceService.getResourceById(id));
     }
 
-    // POST /api/v1/resources  (Admin only)
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ResourceResponse> createResource(@Valid @RequestBody ResourceRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(resourceService.createResource(request));
     }
 
-    // PUT /api/v1/resources/{id}  (Admin only)
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ResourceResponse> updateResource(
             @PathVariable Long id,
             @Valid @RequestBody ResourceRequest request) {
         return ResponseEntity.ok(resourceService.updateResource(id, request));
     }
 
-    // DELETE /api/v1/resources/{id}  (Admin only — soft delete)
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<Void> deleteResource(@PathVariable Long id) {
         resourceService.deleteResource(id);
         return ResponseEntity.noContent().build();
     }
 
-    // GET /api/v1/resources/search?type=LAB&location=Block C&minCapacity=30
     @GetMapping("/search")
     public ResponseEntity<Page<ResourceResponse>> searchResources(
             @RequestParam(required = false) ResourceType type,
@@ -81,26 +79,26 @@ public class ResourceController {
         return ResponseEntity.ok(resourceService.searchResources(type, status, location, minCapacity, pageable));
     }
 
-    // GET /api/v1/resources/analytics
     @GetMapping("/analytics")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ResourceAnalyticsDTO> getAnalytics() {
         return ResponseEntity.ok(resourceService.getAnalytics());
     }
 
-    // POST /api/v1/resources/recommend
     @PostMapping("/recommend")
     public ResponseEntity<List<ResourceRecommendationResult>> recommend(
             @RequestBody ResourceRecommendationRequest request) {
         return ResponseEntity.ok(resourceScoringService.recommend(request));
     }
 
-    // PATCH /api/v1/resources/{id}/status  (Admin only)
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ResourceResponse> toggleStatus(@PathVariable Long id) {
         return ResponseEntity.ok(resourceService.toggleStatus(id));
     }
 
-        @PostMapping("/{id}/image")
+    @PostMapping("/{id}/image")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ResourceResponse> uploadImages(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile[] files) throws IOException {
@@ -112,18 +110,16 @@ public class ResourceController {
                 throw new IllegalArgumentException("File size must not exceed 5MB");
 
             String contentType = file.getContentType();
-            if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png") && !contentType.equals("image/webp")))
-                throw new IllegalArgumentException("Only JPG, PNG and WEBP files are allowed");
+            if (contentType == null || !contentType.startsWith("image/"))
+                throw new IllegalArgumentException("Only image files are allowed");
 
-            String filename = "resource_" + id + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path uploadPath = Paths.get("uploads");
-            Files.createDirectories(uploadPath);
-            Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
-
-            uploadedUrls.add("/uploads/" + filename);
+            String encodedImage = java.util.Base64.getEncoder().encodeToString(file.getBytes());
+            uploadedUrls.add("data:" + contentType + ";base64," + encodedImage);
         }
 
         return ResponseEntity.ok(resourceService.addImageUrls(id, uploadedUrls));
     }
-
 }
+
+
+

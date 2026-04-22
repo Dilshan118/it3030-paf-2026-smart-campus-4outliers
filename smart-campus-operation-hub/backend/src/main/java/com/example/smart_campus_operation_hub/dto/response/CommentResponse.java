@@ -11,6 +11,7 @@ public class CommentResponse {
     private Long id;
     private Long authorId;
     private String authorName;
+    private String authorRole;
     private String authorAvatarUrl;
     private String content;
     private LocalDateTime createdAt;
@@ -26,6 +27,9 @@ public class CommentResponse {
 
     public String getAuthorName() { return authorName; }
     public void setAuthorName(String authorName) { this.authorName = authorName; }
+
+    public String getAuthorRole() { return authorRole; }
+    public void setAuthorRole(String authorRole) { this.authorRole = authorRole; }
 
     public String getAuthorAvatarUrl() { return authorAvatarUrl; }
     public void setAuthorAvatarUrl(String authorAvatarUrl) { this.authorAvatarUrl = authorAvatarUrl; }

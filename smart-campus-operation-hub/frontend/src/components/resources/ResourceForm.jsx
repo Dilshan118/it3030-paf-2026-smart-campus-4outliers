@@ -1,4 +1,5 @@
 import { UploadCloud, X, ImageIcon, Clock } from 'lucide-react';
+import { resolveBackendUrl } from '../../utils/urlUtils';
 
 const TYPE_OPTIONS = ['LECTURE_HALL', 'LAB', 'MEETING_ROOM', 'EQUIPMENT'];
 const TYPE_LABELS = { LECTURE_HALL: 'Lecture Hall', LAB: 'Lab', MEETING_ROOM: 'Meeting Room', EQUIPMENT: 'Equipment' };
@@ -91,13 +92,13 @@ export default function ResourceForm({ form, setForm, onSubmit, onCancel, saving
         const [start, end] = current[day].split('-');
         return { enabled: true, start: start || '08:00', end: end || '18:00' };
       }
-    } catch (e) {}
+    } catch (err) { /* ignore */ }
     return { enabled: false, start: '08:00', end: '18:00' };
   };
 
   const toggleDay = (day, enabled) => {
     let current = {};
-    try { current = form.availabilityWindows ? JSON.parse(form.availabilityWindows) : {}; } catch (e) {}
+    try { current = form.availabilityWindows ? JSON.parse(form.availabilityWindows) : {}; } catch (err) { /* ignore */ }
     if (enabled) current[day] = '08:00-18:00';
     else delete current[day];
     setForm({ ...form, availabilityWindows: Object.keys(current).length > 0 ? JSON.stringify(current) : '' });
@@ -105,7 +106,7 @@ export default function ResourceForm({ form, setForm, onSubmit, onCancel, saving
 
   const handleAvailabilityChange = (day, field, value) => {
     let current = {};
-    try { current = form.availabilityWindows ? JSON.parse(form.availabilityWindows) : {}; } catch (e) {}
+    try { current = form.availabilityWindows ? JSON.parse(form.availabilityWindows) : {}; } catch (err) { /* ignore */ }
     const dayStr = current[day] || '08:00-18:00';
     let [start, end] = dayStr.split('-');
     if (field === 'start') start = value;
@@ -162,7 +163,7 @@ export default function ResourceForm({ form, setForm, onSubmit, onCancel, saving
             <input
               className="rf-input" required minLength={3} maxLength={100}
               placeholder="e.g. Computer Lab C"
-              pattern="^[a-zA-Z0-9 ._,()-]+$"
+                pattern="^[-\w\s.,()]+$"
               title="Name cannot be empty or contain unsupported special characters."
               value={form.name}
               onChange={e => {
@@ -187,7 +188,7 @@ export default function ResourceForm({ form, setForm, onSubmit, onCancel, saving
             <input
               className="rf-input" required minLength={2} maxLength={100}
               placeholder="e.g. Block A, Floor 2"
-              pattern="^[a-zA-Z0-9 ._,-]+$"
+                pattern="^[\w\s.,\-]+$"
               title="Location must be a valid string without unusual characters."
               value={form.location}
               onChange={e => {
@@ -256,7 +257,7 @@ export default function ResourceForm({ form, setForm, onSubmit, onCancel, saving
               {form.imageUrls?.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '4px' }}>
                   {form.imageUrls.map((url, idx) => (
-                    <img key={`url-${idx}`} src={`http://localhost:8080${url}`} alt="Resource"
+                    <img key={`url-${idx}`} src={resolveBackendUrl(url)} alt="Resource"
                       style={{ height: '64px', width: '64px', borderRadius: '6px', objectFit: 'cover', border: '1.5px solid var(--border-main)' }} />
                   ))}
                 </div>

@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import LoadingSpinner from './LoadingSpinner';
 
-export default function ProtectedRoute({ children, requiredRole }) {
+export default function ProtectedRoute({ children, requiredRoles }) {
   const { user, loading } = useContext(AuthContext);
   const location = useLocation();
 
@@ -12,13 +12,11 @@ export default function ProtectedRoute({ children, requiredRole }) {
   }
 
   if (!user) {
-    // Redirect to login with return url
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    // Redirect to dashboard if user doesn't have required role
-    return <Navigate to="/" replace />;
+  if (requiredRoles && !requiredRoles.includes(user.role)) {
+    return <Navigate to="/access-denied" replace />;
   }
 
   return children;

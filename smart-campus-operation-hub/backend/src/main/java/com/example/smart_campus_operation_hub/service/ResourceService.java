@@ -38,7 +38,7 @@ public class ResourceService {
 
     public Page<ResourceResponse> getAllResources(Pageable pageable) {
         return resourceRepository.findByIsDeletedFalse(pageable)
-                .map(ResourceResponse::from);
+                .map(ResourceResponse::forList);
     }
 
     public ResourceResponse getResourceById(Long id) {

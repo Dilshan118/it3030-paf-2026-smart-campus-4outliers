@@ -1,12 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import api from '../api/axiosConfig';
 
-/**
- * MEMBER 4: Auth Context
- * Provides user info and auth state to the entire app.
- *
- * Usage in any component:
- *   const { user, isAuthenticated, login, logout } = useAuth();
- */
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -14,24 +8,37 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TEMPORARY: For development/testing, set a mock user
-    // TODO: Replace with actual token validation and user fetching
-    const mockUser = {
-      id: 1,
-      name: 'Test User',
-      email: 'test@example.com',
-      role: 'ADMIN'
+    const token = localStorage.getItem('token');
+    
+    const handleStorageChange = (e) => {
+      if (e.key === 'token' && !e.newValue) {
+        // Token was removed in another tab
+        setUser(null);
+        window.location.href = '/login';
+      }
     };
-    setUser(mockUser);
-    setLoading(false);
+    window.addEventListener('storage', handleStorageChange);
+
+    if (!token) {
+      setLoading(false);
+      return () => window.removeEventListener('storage', handleStorageChange);
+    }
+
+    api.get('/users/me')
+      .then(res => setUser(res.data.data))
+      .catch(() => localStorage.removeItem('token'))
+      .finally(() => setLoading(false));
+
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const login = (token, userData) => {
+  const login = (token) => {
     localStorage.setItem('token', token);
-    setUser(userData);
+    return api.get('/users/me').then(res => setUser(res.data.data));
   };
 
   const logout = () => {
+    api.post('/auth/logout').catch(() => {});
     localStorage.removeItem('token');
     setUser(null);
     window.location.href = '/login';

@@ -16,6 +16,7 @@ import com.example.smart_campus_operation_hub.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import com.example.smart_campus_operation_hub.enums.NotificationType;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -28,13 +29,16 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final ResourceRepository resourceRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public BookingService(BookingRepository bookingRepository,
                           ResourceRepository resourceRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
         this.resourceRepository = resourceRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     // ─── Create Booking ───────────────────────────────────────────────
@@ -87,6 +91,17 @@ public class BookingService {
         booking.setStatus(BookingStatus.PENDING);
 
         Booking saved = bookingRepository.save(booking);
+
+        // 9. Send Notification
+        notificationService.send(
+                userId,
+                NotificationType.BOOKING_CREATED,
+                "Booking Requested: " + resource.getName(),
+                "Your booking for " + resource.getName() + " on " + request.getDate() + " is pending approval.",
+                saved.getId(),
+                "BOOKING"
+        );
+
         return toResponse(saved);
     }
 
@@ -141,29 +156,58 @@ public class BookingService {
         return toResponse(bookingRepository.save(booking));
     }
 
-    // ─── Get All Bookings ─────────────────────────────────────────────
-    public Page<BookingResponse> getAllBookings(Pageable pageable) {
+    // ─── Get All Bookings (admin) ─────────────────────────────────────
+    public Page<BookingResponse> getAllBookings(BookingStatus status, LocalDate date, Pageable pageable) {
+        if (status != null && date != null) {
+            return bookingRepository.findByStatusAndDate(status, date, pageable).map(this::toResponse);
+        } else if (status != null) {
+            return bookingRepository.findByStatus(status, pageable).map(this::toResponse);
+        } else if (date != null) {
+            return bookingRepository.findByDate(date, pageable).map(this::toResponse);
+        }
         return bookingRepository.findAll(pageable).map(this::toResponse);
     }
 
     // ─── Get User's Own Bookings ──────────────────────────────────────
-    public Page<BookingResponse> getBookingsByUser(Long userId, Pageable pageable) {
+    public Page<BookingResponse> getBookingsByUser(Long userId, BookingStatus status, LocalDate date, Pageable pageable) {
+        if (status != null && date != null) {
+            return bookingRepository.findByUserIdAndStatusAndDate(userId, status, date, pageable).map(this::toResponse);
+        } else if (status != null) {
+            return bookingRepository.findByUserIdAndStatus(userId, status, pageable).map(this::toResponse);
+        } else if (date != null) {
+            return bookingRepository.findByUserIdAndDate(userId, date, pageable).map(this::toResponse);
+        }
         return bookingRepository.findByUserId(userId, pageable).map(this::toResponse);
     }
 
     // ─── Get Booking By ID ────────────────────────────────────────────
-    public BookingResponse getBookingById(Long id) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
+    public BookingResponse getBookingById(Long id, Long callerId, String callerRole) {
+        Booking booking = getAccessibleBooking(id, callerId, callerRole);
         return toResponse(booking);
     }
 
+    // ─── Get Booking QR ───────────────────────────────────────────────
+    public String getBookingQr(Long id, Long callerId, String callerRole) {
+        Booking booking = getAccessibleBooking(id, callerId, callerRole);
+
+        if (booking.getStatus() != BookingStatus.APPROVED) {
+            throw new BadRequestException("QR code is available only for APPROVED bookings");
+        }
+
+        if (booking.getQrCode() == null || booking.getQrCode().isBlank()) {
+            booking.setQrCode(generateQrCode(booking));
+            booking = bookingRepository.save(booking);
+        }
+
+        return booking.getQrCode();
+    }
+
     // ─── Cancel Booking ───────────────────────────────────────────────
-    public BookingResponse cancelBooking(Long id, Long userId, String role) {
+    public BookingResponse cancelBooking(Long id, Long userId, String role, String reason) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
 
-        boolean isAdmin = role.equals("ADMIN") || role.equals("MANAGER");
+        boolean isAdmin = "ADMIN".equals(role) || "MANAGER".equals(role);
         if (!booking.getUser().getId().equals(userId) && !isAdmin) {
             throw new UnauthorizedException("You can only cancel your own bookings");
         }
@@ -174,7 +218,22 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
-        return toResponse(bookingRepository.save(booking));
+        if (reason != null && !reason.isBlank()) {
+            booking.setAdminReason(reason);
+        }
+
+        Booking saved = bookingRepository.save(booking);
+
+        notificationService.send(
+                saved.getUser().getId(),
+                NotificationType.BOOKING_CANCELLED,
+                "Booking Cancelled",
+                "Your booking for " + saved.getResource().getName() + " on " + saved.getDate() + " was cancelled.",
+                saved.getId(),
+                "BOOKING"
+        );
+
+        return toResponse(saved);
     }
 
     // ─── Approve Booking (Admin) ──────────────────────────────────────
@@ -192,7 +251,18 @@ public class BookingService {
         String qrCode = generateQrCode(booking);
         booking.setQrCode(qrCode);
 
-        return toResponse(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        notificationService.send(
+                saved.getUser().getId(),
+                NotificationType.BOOKING_APPROVED,
+                "Booking Approved",
+                "Your booking for " + saved.getResource().getName() + " on " + saved.getDate() + " has been approved.",
+                saved.getId(),
+                "BOOKING"
+        );
+
+        return toResponse(saved);
     }
 
     // ─── Reject Booking (Admin) ───────────────────────────────────────
@@ -206,7 +276,31 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.REJECTED);
         booking.setAdminReason(reason);
-        return toResponse(bookingRepository.save(booking));
+
+        Booking saved = bookingRepository.save(booking);
+
+        notificationService.send(
+                saved.getUser().getId(),
+                NotificationType.BOOKING_REJECTED,
+                "Booking Rejected",
+                "Your booking for " + saved.getResource().getName() + " on " + saved.getDate() + " was rejected. Reason: " + reason,
+                saved.getId(),
+                "BOOKING"
+        );
+
+        return toResponse(saved);
+    }
+
+    private Booking getAccessibleBooking(Long id, Long callerId, String callerRole) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
+
+        boolean isAdminOrManager = "ADMIN".equals(callerRole) || "MANAGER".equals(callerRole);
+        if (!isAdminOrManager && !booking.getUser().getId().equals(callerId)) {
+            throw new UnauthorizedException("You can only view your own bookings");
+        }
+
+        return booking;
     }
 
     // ─── Check Conflicts ─────────────────────────────────────────────
@@ -326,6 +420,7 @@ public class BookingService {
         response.setResourceId(booking.getResource().getId());
         response.setResourceName(booking.getResource().getName());
         response.setResourceLocation(booking.getResource().getLocation());
+        response.setResourceType(booking.getResource().getType().name());
         response.setUserId(booking.getUser().getId());
         response.setUserName(booking.getUser().getName());
         response.setDate(booking.getDate());
