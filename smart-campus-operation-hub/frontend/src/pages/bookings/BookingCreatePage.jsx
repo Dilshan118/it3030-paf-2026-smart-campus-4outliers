@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, Calendar, ChevronDown, Clock, Users } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import { createBooking } from '../../api/bookingApi';
@@ -72,6 +72,7 @@ function formatDuration(start, end) {
 
 export default function BookingCreatePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useContext(AuthContext);
 
   const [resources, setResources]           = useState([]);
@@ -82,7 +83,7 @@ export default function BookingCreatePage() {
   const dropdownRef = useRef(null);
 
   const [formData, setFormData] = useState({
-    resourceId: '',
+    resourceId: searchParams.get('resourceId') ?? '',
     date: '',
     startTime: '',
     endTime: '',
@@ -92,8 +93,18 @@ export default function BookingCreatePage() {
 
   const selectedResource = resources.find(r => String(r.id) === String(formData.resourceId)) ?? null;
   const availability     = parseAvailability(selectedResource?.availabilityWindows);
-  const todayISO         = new Date().toISOString().split('T')[0];
+  const _now             = new Date();
+  const todayISO         = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
   const duration         = formatDuration(formData.startTime, formData.endTime);
+
+  const availableStartSlots = (() => {
+    if (formData.date !== todayISO) return TIME_SLOTS;
+    const nowMins = _now.getHours() * 60 + _now.getMinutes();
+    return TIME_SLOTS.filter(t => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m > nowMins;
+    });
+  })();
 
   // ── Load active resources ───────────────────────────────────────────────
   useEffect(() => {
@@ -119,7 +130,20 @@ export default function BookingCreatePage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === 'date') {
+        const nowMins = _now.getHours() * 60 + _now.getMinutes();
+        const slotValid = (t) => {
+          if (value !== todayISO) return true;
+          const [h, m] = t.split(':').map(Number);
+          return h * 60 + m > nowMins;
+        };
+        if (next.startTime && !slotValid(next.startTime)) next.startTime = '';
+        if (next.endTime && (!next.startTime || !slotValid(next.endTime))) next.endTime = '';
+      }
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -371,7 +395,7 @@ export default function BookingCreatePage() {
                   style={{ appearance: 'none', cursor: 'pointer' }}
                 >
                   <option value="">— select —</option>
-                  {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
+                  {availableStartSlots.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
 

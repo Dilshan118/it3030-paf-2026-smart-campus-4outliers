@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, X, QrCode, Search, LayoutGrid, Rows3, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { Plus, X, QrCode, LayoutGrid, Rows3, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { AuthContext } from '../../context/AuthContext';
 import { getBookings, cancelBooking } from '../../api/bookingApi';
@@ -228,6 +228,8 @@ export default function BookingListPage() {
     return true;
   });
 
+  const resourceNames = [...new Set(bookings.map(b => b.resourceName).filter(Boolean))].sort();
+
   const hasActiveFilters = filters.status || filters.resourceType || filters.date || filters.resourceName;
 
   const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value }));
@@ -310,17 +312,14 @@ export default function BookingListPage() {
       <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div style={{ flex: 1, minWidth: '160px' }}>
           <label className="label-text">Resource Name</label>
-          <div style={{ position: 'relative' }}>
-            <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
-            <input
-              type="text"
-              className="input-field"
-              placeholder="Search resource…"
-              value={filters.resourceName}
-              onChange={(e) => handleFilterChange('resourceName', e.target.value)}
-              style={{ paddingLeft: '36px' }}
-            />
-          </div>
+          <select
+            className="input-field"
+            value={filters.resourceName || 'ALL'}
+            onChange={(e) => handleFilterChange('resourceName', e.target.value === 'ALL' ? '' : e.target.value)}
+          >
+            <option value="ALL">All Resources</option>
+            {resourceNames.map(name => <option key={name} value={name}>{name}</option>)}
+          </select>
         </div>
 
         <div style={{ flex: 1, minWidth: '140px' }}>
