@@ -262,12 +262,12 @@ h1, h2, h3, h4, h5, h6 {
  * ------------------------------------- */
 .sidebar {
   width: 296px;
-  background: var(--accent-base); /* Deep indigo anchor from DESIGN.md */
+  background: linear-gradient(180deg, #190c70 0%, #0a042e 100%); /* Darker indigo monolith */
   display: flex;
   flex-direction: column;
   z-index: 10;
   border-right: none; /* No-Line Rule */
-  box-shadow: 12px 0 34px -18px rgba(0, 0, 0, 0.2);
+  box-shadow: 12px 0 34px -18px rgba(0, 0, 0, 0.4);
   overflow-y: auto;
   position: relative;
 }
