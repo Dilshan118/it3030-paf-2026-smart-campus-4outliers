@@ -293,71 +293,115 @@ export default function TicketListPage() {
 
       {showFilters && (
         <div style={{ 
-          marginBottom: '24px', 
+          marginBottom: '28px', 
           background: 'var(--bg-surface)', 
-          padding: '24px', 
-          borderRadius: 'var(--radius-lg)', 
-          boxShadow: 'var(--ambient-shadow)',
+          padding: '16px', 
+          borderRadius: '20px', 
+          boxShadow: '0 8px 32px rgba(42, 20, 180, 0.04), 0 2px 8px rgba(0,0,0,0.02)',
           border: '1px solid rgba(42, 20, 180, 0.05)',
-          animation: 'pageReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+          animation: 'pageReveal 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px'
         }}>
-          <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label className="label-text">Search Query</label>
-              <div style={{ position: 'relative' }}>
-                <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input
-                  type="text"
-                  value={draftFilters.query}
-                  onChange={(event) => updateDraft('query', event.target.value)}
-                  placeholder="Search by description, reporter, assignee, resource..."
-                  className="input-field"
-                  style={{ paddingLeft: '44px', background: 'var(--bg-primary)' }}
-                />
-              </div>
+          {/* Main Search Row */}
+          <div style={{ display: 'flex', gap: '12px', position: 'relative' }}>
+            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent-base)' }}>
+              <Search size={18} strokeWidth={2.5} />
             </div>
-
-            <div>
-              <label className="label-text">Status</label>
-              <select className="input-field" value={draftFilters.status} onChange={(event) => updateDraft('status', event.target.value)} style={{ background: 'var(--bg-primary)' }}>
-                <option value="">All Statuses</option>
-                {STATUS_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label-text">Priority</label>
-              <select className="input-field" value={draftFilters.priority} onChange={(event) => updateDraft('priority', event.target.value)} style={{ background: 'var(--bg-primary)' }}>
-                <option value="">All Priorities</option>
-                {PRIORITY_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label-text">Category</label>
-              <select className="input-field" value={draftFilters.category} onChange={(event) => updateDraft('category', event.target.value)} style={{ background: 'var(--bg-primary)' }}>
-                <option value="">All Categories</option>
-                {CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label-text">Assignee Rule</label>
-              <select className="input-field" value={draftFilters.assignee} onChange={(event) => updateDraft('assignee', event.target.value)} style={{ background: 'var(--bg-primary)' }}>
-                <option value="">Any</option>
-                {ASSIGNEE_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label-text">SLA State</label>
-              <select className="input-field" value={draftFilters.slaState} onChange={(event) => updateDraft('slaState', event.target.value)} style={{ background: 'var(--bg-primary)' }}>
-                <option value="">Any State</option>
-                {SLA_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
-              </select>
-            </div>
+            <input
+              type="text"
+              value={draftFilters.query}
+              onChange={(event) => updateDraft('query', event.target.value)}
+              placeholder="Search description, exact reporter ID, or resource..."
+              style={{ 
+                flex: 1, 
+                padding: '16px 20px 16px 48px', 
+                background: 'var(--bg-primary)', 
+                border: '1px solid transparent', 
+                borderRadius: '14px', 
+                fontSize: '1.05rem',
+                fontWeight: 500,
+                outline: 'none',
+                transition: 'all 0.2s ease'
+              }}
+              onFocus={(e) => { e.target.style.boxShadow = '0 0 0 2px var(--accent-muted)'; e.target.style.background = 'var(--bg-surface)'; }}
+              onBlur={(e) => { e.target.style.boxShadow = 'none'; e.target.style.background = 'var(--bg-primary)'; }}
+              onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+            />
+            <button className="btn-primary" onClick={applyFilters} style={{ padding: '0 28px', borderRadius: '14px', whiteSpace: 'nowrap' }}>
+              Search
+            </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-            <button className="btn-secondary" onClick={resetFilters}><X size={16} /> Reset</button>
-            <button className="btn-primary" onClick={applyFilters}><Search size={16} /> Apply Filters</button>
+          {/* Inline Filter Pills */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '4px' }}>
+              <Filter size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-2px' }} />
+              Filters
+            </div>
+            
+            <select 
+              value={draftFilters.status} 
+              onChange={(event) => updateDraft('status', event.target.value)} 
+              style={{ padding: '8px 32px 8px 16px', background: 'var(--bg-primary)', border: 'none', borderRadius: '100px', fontSize: '0.85rem', fontWeight: 600, color: draftFilters.status ? 'var(--accent-base)' : 'var(--text-main)', cursor: 'pointer', appearance: 'none', position: 'relative' }}
+            >
+              <option value="">Status: All</option>
+              {STATUS_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
+            </select>
+
+            <select 
+              value={draftFilters.priority} 
+              onChange={(event) => updateDraft('priority', event.target.value)} 
+              style={{ padding: '8px 32px 8px 16px', background: 'var(--bg-primary)', border: 'none', borderRadius: '100px', fontSize: '0.85rem', fontWeight: 600, color: draftFilters.priority ? 'var(--accent-base)' : 'var(--text-main)', cursor: 'pointer', appearance: 'none' }}
+            >
+              <option value="">Priority: All</option>
+              {PRIORITY_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
+            </select>
+
+            <select 
+              value={draftFilters.category} 
+              onChange={(event) => updateDraft('category', event.target.value)} 
+              style={{ padding: '8px 32px 8px 16px', background: 'var(--bg-primary)', border: 'none', borderRadius: '100px', fontSize: '0.85rem', fontWeight: 600, color: draftFilters.category ? 'var(--accent-base)' : 'var(--text-main)', cursor: 'pointer', appearance: 'none' }}
+            >
+              <option value="">Category: All</option>
+              {CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
+            </select>
+
+            <select 
+              value={draftFilters.assignee} 
+              onChange={(event) => updateDraft('assignee', event.target.value)} 
+              style={{ padding: '8px 32px 8px 16px', background: 'var(--bg-primary)', border: 'none', borderRadius: '100px', fontSize: '0.85rem', fontWeight: 600, color: draftFilters.assignee ? 'var(--accent-base)' : 'var(--text-main)', cursor: 'pointer', appearance: 'none' }}
+            >
+              <option value="">Assignee: Any</option>
+              {ASSIGNEE_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
+            </select>
+
+            <select 
+              value={draftFilters.slaState} 
+              onChange={(event) => updateDraft('slaState', event.target.value)} 
+              style={{ padding: '8px 32px 8px 16px', background: 'var(--bg-primary)', border: 'none', borderRadius: '100px', fontSize: '0.85rem', fontWeight: 600, color: draftFilters.slaState ? 'var(--accent-base)' : 'var(--text-main)', cursor: 'pointer', appearance: 'none' }}
+            >
+              <option value="">SLA: Any State</option>
+              {SLA_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
+            </select>
+
+            <div style={{ flex: 1 }} />
+
+            {(draftFilters.query || draftFilters.status || draftFilters.priority || draftFilters.category || draftFilters.assignee || draftFilters.slaState) && (
+              <button onClick={resetFilters} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: '8px 12px', borderRadius: '100px', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--danger-muted)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <X size={14} strokeWidth={2.5} /> Clear Active
+              </button>
+            )}
           </div>
+          
+          <style>{`
+            select {
+              background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+              background-repeat: no-repeat;
+              background-position: right 12px center;
+            }
+          `}</style>
         </div>
       )}
 
