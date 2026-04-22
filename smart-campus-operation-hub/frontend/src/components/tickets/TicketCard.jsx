@@ -70,9 +70,11 @@ export default function TicketCard({ ticket }) {
 
   return (
     <Link to={`/tickets/${id}`} className="card" style={{ 
-      display: 'grid', 
-      gridTemplateColumns: 'minmax(0, 2fr) 1fr auto', 
-      gap: '32px', 
+      display: 'flex', 
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: '24px', 
+      justifyContent: 'space-between',
       alignItems: 'center',
       textDecoration: 'none',
       padding: '24px 32px',
@@ -81,37 +83,45 @@ export default function TicketCard({ ticket }) {
       border: 'none',
       boxShadow: '0 4px 6px -1px rgba(25, 28, 30, 0.02)',
       backgroundColor: 'var(--surface-container-lowest)',
-      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+      transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+      position: 'relative',
+      overflow: 'hidden'
     }}
     onMouseEnter={(e) => {
       e.currentTarget.style.backgroundColor = 'var(--bg-surface)';
-      e.currentTarget.style.boxShadow = 'var(--ambient-shadow)';
-      e.currentTarget.style.transform = 'translateY(-2px)';
+      e.currentTarget.style.boxShadow = 'var(--ambient-shadow-hover)';
+      e.currentTarget.style.transform = 'translateY(-3px) scale(1.005)';
       const icon = e.currentTarget.querySelector('.card-icon');
       if(icon) {
         icon.style.opacity = '1';
         icon.style.transform = 'translateX(0)';
       }
+      const bgGlow = e.currentTarget.querySelector('.bg-glow');
+      if(bgGlow) bgGlow.style.opacity = '1';
     }}
     onMouseLeave={(e) => {
       e.currentTarget.style.backgroundColor = 'var(--surface-container-lowest)';
       e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(25, 28, 30, 0.02)';
-      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.transform = 'translateY(0) scale(1)';
       const icon = e.currentTarget.querySelector('.card-icon');
       if(icon) {
         icon.style.opacity = '0';
         icon.style.transform = 'translateX(-10px)';
       }
+      const bgGlow = e.currentTarget.querySelector('.bg-glow');
+      if(bgGlow) bgGlow.style.opacity = '0';
     }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div className="bg-glow" style={{ position: 'absolute', top: 0, right: 0, width: '300px', height: '100%', background: 'radial-gradient(circle at right, rgba(42, 20, 180, 0.03) 0%, transparent 70%)', opacity: 0, transition: 'opacity 0.6s ease', pointerEvents: 'none' }} />
+      
+      <div style={{ flex: '1 1 min(100%, 400px)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>#{id}</span>
           <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)', fontFamily: 'var(--font-body)', fontWeight: 700, letterSpacing: '-0.01em' }}>
             {title || `${formatEnum(category)} Ticket`}
           </h3>
           {isAssignedToMe && (
-            <span style={{ fontSize: '0.65rem', background: 'var(--accent-base)', color: 'white', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: '0.65rem', background: 'var(--accent-gradient)', color: 'white', padding: '2px 8px', borderRadius: '4px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Assigned to You
             </span>
           )}
@@ -126,7 +136,7 @@ export default function TicketCard({ ticket }) {
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', flex: '1 1 auto', position: 'relative', zIndex: 1 }}>
         <span className={`status-badge status-${(status || 'open').toLowerCase()}`}>{formatEnum(status)}</span>
         <span className={`priority-badge priority-${(priority || 'low').toLowerCase()}`}>{formatEnum(priority)}</span>
         
@@ -136,17 +146,18 @@ export default function TicketCard({ ticket }) {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '6px 10px',
+              padding: '6px 12px',
               borderRadius: '999px',
               fontFamily: 'var(--font-mono)',
               fontSize: '0.65rem',
+              fontWeight: 600,
               letterSpacing: '0.05em',
               textTransform: 'uppercase',
               background: slaState === 'BREACHED' ? 'var(--danger-muted)' : (slaState === 'DUE_SOON' ? 'rgba(234, 179, 8, 0.1)' : 'var(--success-muted)'),
               color: slaState === 'BREACHED' ? 'var(--danger)' : (slaState === 'DUE_SOON' ? 'var(--warning)' : 'var(--success)'),
             }}
           >
-            {slaState !== 'ON_TRACK' && <AlertTriangle size={12} />} 
+            {slaState !== 'ON_TRACK' && <AlertTriangle size={12} strokeWidth={2.5} />} 
             {slaCountdown}
           </span>
         )}
@@ -157,23 +168,24 @@ export default function TicketCard({ ticket }) {
             alignItems: 'center',
             gap: '5px',
             borderRadius: '999px',
-            padding: '6px 10px',
+            padding: '6px 12px',
             background: 'var(--accent-muted)',
             color: 'var(--accent-base)',
             fontFamily: 'var(--font-mono)',
             fontSize: '0.68rem',
-            maxWidth: '120px',
+            fontWeight: 600,
+            maxWidth: '140px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap'
           }}>
-            <UserRound size={12} />
+            <UserRound size={12} strokeWidth={2.5} />
             {assignedToName || `Tech #${assignedToId}`}
           </div>
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexShrink: 0, position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
           <Clock size={14} />
           {new Date(createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}

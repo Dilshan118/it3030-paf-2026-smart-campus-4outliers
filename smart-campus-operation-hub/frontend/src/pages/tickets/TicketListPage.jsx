@@ -292,110 +292,91 @@ export default function TicketListPage() {
       </div>
 
       {showFilters && (
-        <div className="card" style={{ marginBottom: '20px', background: 'var(--bg-surface)' }}>
-          <div
-            style={{
-              display: 'grid',
-              gap: '12px',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-            }}
-          >
-            <div style={{ gridColumn: 'span 2' }}>
-              <label className="label-text" style={{ marginBottom: '6px', display: 'inline-block' }}>Search</label>
+        <div style={{ 
+          marginBottom: '24px', 
+          background: 'var(--bg-surface)', 
+          padding: '24px', 
+          borderRadius: 'var(--radius-lg)', 
+          boxShadow: 'var(--ambient-shadow)',
+          border: '1px solid rgba(42, 20, 180, 0.05)',
+          animation: 'pageReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}>
+          <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label className="label-text">Search Query</label>
               <div style={{ position: 'relative' }}>
-                <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 <input
                   type="text"
                   value={draftFilters.query}
                   onChange={(event) => updateDraft('query', event.target.value)}
-                  placeholder="Search description, reporter, assignee, resource"
+                  placeholder="Search by description, reporter, assignee, resource..."
                   className="input-field"
-                  style={{ paddingLeft: '34px' }}
+                  style={{ paddingLeft: '44px', background: 'var(--bg-primary)' }}
                 />
               </div>
             </div>
 
             <div>
-              <label className="label-text" style={{ marginBottom: '6px', display: 'inline-block' }}>Status</label>
-              <select className="input-field" value={draftFilters.status} onChange={(event) => updateDraft('status', event.target.value)}>
-                <option value="">All</option>
+              <label className="label-text">Status</label>
+              <select className="input-field" value={draftFilters.status} onChange={(event) => updateDraft('status', event.target.value)} style={{ background: 'var(--bg-primary)' }}>
+                <option value="">All Statuses</option>
                 {STATUS_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
               </select>
             </div>
-
             <div>
-              <label className="label-text" style={{ marginBottom: '6px', display: 'inline-block' }}>Priority</label>
-              <select className="input-field" value={draftFilters.priority} onChange={(event) => updateDraft('priority', event.target.value)}>
-                <option value="">All</option>
+              <label className="label-text">Priority</label>
+              <select className="input-field" value={draftFilters.priority} onChange={(event) => updateDraft('priority', event.target.value)} style={{ background: 'var(--bg-primary)' }}>
+                <option value="">All Priorities</option>
                 {PRIORITY_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
               </select>
             </div>
-
             <div>
-              <label className="label-text" style={{ marginBottom: '6px', display: 'inline-block' }}>Category</label>
-              <select className="input-field" value={draftFilters.category} onChange={(event) => updateDraft('category', event.target.value)}>
-                <option value="">All</option>
+              <label className="label-text">Category</label>
+              <select className="input-field" value={draftFilters.category} onChange={(event) => updateDraft('category', event.target.value)} style={{ background: 'var(--bg-primary)' }}>
+                <option value="">All Categories</option>
                 {CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
               </select>
             </div>
-
             <div>
-              <label className="label-text" style={{ marginBottom: '6px', display: 'inline-block' }}>Assignee</label>
-              <select className="input-field" value={draftFilters.assignee} onChange={(event) => updateDraft('assignee', event.target.value)}>
-                <option value="">All</option>
+              <label className="label-text">Assignee Rule</label>
+              <select className="input-field" value={draftFilters.assignee} onChange={(event) => updateDraft('assignee', event.target.value)} style={{ background: 'var(--bg-primary)' }}>
+                <option value="">Any</option>
                 {ASSIGNEE_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
               </select>
             </div>
-
             <div>
-              <label className="label-text" style={{ marginBottom: '6px', display: 'inline-block' }}>SLA State</label>
-              <select className="input-field" value={draftFilters.slaState} onChange={(event) => updateDraft('slaState', event.target.value)}>
-                <option value="">All</option>
+              <label className="label-text">SLA State</label>
+              <select className="input-field" value={draftFilters.slaState} onChange={(event) => updateDraft('slaState', event.target.value)} style={{ background: 'var(--bg-primary)' }}>
+                <option value="">Any State</option>
                 {SLA_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
               </select>
             </div>
-
-            <div>
-              <label className="label-text" style={{ marginBottom: '6px', display: 'inline-block' }}>Created From</label>
-              <input type="date" className="input-field" value={draftFilters.createdFrom} onChange={(event) => updateDraft('createdFrom', event.target.value)} />
-            </div>
-
-            <div>
-              <label className="label-text" style={{ marginBottom: '6px', display: 'inline-block' }}>Created To</label>
-              <input type="date" className="input-field" value={draftFilters.createdTo} onChange={(event) => updateDraft('createdTo', event.target.value)} />
-            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
-            <button className="btn-secondary" onClick={resetFilters}><X size={16} /> Clear</button>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+            <button className="btn-secondary" onClick={resetFilters}><X size={16} /> Reset</button>
             <button className="btn-primary" onClick={applyFilters}><Search size={16} /> Apply Filters</button>
           </div>
         </div>
       )}
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: '12px',
-          marginBottom: '18px',
-        }}
-      >
-        <div className="card" style={{ padding: '14px 16px', background: 'var(--bg-surface)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Open</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{queueInsights.open}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', transition: 'transform 0.3s ease', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Active Open</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>{queueInsights.open}</div>
         </div>
-        <div className="card" style={{ padding: '14px 16px', background: 'var(--bg-surface)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>In Progress</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{queueInsights.inProgress}</div>
+        <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', transition: 'transform 0.3s ease', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>In Progress</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{queueInsights.inProgress}</div>
         </div>
-        <div className="card" style={{ padding: '14px 16px', background: 'var(--bg-surface)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Critical</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{queueInsights.critical}</div>
+        <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', transition: 'transform 0.3s ease', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Critical Queue</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: queueInsights.critical > 0 ? 'var(--danger)' : 'var(--text-main)', lineHeight: 1 }}>{queueInsights.critical}</div>
         </div>
-        <div className="card" style={{ padding: '14px 16px', background: 'var(--bg-surface)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>SLA Breached</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: queueInsights.breached > 0 ? 'var(--danger)' : 'var(--text-main)' }}>{queueInsights.breached}</div>
+        <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', transition: 'transform 0.3s ease', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>SLA Breaches</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: queueInsights.breached > 0 ? 'var(--danger)' : 'var(--success)', lineHeight: 1 }}>{queueInsights.breached}</div>
         </div>
       </div>
 

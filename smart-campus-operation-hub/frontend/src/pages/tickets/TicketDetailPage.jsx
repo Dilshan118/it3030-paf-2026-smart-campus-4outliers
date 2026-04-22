@@ -365,31 +365,89 @@ export default function TicketDetailPage() {
           line-height: 1.55;
         }
 
-        .ticket-detail-page .lifecycle {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
+        .ticket-detail-page .lifecycle-timeline {
+          position: relative;
+          padding: 8px 0;
+        }
+        
+        .ticket-detail-page .lifecycle-timeline::before {
+          content: '';
+          position: absolute;
+          left: 11px;
+          top: 16px;
+          bottom: 16px;
+          width: 2px;
+          background: var(--bg-surface-elevated);
+          border-radius: 2px;
+          z-index: 1;
         }
 
-        .ticket-detail-page .lifecycle-row {
+        .ticket-detail-page .lifecycle-node {
+          position: relative;
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 16px;
+          margin-bottom: 24px;
+          z-index: 2;
+        }
+        .ticket-detail-page .lifecycle-node:last-child {
+          margin-bottom: 0;
+        }
+
+        .ticket-detail-page .node-icon {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--bg-surface-elevated);
+          color: transparent;
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .ticket-detail-page .lifecycle-node.done .node-icon {
+          background: var(--success);
+          color: white;
+          box-shadow: 0 0 12px -2px rgba(16, 185, 129, 0.4);
+        }
+
+        .ticket-detail-page .lifecycle-node.current .node-icon {
+          background: var(--bg-surface);
+          border: 2px solid var(--accent-base);
+          box-shadow: 0 0 0 4px var(--accent-muted);
+        }
+        .ticket-detail-page .lifecycle-node.current .node-icon::after {
+          content: '';
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: var(--accent-base);
+        }
+
+        .ticket-detail-page .lifecycle-node.rejected .node-icon {
+          background: var(--danger);
+          color: white;
+          box-shadow: 0 0 12px -2px rgba(225, 42, 69, 0.4);
+        }
+
+        .ticket-detail-page .node-text {
           font-size: 0.86rem;
           font-family: var(--font-mono);
+          font-weight: 600;
+          color: var(--text-muted);
+          transition: color 0.3s ease;
         }
 
-        .ticket-detail-page .lifecycle-row.done {
-          color: #03674d;
+        .ticket-detail-page .lifecycle-node.done .node-text {
+          color: var(--text-main);
         }
-
-        .ticket-detail-page .lifecycle-row.current {
+        .ticket-detail-page .lifecycle-node.current .node-text {
           color: var(--accent-base);
           font-weight: 700;
         }
-
-        .ticket-detail-page .lifecycle-row.pending {
-          color: var(--text-muted);
+        .ticket-detail-page .lifecycle-node.rejected .node-text {
+          color: var(--danger);
         }
 
         @media (max-width: 1100px) {
@@ -562,7 +620,7 @@ export default function TicketDetailPage() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {canMoveToInProgress && (
-                    <button className="btn-secondary" onClick={() => handleUpdateStatus('IN_PROGRESS')} style={{ width: '100%', justifyContent: 'center' }}>
+                    <button className="btn-primary" onClick={() => handleUpdateStatus('IN_PROGRESS')} style={{ width: '100%', justifyContent: 'center' }}>
                       Mark In Progress
                     </button>
                   )}
@@ -577,7 +635,7 @@ export default function TicketDetailPage() {
                     </button>
                   )}
                   {canClose && (
-                    <button className="btn-secondary" onClick={() => handleUpdateStatus('CLOSED')} style={{ width: '100%', justifyContent: 'center' }}>
+                    <button className="btn-primary" onClick={() => handleUpdateStatus('CLOSED')} style={{ width: '100%', justifyContent: 'center' }}>
                       Close Ticket File
                     </button>
                   )}
@@ -590,21 +648,27 @@ export default function TicketDetailPage() {
               </div>
             )}
 
-            <div className="card">
-              <h3 className="label-text" style={{ marginBottom: '12px' }}>Lifecycle</h3>
+            <div className="card" style={{ padding: '28px' }}>
+              <h3 className="label-text" style={{ marginBottom: '20px' }}>Lifecycle</h3>
               {ticket.status === 'REJECTED' ? (
-                <div className="lifecycle">
-                  <div className="lifecycle-row done"><CheckCircle2 size={14} /> Opened</div>
-                  <div className="lifecycle-row current" style={{ color: 'var(--danger)' }}><XCircle size={14} /> Rejected</div>
+                <div className="lifecycle-timeline">
+                  <div className="lifecycle-node done">
+                    <div className="node-icon"><CheckCircle2 size={14} /></div>
+                    <span className="node-text">Opened</span>
+                  </div>
+                  <div className="lifecycle-node rejected">
+                    <div className="node-icon"><XCircle size={14} /></div>
+                    <span className="node-text">Rejected</span>
+                  </div>
                 </div>
               ) : (
-                <div className="lifecycle">
+                <div className="lifecycle-timeline">
                   {lifecycleStages.map((stage) => (
-                    <div key={stage.stage} className={`lifecycle-row ${stage.state}`}>
-                      {stage.state === 'done' && <CheckCircle2 size={14} />}
-                      {stage.state === 'current' && <CircleDot size={14} />}
-                      {stage.state === 'pending' && <CircleDot size={14} />}
-                      {formatEnum(stage.stage)}
+                    <div key={stage.stage} className={`lifecycle-node ${stage.state}`}>
+                      <div className="node-icon">
+                        {stage.state === 'done' && <CheckCircle2 size={14} strokeWidth={3} />}
+                      </div>
+                      <span className="node-text">{formatEnum(stage.stage)}</span>
                     </div>
                   ))}
                 </div>

@@ -93,119 +93,127 @@ export default function TicketForm({ initialData = {}, onSubmit, onCancel, loadi
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
-        <div>
-          <label className="label-text">Select Category</label>
-          <div style={{ position: 'relative' }}>
-            <select name="category" value={formData.category} onChange={handleChange} required className="input-field" style={{ appearance: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '1.05rem', padding: '18px 24px', background: 'var(--bg-primary)' }}>
-              <option value="IT_ISSUE">IT Issue</option>
-              <option value="SAFETY">Safety</option>
-              <option value="CLEANING">Cleaning</option>
-              <option value="FACILITY_DAMAGE">Facility Damage</option>
-              <option value="EQUIPMENT_MALFUNCTION">Equipment Malfunction</option>
-              <option value="OTHER">Other</option>
-            </select>
-            <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }}>
-              <ChevronDown size={18} />
+      <div style={{ padding: '24px', background: 'var(--bg-primary)', borderRadius: 'var(--radius)', border: '1px solid rgba(42, 20, 180, 0.05)' }}>
+        <h3 className="label-text" style={{ marginBottom: '24px', color: 'var(--accent-base)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>1. Issue Classification</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) minmax(200px, 1fr)', gap: '24px' }}>
+          <div>
+            <label className="label-text">Select Category</label>
+            <div style={{ position: 'relative' }}>
+              <select name="category" value={formData.category} onChange={handleChange} required className="input-field" style={{ appearance: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '1.05rem', padding: '16px 20px', background: 'var(--bg-surface)' }}>
+                <option value="IT_ISSUE">IT Issue</option>
+                <option value="SAFETY">Safety</option>
+                <option value="CLEANING">Cleaning</option>
+                <option value="FACILITY_DAMAGE">Facility Damage</option>
+                <option value="EQUIPMENT_MALFUNCTION">Equipment Malfunction</option>
+                <option value="OTHER">Other</option>
+              </select>
+              <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }}>
+                <ChevronDown size={18} />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div>
-          <label className="label-text">Select Priority</label>
-          <div style={{ position: 'relative' }}>
-            <select name="priority" value={formData.priority} onChange={handleChange} required className="input-field" style={{ appearance: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '1.05rem', padding: '18px 24px', background: 'var(--bg-primary)' }}>
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-              <option value="CRITICAL">Critical</option>
-            </select>
-            <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }}>
-              <ChevronDown size={18} />
+          <div>
+            <label className="label-text">Select Priority</label>
+            <div style={{ position: 'relative' }}>
+              <select name="priority" value={formData.priority} onChange={handleChange} required className="input-field" style={{ appearance: 'none', cursor: 'pointer', fontWeight: 500, fontSize: '1.05rem', padding: '16px 20px', background: 'var(--bg-surface)' }}>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+              </select>
+              <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }}>
+                <ChevronDown size={18} />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div>
-        <label className="label-text">Detailed Description</label>
-        <textarea 
-          name="description" 
-          value={formData.description} 
-          onChange={handleChange} 
-          required 
-          minLength={10} 
-          className="input-field" 
-          style={{ minHeight: '160px', resize: 'vertical', fontSize: '1.05rem', padding: '24px', background: 'var(--bg-primary)' }} 
-          placeholder="Describe the issue, location, and any actions already taken..."
-        />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) 1.5fr', gap: '32px', alignItems: 'start' }}>
+      <div style={{ padding: '24px', background: 'var(--bg-primary)', borderRadius: 'var(--radius)', border: '1px solid rgba(42, 20, 180, 0.05)' }}>
+        <h3 className="label-text" style={{ marginBottom: '24px', color: 'var(--accent-base)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>2. Issue Details</h3>
         <div>
-          <label className="label-text">Contact Info</label>
-          <input 
-            type="text" 
-            name="contactInfo" 
-            value={formData.contactInfo} 
+          <label className="label-text">Detailed Description</label>
+          <textarea 
+            name="description" 
+            value={formData.description} 
             onChange={handleChange} 
+            required 
+            minLength={10} 
             className="input-field" 
-            style={{ fontSize: '1.05rem', padding: '18px 24px', background: 'var(--bg-primary)' }}
-            placeholder="Phone or Extension" 
+            style={{ minHeight: '160px', resize: 'vertical', fontSize: '1.05rem', padding: '20px', background: 'var(--bg-surface)' }} 
+            placeholder="Describe the issue, location, and any actions already taken..."
           />
         </div>
-        
-        <div style={{ position: 'relative' }} ref={dropdownRef}>
-          <label className="label-text" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>Associated Resource</span>
-            {selectedResource ? (
-              <span style={{ color: 'var(--success)', fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--success-muted)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
-                <Check size={10} strokeWidth={3} /> Verified Link
-              </span>
-            ) : (
-              <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(Optional Sync)</span>
-            )}
-          </label>
-          
-          <div style={{ position: 'relative' }}>
+      </div>
+
+      <div style={{ padding: '24px', background: 'var(--bg-primary)', borderRadius: 'var(--radius)', border: '1px solid rgba(42, 20, 180, 0.05)' }}>
+        <h3 className="label-text" style={{ marginBottom: '24px', color: 'var(--accent-base)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>3. Context & Links</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) 1.5fr', gap: '32px', alignItems: 'start' }}>
+          <div>
+            <label className="label-text">Contact Info</label>
             <input 
               type="text" 
-              value={showResourceDropdown ? searchTerm : (selectedResource ? selectedResource.name : '')}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setShowResourceDropdown(true);
-              }}
-              onFocus={() => {
-                setShowResourceDropdown(true);
-                setSearchTerm('');
-              }}
+              name="contactInfo" 
+              value={formData.contactInfo} 
+              onChange={handleChange} 
               className="input-field" 
-              style={{ 
-                fontSize: '1.05rem', 
-                padding: '18px 24px 18px 52px', 
-                background: 'var(--bg-primary)',
-                border: selectedResource ? '2px solid var(--success)' : '2px solid transparent',
-                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-              }}
-              placeholder={selectedResource ? selectedResource.name : "Search resource name or ID..."} 
+              style={{ fontSize: '1.05rem', padding: '16px 20px', background: 'var(--bg-surface)' }}
+              placeholder="Phone or Extension" 
             />
-            <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: selectedResource ? 'var(--success)' : 'var(--text-muted)' }}>
-              {selectedResource ? <Zap size={18} fill="var(--success)" strokeWidth={0} /> : <Search size={18} />}
-            </div>
-            {(formData.resourceId || searchTerm) && (
-              <button 
-                type="button" 
-                onClick={clearResource}
-                style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'var(--bg-surface-elevated)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', borderRadius: '50%', display: 'flex', transition: 'all 0.2s' }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.background = 'var(--danger-muted)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'var(--bg-surface-elevated)'; }}
-              >
-                <X size={14} />
-              </button>
-            )}
           </div>
+          
+          <div style={{ position: 'relative' }} ref={dropdownRef}>
+            <label className="label-text" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Associated Resource</span>
+              {selectedResource ? (
+                <span style={{ color: 'var(--success)', fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--success-muted)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                  <Check size={10} strokeWidth={3} /> Verified Link
+                </span>
+              ) : (
+                <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(Optional Sync)</span>
+              )}
+            </label>
+            
+            <div style={{ position: 'relative' }}>
+              <input 
+                type="text" 
+                value={showResourceDropdown ? searchTerm : (selectedResource ? selectedResource.name : '')}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowResourceDropdown(true);
+                }}
+                onFocus={() => {
+                  setShowResourceDropdown(true);
+                  setSearchTerm('');
+                }}
+                className="input-field" 
+                style={{ 
+                  fontSize: '1.05rem', 
+                  padding: '16px 20px 16px 52px', 
+                  background: 'var(--bg-surface)',
+                  border: selectedResource ? '2px solid var(--success)' : '2px solid transparent',
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}
+                placeholder={selectedResource ? selectedResource.name : "Search resource name or ID..."} 
+              />
+              <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: selectedResource ? 'var(--success)' : 'var(--text-muted)' }}>
+                {selectedResource ? <Check size={18} /> : <Search size={18} />}
+              </div>
+              {(formData.resourceId || searchTerm) && (
+                <button 
+                  type="button" 
+                  onClick={clearResource}
+                  style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'var(--bg-surface-elevated)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', borderRadius: '50%', display: 'flex', transition: 'all 0.2s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.background = 'var(--danger-muted)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'var(--bg-surface-elevated)'; }}
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
 
-          {showResourceDropdown && (
+            {showResourceDropdown && (
             <div style={{ 
               position: 'absolute', 
               top: '100%', 
