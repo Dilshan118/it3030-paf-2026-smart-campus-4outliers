@@ -1,5 +1,6 @@
 package com.example.smart_campus_operation_hub.service;
 
+import com.example.smart_campus_operation_hub.exception.PendingApprovalException;
 import com.example.smart_campus_operation_hub.exception.UnauthorizedException;
 import com.example.smart_campus_operation_hub.model.User;
 import com.example.smart_campus_operation_hub.repository.UserRepository;
@@ -28,7 +29,10 @@ public class AuthService {
                 .orElseGet(() -> createNewUser(email, name, avatarUrl, providerId));
 
         if (!Boolean.TRUE.equals(user.getIsActive())) {
-            throw new UnauthorizedException("Your account has been deactivated. Please contact an administrator");
+            if (user.getRejectedAt() != null) {
+                throw new UnauthorizedException("Your access request was declined. Please contact an administrator.");
+            }
+            throw new PendingApprovalException("Your account is awaiting admin approval.");
         }
 
         if (avatarUrl != null && !avatarUrl.equals(user.getAvatarUrl())) {
