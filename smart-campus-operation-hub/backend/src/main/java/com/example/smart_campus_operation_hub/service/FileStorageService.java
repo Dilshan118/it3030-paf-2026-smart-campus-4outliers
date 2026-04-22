@@ -44,24 +44,10 @@ public class FileStorageService {
      */
     public String storeFile(MultipartFile file) {
         try {
-            java.nio.file.Path uploadPath = java.nio.file.Paths.get(uploadDir);
-            if (!java.nio.file.Files.exists(uploadPath)) {
-                java.nio.file.Files.createDirectories(uploadPath);
-            }
-
-            // Generate unique name
-            String originalName = org.springframework.util.StringUtils.cleanPath(file.getOriginalFilename());
-            String uniqueName = java.util.UUID.randomUUID().toString() + "_" + originalName;
-            
-            java.nio.file.Path filePath = uploadPath.resolve(uniqueName);
-            java.nio.file.Files.copy(file.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-
-            // In a real app we'd map this to a base URL or CDN. 
-            // For now, return a relative path that matches a static resource handler.
-            return "/uploads/" + uniqueName;
-            
+            String encodedImage = java.util.Base64.getEncoder().encodeToString(file.getBytes());
+            return "data:" + file.getContentType() + ";base64," + encodedImage;
         } catch (java.io.IOException ex) {
-            throw new RuntimeException("Could not store file " + file.getOriginalFilename() + ". Please try again!", ex);
+            throw new RuntimeException("Could not process file " + file.getOriginalFilename() + ". Please try again!", ex);
         }
     }
 
@@ -82,3 +68,5 @@ public class FileStorageService {
         }
     }
 }
+
+

@@ -110,17 +110,16 @@ public class ResourceController {
                 throw new IllegalArgumentException("File size must not exceed 5MB");
 
             String contentType = file.getContentType();
-            if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png") && !contentType.equals("image/webp")))
-                throw new IllegalArgumentException("Only JPG, PNG and WEBP files are allowed");
+            if (contentType == null || !contentType.startsWith("image/"))
+                throw new IllegalArgumentException("Only image files are allowed");
 
-            String filename = "resource_" + id + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path uploadPath = Paths.get("uploads");
-            Files.createDirectories(uploadPath);
-            Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
-
-            uploadedUrls.add("/uploads/" + filename);
+            String encodedImage = java.util.Base64.getEncoder().encodeToString(file.getBytes());
+            uploadedUrls.add("data:" + contentType + ";base64," + encodedImage);
         }
 
         return ResponseEntity.ok(resourceService.addImageUrls(id, uploadedUrls));
     }
 }
+
+
+
