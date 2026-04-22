@@ -8,6 +8,8 @@ export default function LoginPage() {
 
   const errorMessage = error === 'access_denied'
     ? 'Your access request was declined. Please contact a campus administrator.'
+    : error === 'server_error'
+    ? 'A server error occurred during sign-in. Please check the backend logs and try again.'
     : error
     ? 'Sign-in failed. Please try again.'
     : null;
