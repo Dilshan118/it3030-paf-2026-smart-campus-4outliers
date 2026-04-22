@@ -91,11 +91,6 @@ export default function Sidebar() {
             Analytics Dashboard
           </NavLink>
 
-          <NavLink to="/admin/resources/analytics" className={compactMutedNavClassName}>
-            <TrendingUp size={16} strokeWidth={1.8} className="sidebar-icon" />
-            Analytics
-          </NavLink>
-
           <NavLink to="/tickets/manage" className={navClassName}>
             <Briefcase size={20} strokeWidth={1.5} className="sidebar-icon" />
             Operations Log

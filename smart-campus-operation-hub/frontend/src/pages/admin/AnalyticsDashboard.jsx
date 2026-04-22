@@ -9,13 +9,42 @@ import {
   AlertTriangle,
   Box,
   CalendarCheck,
+  CalendarPlus,
   CheckCircle,
   Clock,
+  Database,
   RefreshCw,
   ShieldCheck,
   Ticket,
   TrendingUp,
 } from 'lucide-react';
+import {
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+} from 'recharts';
+
+const TYPE_META = {
+  LAB:          { label: 'Laboratory',   color: 'var(--accent-base)' },
+  LECTURE_HALL: { label: 'Lecture Hall', color: '#38A169' },
+  MEETING_ROOM: { label: 'Meeting Room', color: '#805AD5' },
+  EQUIPMENT:    { label: 'Equipment',    color: '#D69E2E' },
+};
+
+class ChartSectionBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(e) { console.error('Chart failed:', e); }
+  render() { return this.state.hasError ? this.props.fallback : this.props.children; }
+}
+
+function SectionLabel({ children }) {
+  return (
+    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+      {children}
+      <span style={{ flex: 1, height: '1px', background: 'var(--border-main)' }} />
+    </div>
+  );
+}
 
 const TABS = [
   { id: 'OVERVIEW', label: 'Overview' },
@@ -313,6 +342,13 @@ export default function AnalyticsDashboard() {
        .sort((a, b) => b.value - a.value)
        .slice(0, 6);
    }, [resourceAnalytics.resourcesByLocation]);
+
+   const resourcePieData = useMemo(() => {
+     return resourceTypeBreakdown.map(entry => {
+       const meta = TYPE_META[entry.name] || { label: entry.name, color: 'var(--accent-base)' };
+       return { name: meta.label, value: entry.value, color: meta.color };
+     });
+   }, [resourceTypeBreakdown]);
 
    const totalTickets = ticketRecords.length || metrics.totalTickets;
    const activeTickets = ticketRecords.length
@@ -814,7 +850,7 @@ export default function AnalyticsDashboard() {
                    </div>
                  </div>
                  <div className="analytics-actions" style={{ marginTop: '14px' }}>
-                   <Link className="analytics-link analytics-link-primary" to="/admin/resources/analytics">Open Resource Analytics Dashboard</Link>
+                   <button className="analytics-link analytics-link-primary" style={{ border: 'none', cursor: 'pointer' }} onClick={() => setActiveTab('RESOURCES')}>Open Resource Analytics</button>
                    <Link className="analytics-link analytics-link-secondary" to="/admin/resources">Manage Resources</Link>
                  </div>
                </div>
@@ -956,85 +992,112 @@ export default function AnalyticsDashboard() {
              </div>
            )}
 
-           {activeTab === 'RESOURCES' && (
-             <div className="analytics-grid-2">
-               <div className="analytics-card">
-                 <h2 className="analytics-section-title">Resource Operations</h2>
-                 <div className="analytics-section-subtitle">Current fleet and serviceability</div>
-                 <ul className="analytics-list" style={{ marginBottom: '16px' }}>
-                   <li>
-                     <span className="analytics-list-label">Total resources</span>
-                     <span>{totalResources}</span>
-                   </li>
-                   <li>
-                     <span className="analytics-list-label">Active resources</span>
-                     <span style={{ color: 'var(--success)' }}>{operationalResources}</span>
-                   </li>
-                   <li>
-                     <span className="analytics-list-label">Out of service</span>
-                     <span style={{ color: 'var(--danger)' }}>{resourceAnalytics.outOfServiceResources}</span>
-                   </li>
-                   <li>
-                     <span className="analytics-list-label">Added this month</span>
-                     <span>{resourceAnalytics.addedThisMonth}</span>
-                   </li>
-                 </ul>
-
-                 <DistributionRow
-                   label="Operational health"
-                   value={resourceHealth}
-                   total={100}
-                   color={resourceHealth >= 70 ? 'var(--success)' : resourceHealth >= 40 ? 'var(--warning)' : 'var(--danger)'}
-                 />
-
-                 <div className="analytics-actions">
-                   <Link className="analytics-link analytics-link-primary" to="/admin/resources/analytics">Open Full Resource Analytics</Link>
-                   <Link className="analytics-link analytics-link-secondary" to="/admin/resources">Manage Resource Inventory</Link>
+           {activeTab === 'RESOURCES' && (() => {
+             const activeRate = Math.max(0, Math.min(resourceAnalytics.activePercentage || resourceHealth, 100));
+             const rateColor = activeRate >= 70 ? 'var(--success)' : activeRate >= 40 ? 'var(--warning)' : 'var(--danger)';
+             return (
+               <div className="analytics-tab-frame">
+                 {/* Stat Cards */}
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border-main)' }}>
+                   {[
+                     { label: 'Total Resources',  value: resourceAnalytics.totalResources,        icon: <Database size={16} />,      color: 'var(--text-main)' },
+                     { label: 'Active',            value: resourceAnalytics.activeResources,       icon: <Activity size={16} />,      color: 'var(--success)' },
+                     { label: 'Out of Service',    value: resourceAnalytics.outOfServiceResources, icon: <AlertTriangle size={16} />, color: 'var(--danger)' },
+                     { label: 'Added This Month',  value: resourceAnalytics.addedThisMonth,        icon: <CalendarPlus size={16} />,  color: 'var(--info)' },
+                   ].map(({ label, value, icon, color }) => (
+                     <div key={label} style={{ background: 'var(--bg-surface)', padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                       <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>
+                         {icon} {label}
+                       </div>
+                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.8rem, 4vw, 3.8rem)', fontWeight: 900, color, lineHeight: 1 }}>
+                         {value}
+                       </div>
+                     </div>
+                   ))}
                  </div>
-               </div>
 
-               <div className="analytics-card">
-                 <h2 className="analytics-section-title">Resource Breakdown</h2>
-                 <div className="analytics-section-subtitle">Top types and locations</div>
-
-                 <div style={{ marginBottom: '16px' }}>
-                   <div className="analytics-list-label" style={{ marginBottom: '8px' }}>By type</div>
-                   <div className="analytics-distribution">
-                     {resourceTypeBreakdown.length === 0 && (
-                       <DistributionRow label="No data" value={0} total={1} color="var(--text-muted)" />
+                 {/* Charts Row */}
+                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1px', background: 'var(--border-main)' }}>
+                   {/* Location BarChart */}
+                   <div style={{ background: 'var(--bg-surface)', padding: '32px' }}>
+                     <SectionLabel>Spatial Analytics</SectionLabel>
+                     <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '28px' }}>
+                       Location Utilization
+                     </h2>
+                     {resourceLocationBreakdown.length === 0 ? (
+                       <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No location data yet.</p>
+                     ) : (
+                       <div style={{ height: '300px', width: '100%', marginTop: '24px' }}>
+                         <ChartSectionBoundary fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>Chart unavailable for this browser session.</div>}>
+                           <ResponsiveContainer width="100%" height="100%">
+                             <BarChart data={resourceLocationBreakdown.map(e => ({ name: e.name, count: e.value }))} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
+                               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-main)" />
+                               <XAxis type="number" hide />
+                               <YAxis type="category" dataKey="name" width={100} axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }} />
+                               <Tooltip cursor={{ fill: 'rgba(0,0,0,0.03)' }} contentStyle={{ background: '#11141b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }} itemStyle={{ color: '#fff' }} />
+                               <Bar dataKey="count" fill="var(--info)" radius={[0, 4, 4, 0]} barSize={20} />
+                             </BarChart>
+                           </ResponsiveContainer>
+                         </ChartSectionBoundary>
+                       </div>
                      )}
-                     {resourceTypeBreakdown.map((entry) => (
-                       <DistributionRow
-                         key={entry.name}
-                         label={formatEnum(entry.name)}
-                         value={entry.value}
-                         total={Math.max(totalResources, 1)}
-                         color="var(--accent-base)"
-                       />
-                     ))}
+                   </div>
+
+                   {/* Type PieChart + legend + active rate */}
+                   <div style={{ background: 'var(--bg-surface)', padding: '32px' }}>
+                     <SectionLabel>Class Telemetry</SectionLabel>
+                     <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '12px' }}>
+                       Systems Overview
+                     </h2>
+                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) minmax(180px, auto)', gap: '20px', alignItems: 'center' }}>
+                       <div style={{ height: '240px', width: '100%', position: 'relative' }}>
+                         <ChartSectionBoundary fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>Chart unavailable for this browser session.</div>}>
+                           <ResponsiveContainer width="100%" height="100%">
+                             <PieChart>
+                               <Pie data={resourcePieData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value" stroke="none">
+                                 {resourcePieData.map((entry, index) => (
+                                   <Cell key={`cell-${index}`} fill={entry.color} />
+                                 ))}
+                               </Pie>
+                               <Tooltip contentStyle={{ background: '#11141b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', padding: '10px 16px' }} itemStyle={{ color: '#fff' }} />
+                             </PieChart>
+                           </ResponsiveContainer>
+                         </ChartSectionBoundary>
+                       </div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                         {resourcePieData.map(entry => (
+                           <div key={entry.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color }} />
+                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)', textTransform: 'uppercase' }}>{entry.name}</span>
+                             </div>
+                             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{entry.value}</span>
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                     <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px dashed var(--border-main)' }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
+                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                           Infrastructure Health Status
+                         </span>
+                         <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 900, color: rateColor }}>
+                           {activeRate.toFixed(1)}% Operational
+                         </span>
+                       </div>
+                       <div style={{ height: '6px', background: 'var(--bg-surface-elevated)', position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
+                         <div style={{ position: 'absolute', inset: '0 auto 0 0', width: `${activeRate}%`, background: rateColor, transition: 'width 0.9s cubic-bezier(0.16,1,0.3,1)', borderRadius: '10px' }} />
+                       </div>
+                     </div>
                    </div>
                  </div>
 
-                 <div>
-                   <div className="analytics-list-label" style={{ marginBottom: '8px' }}>Top locations</div>
-                   <ul className="analytics-list">
-                     {resourceLocationBreakdown.length === 0 && (
-                       <li>
-                         <span className="analytics-list-label">No location data</span>
-                         <span>0</span>
-                       </li>
-                     )}
-                     {resourceLocationBreakdown.map((entry) => (
-                       <li key={entry.name}>
-                         <span className="analytics-list-label">{entry.name}</span>
-                         <span>{entry.value}</span>
-                       </li>
-                     ))}
-                   </ul>
+                 <div className="analytics-actions">
+                   <Link className="analytics-link analytics-link-secondary" to="/admin/resources">Manage Resource Inventory</Link>
                  </div>
                </div>
-             </div>
-           )}
+             );
+           })()}
          </>
        )}
 
