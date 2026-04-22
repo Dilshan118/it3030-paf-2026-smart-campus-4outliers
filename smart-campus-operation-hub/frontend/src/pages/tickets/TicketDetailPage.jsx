@@ -365,32 +365,87 @@ export default function TicketDetailPage() {
           line-height: 1.55;
         }
 
-        .ticket-detail-page .lifecycle {
+        .ticket-detail-page .horizontal-lifecycle {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-top: 32px;
+          padding-top: 32px;
+          border-top: 1px solid var(--bg-surface-elevated);
+          position: relative;
+        }
+
+        .ticket-detail-page .horizontal-lifecycle::before {
+          content: '';
+          position: absolute;
+          top: 48px;
+          left: 40px;
+          right: 40px;
+          height: 2px;
+          background: var(--bg-surface-elevated);
+          z-index: 1;
+        }
+
+        .ticket-detail-page .hz-node {
+          position: relative;
+          z-index: 2;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          align-items: center;
+          gap: 12px;
+          background: transparent;
         }
 
-        .ticket-detail-page .lifecycle-row {
+        .ticket-detail-page .hz-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: var(--bg-surface-elevated);
           display: flex;
           align-items: center;
-          gap: 10px;
-          font-size: 0.86rem;
+          justify-content: center;
+          color: transparent;
+          transition: all 0.4s ease;
+          border: 4px solid #ffffff; /* Cutout effect */
+        }
+        
+        .ticket-detail-page .hz-node.done .hz-icon {
+          background: var(--success);
+          color: white;
+        }
+        
+        .ticket-detail-page .hz-node.current .hz-icon {
+          background: #ffffff;
+          border-color: var(--accent-base);
+          border-width: 2px;
+          box-shadow: 0 0 0 4px var(--accent-muted);
+        }
+        
+        .ticket-detail-page .hz-node.current .hz-icon::after {
+          content: '';
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: var(--accent-base);
+        }
+        
+        .ticket-detail-page .hz-node.rejected .hz-icon {
+          background: var(--danger);
+          color: white;
+        }
+
+        .ticket-detail-page .hz-text {
+          font-size: 0.8rem;
           font-family: var(--font-mono);
-        }
-
-        .ticket-detail-page .lifecycle-row.done {
-          color: #03674d;
-        }
-
-        .ticket-detail-page .lifecycle-row.current {
-          color: var(--accent-base);
-          font-weight: 700;
-        }
-
-        .ticket-detail-page .lifecycle-row.pending {
+          font-weight: 600;
           color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
         }
+        
+        .ticket-detail-page .hz-node.done .hz-text { color: var(--text-main); }
+        .ticket-detail-page .hz-node.current .hz-text { color: var(--accent-base); font-weight: 700; }
+        .ticket-detail-page .hz-node.rejected .hz-text { color: var(--danger); }
 
         @media (max-width: 1100px) {
           .ticket-detail-page .ticket-shell {
@@ -399,6 +454,17 @@ export default function TicketDetailPage() {
         }
 
         @media (max-width: 720px) {
+          .ticket-detail-page .horizontal-lifecycle::before {
+            display: none;
+          }
+          .ticket-detail-page .horizontal-lifecycle {
+            flex-direction: column;
+            gap: 20px;
+            align-items: flex-start;
+          }
+          .ticket-detail-page .hz-node {
+            flex-direction: row;
+          }
           .ticket-detail-page .hero-head {
             flex-direction: column;
           }
@@ -437,181 +503,180 @@ export default function TicketDetailPage() {
             </span>
           </div>
         </div>
-      </div>
 
-      <div
-        className="ticket-shell"
-        style={{
-          gridTemplateColumns: showSidebar ? 'minmax(0, 1.9fr) minmax(300px, 1fr)' : 'minmax(0, 1fr)',
-        }}
-      >
-        <div className="ticket-main">
-          {isEditing ? (
-            <div className="card">
-              <h2 className="section-title"><Edit2 size={18} /> Edit Ticket</h2>
-              <TicketForm initialData={ticket} onSubmit={handleEditSubmit} onCancel={() => setIsEditing(false)} />
-            </div>
-          ) : (
+        {/* Horizontal Lifecycle */}
+        <div className="horizontal-lifecycle">
+          {ticket.status === 'REJECTED' ? (
             <>
-              <div className="card">
-                <h2 className="section-title"><AlertCircle size={18} /> Issue Summary</h2>
-                <p className="issue-text">{ticket.description}</p>
-
-                {ticket.resolutionNotes && (
-                  <div className="note-box" style={{ background: 'var(--success-muted)', color: '#065f46' }}>
-                    <strong>Resolution Notes:</strong> {ticket.resolutionNotes}
-                  </div>
-                )}
-
-                {ticket.rejectionReason && (
-                  <div className="note-box" style={{ background: 'var(--danger-muted)', color: 'var(--danger)' }}>
-                    <strong>Rejection Reason:</strong> {ticket.rejectionReason}
-                  </div>
-                )}
+              <div className="hz-node done">
+                <div className="hz-icon"><CheckCircle2 size={16} /></div>
+                <span className="hz-text">Opened</span>
               </div>
-
-              <div className="card">
-                <h2 className="section-title"><Wrench size={18} /> Ticket Details</h2>
-                <div className="detail-facts">
-                  <div className="fact-item">
-                    <span className="fact-label"><CalendarDays size={12} /> Created</span>
-                    <span className="fact-value">{formatDateTime(ticket.createdAt)}</span>
-                  </div>
-                  <div className="fact-item">
-                    <span className="fact-label"><Clock3 size={12} /> Last Updated</span>
-                    <span className="fact-value">{formatDateTime(ticket.updatedAt)}</span>
-                  </div>
-                  <div className="fact-item">
-                    <span className="fact-label"><CircleDot size={12} /> Category</span>
-                    <span className="fact-value">{formatEnum(ticket.category)}</span>
-                  </div>
-                  <div className="fact-item">
-                    <span className="fact-label"><AlertCircle size={12} /> Priority</span>
-                    <span className="fact-value">{formatEnum(ticket.priority)}</span>
-                  </div>
-                  <div className="fact-item">
-                    <span className="fact-label"><UserRound size={12} /> Reporter</span>
-                    <span className="fact-value">{ticket.userName || `User ${ticket.userId}`}</span>
-                  </div>
-                  <div className="fact-item">
-                    <span className="fact-label"><Wrench size={12} /> Assigned Technician</span>
-                    <span className="fact-value">{ticket.assignedToName || 'Unassigned'}</span>
-                  </div>
-                  <div className="fact-item">
-                    <span className="fact-label"><Hash size={12} /> Resource</span>
-                    <span className="fact-value">
-                      {ticket.resourceName || (ticket.resourceId ? `#${ticket.resourceId}` : 'Not linked')}
-                    </span>
-                  </div>
-                  <div className="fact-item">
-                    <span className="fact-label"><UserRound size={12} /> Contact</span>
-                    <span className="fact-value">{ticket.contactInfo || 'Not provided'}</span>
-                  </div>
-                </div>
+              <div className="hz-node rejected">
+                <div className="hz-icon"><XCircle size={16} /></div>
+                <span className="hz-text">Rejected</span>
               </div>
             </>
+          ) : (
+            lifecycleStages.map((stage) => (
+              <div key={stage.stage} className={`hz-node ${stage.state}`}>
+                <div className="hz-icon" title={formatEnum(stage.stage)}>
+                  {stage.state === 'done' && <CheckCircle2 size={16} strokeWidth={3} />}
+                </div>
+                <span className="hz-text">{formatEnum(stage.stage)}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {showSidebar && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+          {actionError && (
+            <div className="card" style={{ background: 'var(--danger-muted)', color: 'var(--danger)', gridColumn: '1 / -1' }}>
+              <strong style={{ fontFamily: 'var(--font-mono)' }}>Workflow Error:</strong> {` ${actionError}`}
+            </div>
           )}
 
-          <CommentThread ticketId={id} initialComments={ticket.comments || []} onCommentAdded={fetchTicket} />
-          <ImageUpload ticketId={id} attachments={ticket.attachments || []} onUploadSuccess={fetchTicket} />
-        </div>
-
-        {showSidebar && (
-          <aside className="ticket-side">
-            {actionError && (
-              <div className="card" style={{ background: 'var(--danger-muted)', color: 'var(--danger)' }}>
-                <strong style={{ fontFamily: 'var(--font-mono)' }}>Workflow Error:</strong> {` ${actionError}`}
+          {isOwner && ticket.status === 'OPEN' && !isEditing && (
+            <div className="card">
+              <h3 className="label-text" style={{ marginBottom: '16px' }}>Your Actions</h3>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <button className="btn-secondary" onClick={() => setIsEditing(true)} style={{ flex: '1 1 140px', justifyContent: 'center' }}>
+                  <Edit2 size={16} /> Edit Details
+                </button>
+                <button className="btn-secondary" onClick={handleDelete} style={{ flex: '1 1 140px', justifyContent: 'center', color: 'var(--danger)', background: 'var(--danger-muted)' }}>
+                  <Trash2 size={16} /> Withdraw Ticket
+                </button>
               </div>
-            )}
+            </div>
+          )}
 
-            {isOwner && ticket.status === 'OPEN' && !isEditing && (
-              <div className="card">
-                <h3 className="label-text" style={{ marginBottom: '14px' }}>Your Actions</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <button className="btn-secondary" onClick={() => setIsEditing(true)} style={{ width: '100%', justifyContent: 'center' }}>
-                    <Edit2 size={16} /> Edit Details
-                  </button>
-                  <button className="btn-secondary" onClick={handleDelete} style={{ width: '100%', justifyContent: 'center', color: 'var(--danger)', background: 'var(--danger-muted)' }}>
-                    <Trash2 size={16} /> Withdraw Ticket
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {canManage && (
-              <div className="card">
-                <h3 className="label-text" style={{ marginBottom: '12px' }}>SLA Tracking</h3>
-                <p className="fact-label" style={{ marginBottom: '8px' }}>Resolution Deadline</p>
+          {canManage && (
+            <div className="card">
+              <h3 className="label-text" style={{ marginBottom: '16px' }}>SLA Tracking</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <p className="fact-label" style={{ margin: 0 }}>Target Deadline:</p>
                 {ticket.slaDeadline ? (
                   <SlaTimer deadline={ticket.slaDeadline} status={ticket.status} />
                 ) : (
                   <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>Not set</span>
                 )}
               </div>
-            )}
+            </div>
+          )}
 
-            {(canManage || isAssignedTech || canReopen) && (
-              <div className="card">
-                <h3 className="label-text" style={{ marginBottom: '14px' }}>Workflow Actions</h3>
-
-                {ticket.status === 'OPEN' && !hasAssignedTechnician && canManage && (
-                  <div style={{ marginBottom: '12px', padding: '12px 14px', borderRadius: 'var(--radius)', background: 'var(--bg-primary)', color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                    Assign a technician from Manage Tickets before moving this request forward.
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {canMoveToInProgress && (
-                    <button className="btn-secondary" onClick={() => handleUpdateStatus('IN_PROGRESS')} style={{ width: '100%', justifyContent: 'center' }}>
-                      Mark In Progress
-                    </button>
-                  )}
-                  {canReject && (
-                    <button className="btn-secondary" onClick={() => handleUpdateStatus('REJECTED')} style={{ width: '100%', justifyContent: 'center', color: 'var(--danger)', background: 'var(--danger-muted)' }}>
-                      Reject Request
-                    </button>
-                  )}
-                  {canResolve && (
-                    <button className="btn-primary" onClick={() => handleUpdateStatus('RESOLVED')} style={{ width: '100%', justifyContent: 'center' }}>
-                      Complete Resolution
-                    </button>
-                  )}
-                  {canClose && (
-                    <button className="btn-secondary" onClick={() => handleUpdateStatus('CLOSED')} style={{ width: '100%', justifyContent: 'center' }}>
-                      Close Ticket File
-                    </button>
-                  )}
-                  {canReopen && (
-                    <button className="btn-secondary" onClick={handleReopen} style={{ width: '100%', justifyContent: 'center' }}>
-                      Reopen Ticket
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
+          {(canManage || isAssignedTech || canReopen) && (
             <div className="card">
-              <h3 className="label-text" style={{ marginBottom: '12px' }}>Lifecycle</h3>
-              {ticket.status === 'REJECTED' ? (
-                <div className="lifecycle">
-                  <div className="lifecycle-row done"><CheckCircle2 size={14} /> Opened</div>
-                  <div className="lifecycle-row current" style={{ color: 'var(--danger)' }}><XCircle size={14} /> Rejected</div>
+              <h3 className="label-text" style={{ marginBottom: '16px' }}>Workflow Processing</h3>
+              
+              {ticket.status === 'OPEN' && !hasAssignedTechnician && canManage && (
+                <div style={{ marginBottom: '12px', padding: '12px 14px', borderRadius: 'var(--radius)', background: 'var(--bg-primary)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  Assign a technician from Manage Tickets to proceed.
                 </div>
-              ) : (
-                <div className="lifecycle">
-                  {lifecycleStages.map((stage) => (
-                    <div key={stage.stage} className={`lifecycle-row ${stage.state}`}>
-                      {stage.state === 'done' && <CheckCircle2 size={14} />}
-                      {stage.state === 'current' && <CircleDot size={14} />}
-                      {stage.state === 'pending' && <CircleDot size={14} />}
-                      {formatEnum(stage.stage)}
-                    </div>
-                  ))}
+              )}
+
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                {canMoveToInProgress && (
+                  <button className="btn-primary" onClick={() => handleUpdateStatus('IN_PROGRESS')} style={{ flex: '1 1 160px', justifyContent: 'center' }}>
+                    Mark In Progress
+                  </button>
+                )}
+                {canReject && (
+                  <button className="btn-secondary" onClick={() => handleUpdateStatus('REJECTED')} style={{ flex: '1 1 140px', justifyContent: 'center', color: 'var(--danger)', background: 'var(--danger-muted)' }}>
+                    Reject Request
+                  </button>
+                )}
+                {canResolve && (
+                  <button className="btn-primary" onClick={() => handleUpdateStatus('RESOLVED')} style={{ flex: '1 1 160px', justifyContent: 'center' }}>
+                    Complete Resolution
+                  </button>
+                )}
+                {canClose && (
+                  <button className="btn-primary" onClick={() => handleUpdateStatus('CLOSED')} style={{ flex: '1 1 140px', justifyContent: 'center' }}>
+                    Close Ticket File
+                  </button>
+                )}
+                {canReopen && (
+                  <button className="btn-secondary" onClick={handleReopen} style={{ flex: '1 1 140px', justifyContent: 'center' }}>
+                    Reopen Ticket
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {isEditing ? (
+          <div className="card">
+            <h2 className="section-title"><Edit2 size={18} /> Edit Ticket</h2>
+            <TicketForm initialData={ticket} onSubmit={handleEditSubmit} onCancel={() => setIsEditing(false)} />
+          </div>
+        ) : (
+          <>
+            <div className="card">
+              <h2 className="section-title"><AlertCircle size={18} /> Issue Summary</h2>
+              <p className="issue-text">{ticket.description}</p>
+
+              {ticket.resolutionNotes && (
+                <div className="note-box" style={{ background: 'var(--success-muted)', color: '#065f46' }}>
+                  <strong>Resolution Notes:</strong> {ticket.resolutionNotes}
+                </div>
+              )}
+
+              {ticket.rejectionReason && (
+                <div className="note-box" style={{ background: 'var(--danger-muted)', color: 'var(--danger)' }}>
+                  <strong>Rejection Reason:</strong> {ticket.rejectionReason}
                 </div>
               )}
             </div>
-          </aside>
+
+            <div className="card">
+              <h2 className="section-title"><Wrench size={18} /> Ticket Details</h2>
+              <div className="detail-facts" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+                <div className="fact-item">
+                  <span className="fact-label"><CalendarDays size={12} /> Created</span>
+                  <span className="fact-value">{formatDateTime(ticket.createdAt)}</span>
+                </div>
+                <div className="fact-item">
+                  <span className="fact-label"><Clock3 size={12} /> Last Updated</span>
+                  <span className="fact-value">{formatDateTime(ticket.updatedAt)}</span>
+                </div>
+                <div className="fact-item">
+                  <span className="fact-label"><CircleDot size={12} /> Category</span>
+                  <span className="fact-value">{formatEnum(ticket.category)}</span>
+                </div>
+                <div className="fact-item">
+                  <span className="fact-label"><AlertCircle size={12} /> Priority</span>
+                  <span className="fact-value">{formatEnum(ticket.priority)}</span>
+                </div>
+                <div className="fact-item">
+                  <span className="fact-label"><UserRound size={12} /> Reporter</span>
+                  <span className="fact-value">{ticket.userName || `User ${ticket.userId}`}</span>
+                </div>
+                <div className="fact-item">
+                  <span className="fact-label"><Wrench size={12} /> Assigned Technician</span>
+                  <span className="fact-value">{ticket.assignedToName || 'Unassigned'}</span>
+                </div>
+                <div className="fact-item">
+                  <span className="fact-label"><Hash size={12} /> Resource</span>
+                  <span className="fact-value">
+                    {ticket.resourceName || (ticket.resourceId ? `#${ticket.resourceId}` : 'Not linked')}
+                  </span>
+                </div>
+                <div className="fact-item">
+                  <span className="fact-label"><UserRound size={12} /> Contact</span>
+                  <span className="fact-value">{ticket.contactInfo || 'Not provided'}</span>
+                </div>
+              </div>
+            </div>
+          </>
         )}
+
+        <CommentThread ticketId={id} initialComments={ticket.comments || []} onCommentAdded={fetchTicket} />
+        <ImageUpload ticketId={id} attachments={ticket.attachments || []} onUploadSuccess={fetchTicket} />
       </div>
     </div>
   );
