@@ -13,15 +13,13 @@ export default function Sidebar() {
 
   return (
     <nav className="sidebar">
-      <div className="sidebar-brand" style={{ marginBottom: '40px', padding: '0 8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.03)', padding: '16px 16px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 20px rgba(0,0,0,0.2)' }}>
-          <div className="sidebar-logo" style={{ background: 'linear-gradient(135deg, var(--accent-base) 0%, #7c3aed 100%)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)' }}>
-            <Building2 color="#fff" size={20} strokeWidth={2} />
-          </div>
-          <div className="sidebar-brand-text" style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, letterSpacing: '-0.02em', color: '#fff', fontSize: '1.25rem', lineHeight: '1.1' }}>SMART</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '0.22em', fontSize: '0.62rem', color: '#8b95a5', textTransform: 'uppercase' }}>Campus</span>
-          </div>
+      <div className="sidebar-brand" style={{ marginBottom: '40px', padding: '0 8px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div className="sidebar-logo" style={{ background: 'linear-gradient(135deg, var(--accent-base) 0%, #7c3aed 100%)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)' }}>
+          <Building2 color="#fff" size={20} strokeWidth={2} />
+        </div>
+        <div className="sidebar-brand-text" style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, letterSpacing: '-0.02em', color: '#fff', fontSize: '1.25rem', lineHeight: '1.1' }}>SMART</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '0.22em', fontSize: '0.62rem', color: '#8b95a5', textTransform: 'uppercase' }}>Campus</span>
         </div>
       </div>
 

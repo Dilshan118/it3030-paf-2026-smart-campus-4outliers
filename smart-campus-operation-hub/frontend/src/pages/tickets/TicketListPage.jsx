@@ -443,7 +443,12 @@ export default function TicketListPage() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: (user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'TECHNICIAN') ? 'repeat(4, 1fr)' : 'repeat(2, 1fr)', 
+        gap: '16px', 
+        marginBottom: '24px' 
+      }}>
         <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', transition: 'transform 0.3s ease', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Active Open</div>
           <div style={{ fontSize: '2rem', fontWeight: 800, background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>{queueInsights.open}</div>
