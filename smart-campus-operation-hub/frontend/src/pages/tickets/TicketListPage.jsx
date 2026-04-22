@@ -263,6 +263,7 @@ export default function TicketListPage() {
         </div>
       </div>
 
+      {/* Technician tabs */}
       {user?.role === 'TECHNICIAN' && (
         <div className="operations-tabs">
           <button 
@@ -285,12 +286,16 @@ export default function TicketListPage() {
           </button>
         </div>
       )}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '18px' }}>
-        <button className="quick-chip" onClick={() => applyQuickPreset('MY_QUEUE')}>My Queue</button>
-        <button className="quick-chip" onClick={() => applyQuickPreset('CRITICAL')}>Critical Queue</button>
-        <button className="quick-chip" onClick={() => applyQuickPreset('SLA_RISK')}>SLA Risk</button>
-        <button className="quick-chip" onClick={() => applyQuickPreset('UNASSIGNED')}>Unassigned</button>
-      </div>
+
+      {/* Quick Chips (Management Only) */}
+      {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'TECHNICIAN') && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '18px' }}>
+          <button className="quick-chip" onClick={() => applyQuickPreset('MY_QUEUE')}>My Queue</button>
+          <button className="quick-chip" onClick={() => applyQuickPreset('CRITICAL')}>Critical Queue</button>
+          <button className="quick-chip" onClick={() => applyQuickPreset('SLA_RISK')}>SLA Risk</button>
+          <button className="quick-chip" onClick={() => applyQuickPreset('UNASSIGNED')}>Unassigned</button>
+        </div>
+      )}
 
       {showFilters && (
         <div style={{ 
@@ -385,25 +390,29 @@ export default function TicketListPage() {
                 {CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
               </select>
 
-              <select 
-                value={draftFilters.assignee} 
-                onChange={(event) => { updateDraft('assignee', event.target.value); setFilters(prev => ({...prev, assignee: event.target.value})); setPage(0); }} 
-                className="filter-select"
-                style={draftFilters.assignee ? { color: 'var(--accent-base)', borderColor: 'var(--accent-muted)', background: 'var(--bg-surface)' } : {}}
-              >
-                <option value="">Assignee: Any</option>
-                {ASSIGNEE_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
-              </select>
+              {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'TECHNICIAN') && (
+                <>
+                  <select 
+                    value={draftFilters.assignee} 
+                    onChange={(event) => { updateDraft('assignee', event.target.value); setFilters(prev => ({...prev, assignee: event.target.value})); setPage(0); }} 
+                    className="filter-select"
+                    style={draftFilters.assignee ? { color: 'var(--accent-base)', borderColor: 'var(--accent-muted)', background: 'var(--bg-surface)' } : {}}
+                  >
+                    <option value="">Assignee: Any</option>
+                    {ASSIGNEE_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
+                  </select>
 
-              <select 
-                value={draftFilters.slaState} 
-                onChange={(event) => { updateDraft('slaState', event.target.value); setFilters(prev => ({...prev, slaState: event.target.value})); setPage(0); }} 
-                className="filter-select"
-                style={draftFilters.slaState ? { color: 'var(--accent-base)', borderColor: 'var(--accent-muted)', background: 'var(--bg-surface)' } : {}}
-              >
-                <option value="">SLA: Any State</option>
-                {SLA_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
-              </select>
+                  <select 
+                    value={draftFilters.slaState} 
+                    onChange={(event) => { updateDraft('slaState', event.target.value); setFilters(prev => ({...prev, slaState: event.target.value})); setPage(0); }} 
+                    className="filter-select"
+                    style={draftFilters.slaState ? { color: 'var(--accent-base)', borderColor: 'var(--accent-muted)', background: 'var(--bg-surface)' } : {}}
+                  >
+                    <option value="">SLA: Any State</option>
+                    {SLA_OPTIONS.map((option) => <option key={option} value={option}>{formatEnum(option)}</option>)}
+                  </select>
+                </>
+              )}
             </div>
           </div>
           
@@ -443,14 +452,18 @@ export default function TicketListPage() {
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>In Progress</div>
           <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{queueInsights.inProgress}</div>
         </div>
-        <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', transition: 'transform 0.3s ease', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Critical Queue</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: queueInsights.critical > 0 ? 'var(--danger)' : 'var(--text-main)', lineHeight: 1 }}>{queueInsights.critical}</div>
-        </div>
-        <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', transition: 'transform 0.3s ease', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>SLA Breaches</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: queueInsights.breached > 0 ? 'var(--danger)' : 'var(--success)', lineHeight: 1 }}>{queueInsights.breached}</div>
-        </div>
+        {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'TECHNICIAN') && (
+          <>
+            <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', transition: 'transform 0.3s ease', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Critical Queue</div>
+              <div style={{ fontSize: '2rem', fontWeight: 800, color: queueInsights.critical > 0 ? 'var(--danger)' : 'var(--text-main)', lineHeight: 1 }}>{queueInsights.critical}</div>
+            </div>
+            <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ambient-shadow)', transition: 'transform 0.3s ease', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>SLA Breaches</div>
+              <div style={{ fontSize: '2rem', fontWeight: 800, color: queueInsights.breached > 0 ? 'var(--danger)' : 'var(--success)', lineHeight: 1 }}>{queueInsights.breached}</div>
+            </div>
+          </>
+        )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px', flexWrap: 'wrap' }}>
