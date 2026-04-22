@@ -7,6 +7,7 @@ import PageErrorBoundary from './components/common/PageErrorBoundary';
 import LoginPage from './pages/auth/LoginPage';
 import OAuthCallback from './pages/auth/OAuthCallback';
 import AccessDeniedPage from './pages/auth/AccessDeniedPage';
+import PendingApprovalPage from './pages/auth/PendingApprovalPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import NotificationHistoryPage from './pages/notifications/NotificationHistoryPage';
 import TicketListPage from './pages/tickets/TicketListPage';
@@ -54,6 +55,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<OAuthCallback />} />
           <Route path="/access-denied" element={<AccessDeniedPage />} />
+          <Route path="/pending-approval" element={<PendingApprovalPage />} />
 
           {/* Protected Main Routes */}
           <Route path="/" element={<ProtectedRoute><DashboardLayout><DashboardPage /></DashboardLayout></ProtectedRoute>} />
