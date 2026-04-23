@@ -66,4 +66,26 @@ public class UserController {
         User deactivatedUser = userService.deactivateUser(id, actorUserId);
         return ResponseEntity.ok(ApiResponse.success(deactivatedUser, "User deactivated successfully"));
     }
+
+    @GetMapping("/admin/users/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Object>> getPendingUsers(Pageable pageable) {
+        Page<User> pending = userService.getPendingUsers(pageable);
+        return ResponseEntity.ok(ApiResponse.success(pending));
+    }
+
+    @PatchMapping("/admin/users/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Object>> approveUser(@PathVariable Long id,
+                                                           @RequestParam(required = false) Role role) {
+        User approved = userService.approveUser(id, role);
+        return ResponseEntity.ok(ApiResponse.success(approved, "User approved successfully"));
+    }
+
+    @PatchMapping("/admin/users/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Object>> rejectUser(@PathVariable Long id) {
+        User rejected = userService.rejectUser(id);
+        return ResponseEntity.ok(ApiResponse.success(rejected, "User rejected"));
+    }
 }

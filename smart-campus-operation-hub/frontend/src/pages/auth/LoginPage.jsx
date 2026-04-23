@@ -1,9 +1,18 @@
 import React from 'react';
-import { Building2, Info, KeyRound } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { Building2, Info, AlertTriangle } from 'lucide-react';
 
 export default function LoginPage() {
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const error = searchParams.get('error');
+
+  const errorMessage = error === 'access_denied'
+    ? 'Your access request was declined. Please contact a campus administrator.'
+    : error === 'server_error'
+    ? 'A server error occurred during sign-in. Please check the backend logs and try again.'
+    : error
+    ? 'Sign-in failed. Please try again.'
+    : null;
 
   const handleGoogleLogin = () => {
     const from = location.state?.from?.pathname || '/';
@@ -157,12 +166,22 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div style={{ 
-            background: 'var(--bg-surface)', 
-            padding: '40px', 
+          <div style={{
+            background: 'var(--bg-surface)',
+            padding: '40px',
             borderRadius: '24px',
-            boxShadow: 'var(--ambient-shadow)' /* Tonal layering instead of solid borders */
+            boxShadow: 'var(--ambient-shadow)'
           }}>
+            {errorMessage && (
+              <div style={{
+                display: 'flex', alignItems: 'flex-start', gap: '12px',
+                padding: '16px 20px', borderRadius: '12px', marginBottom: '24px',
+                background: 'var(--danger-muted)', color: 'var(--danger)'
+              }}>
+                <AlertTriangle size={18} strokeWidth={2} style={{ flexShrink: 0, marginTop: '1px' }} />
+                <p style={{ margin: 0, fontSize: '0.88rem', fontWeight: 500, lineHeight: 1.5 }}>{errorMessage}</p>
+              </div>
+            )}
             <button onClick={handleGoogleLogin} className="google-btn">
               <svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
                 <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>

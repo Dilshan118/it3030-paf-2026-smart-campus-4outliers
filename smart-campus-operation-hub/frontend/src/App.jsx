@@ -8,6 +8,7 @@ import PageErrorBoundary from './components/common/PageErrorBoundary';
 import LoginPage from './pages/auth/LoginPage';
 import OAuthCallback from './pages/auth/OAuthCallback';
 import AccessDeniedPage from './pages/auth/AccessDeniedPage';
+import PendingApprovalPage from './pages/auth/PendingApprovalPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import NotificationHistoryPage from './pages/notifications/NotificationHistoryPage';
 import TicketListPage from './pages/tickets/TicketListPage';
@@ -22,7 +23,6 @@ import ResourceListPage from './pages/resources/ResourceListPage';
 import ResourceDetailPage from './pages/resources/ResourceDetailPage';
 import ResourceManagePage from './pages/resources/ResourceManagePage';
 import BookingAdminDetailPage from './pages/bookings/BookingAdminDetailPage';
-import ResourceAnalyticsPage from './pages/resources/ResourceAnalyticsPage';
 import ResourceFinderPage from './pages/resources/ResourceFinderPage';
 import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
 import UserManagePage from './pages/admin/UserManagePage';
@@ -48,19 +48,19 @@ function DashboardLayout({ children }) {
 
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
+    <ToastProvider>
+      <AuthProvider>
         <Router>
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/access-denied" element={<AccessDeniedPage />} />
+            <Route path="/pending-approval" element={<PendingApprovalPage />} />
 
             {/* Protected Main Routes */}
             <Route path="/" element={<ProtectedRoute><DashboardLayout><DashboardPage /></DashboardLayout></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><NotificationHistoryPage /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/notifications/preferences" element={<ProtectedRoute><DashboardLayout><NotificationPreferencesPage /></DashboardLayout></ProtectedRoute>} />
 
             {/* Ticket Routes */}
             <Route path="/tickets" element={<ProtectedRoute><DashboardLayout><TicketListPage /></DashboardLayout></ProtectedRoute>} />
@@ -81,7 +81,6 @@ function App() {
 
             {/* Admin Routes */}
             <Route path="/admin/resources" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><ResourceManagePage /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/admin/resources/analytics" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><ResourceAnalyticsPage /></DashboardLayout></ProtectedRoute>} />
             <Route path="/admin/bookings" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingReviewPage /></DashboardLayout></ProtectedRoute>} />
             <Route path="/admin/bookings/:id" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><BookingAdminDetailPage /></DashboardLayout></ProtectedRoute>} />
             <Route path="/admin/analytics" element={<ProtectedRoute requiredRoles={ADMIN_MANAGER}><DashboardLayout><AnalyticsDashboard /></DashboardLayout></ProtectedRoute>} />
@@ -99,8 +98,8 @@ function App() {
             } />
           </Routes>
         </Router>
-      </ToastProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 
