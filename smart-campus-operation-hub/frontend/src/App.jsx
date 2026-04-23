@@ -26,6 +26,7 @@ import BookingAdminDetailPage from './pages/bookings/BookingAdminDetailPage';
 import ResourceFinderPage from './pages/resources/ResourceFinderPage';
 import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
 import UserManagePage from './pages/admin/UserManagePage';
+import ProfilePage from './pages/profile/ProfilePage';
 
 const ADMIN_ONLY = ['ADMIN'];
 const ADMIN_MANAGER = ['ADMIN', 'MANAGER'];
@@ -61,6 +62,7 @@ function App() {
             {/* Protected Main Routes */}
             <Route path="/" element={<ProtectedRoute><DashboardLayout><DashboardPage /></DashboardLayout></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><NotificationHistoryPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><DashboardLayout><ProfilePage /></DashboardLayout></ProtectedRoute>} />
 
             {/* Ticket Routes */}
             <Route path="/tickets" element={<ProtectedRoute><DashboardLayout><TicketListPage /></DashboardLayout></ProtectedRoute>} />
