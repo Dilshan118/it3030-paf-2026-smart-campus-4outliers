@@ -15,6 +15,7 @@ public class BookingResponse {
     private String resourceType;
     private Long userId;
     private String userName;
+    private String userStudentId;
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;
@@ -49,6 +50,9 @@ public class BookingResponse {
 
     public String getUserName() { return userName; }
     public void setUserName(String userName) { this.userName = userName; }
+
+    public String getUserStudentId() { return userStudentId; }
+    public void setUserStudentId(String userStudentId) { this.userStudentId = userStudentId; }
 
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }
