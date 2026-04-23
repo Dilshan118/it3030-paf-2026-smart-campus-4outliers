@@ -34,8 +34,14 @@ export function AuthProvider({ children }) {
 
   const login = (token) => {
     localStorage.setItem('token', token);
-    return api.get('/users/me').then(res => setUser(res.data.data));
+    return api.get('/users/me').then(res => {
+      setUser(res.data.data);
+      return res.data.data;
+    });
   };
+
+  const refreshUser = () =>
+    api.get('/users/me').then(res => { setUser(res.data.data); return res.data.data; });
 
   const logout = () => {
     api.post('/auth/logout').catch(() => {});
@@ -50,6 +56,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
     login,
     logout,
+    refreshUser,
   };
 
   return (

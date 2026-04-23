@@ -1,5 +1,7 @@
 package com.example.smart_campus_operation_hub.controller;
 
+import com.example.smart_campus_operation_hub.dto.request.ProfileRequest;
+import com.example.smart_campus_operation_hub.dto.response.UserResponse;
 import com.example.smart_campus_operation_hub.enums.Role;
 import com.example.smart_campus_operation_hub.model.User;
 import com.example.smart_campus_operation_hub.service.UserService;
@@ -10,8 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -26,16 +26,24 @@ public class UserController {
     @GetMapping("/users/me")
     public ResponseEntity<ApiResponse<Object>> getCurrentUser(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
-        User user = userService.getCurrentUser(userId);
+        UserResponse user = userService.getCurrentUser(userId);
         return ResponseEntity.ok(ApiResponse.success(user));
     }
 
     @PutMapping("/users/me")
     public ResponseEntity<ApiResponse<Object>> updateProfile(Authentication authentication,
-                                                              @RequestBody Map<String, Object> updates) {
+                                                              @RequestBody ProfileRequest request) {
         Long userId = (Long) authentication.getPrincipal();
-        User user = userService.updateProfile(userId, updates);
+        UserResponse user = userService.saveProfile(userId, request, false);
         return ResponseEntity.ok(ApiResponse.success(user));
+    }
+
+    @PostMapping("/users/me/complete-profile")
+    public ResponseEntity<ApiResponse<Object>> completeProfile(Authentication authentication,
+                                                                @RequestBody ProfileRequest request) {
+        Long userId = (Long) authentication.getPrincipal();
+        UserResponse user = userService.saveProfile(userId, request, true);
+        return ResponseEntity.ok(ApiResponse.success(user, "Profile completed successfully"));
     }
 
     @GetMapping("/users/technicians")

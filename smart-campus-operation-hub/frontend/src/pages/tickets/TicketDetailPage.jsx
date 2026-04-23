@@ -490,7 +490,7 @@ export default function TicketDetailPage() {
             <h1 className="hero-title">{ticket.title || `${formatEnum(ticket.category)} Request`}</h1>
             <div className="hero-meta">
               <span className="hero-meta-item"><Hash size={12} /> #{ticket.id}</span>
-              <span className="hero-meta-item"><UserRound size={12} /> {ticket.userName || `User ${ticket.userId}`}</span>
+              <span className="hero-meta-item"><UserRound size={12} /> {ticket.userName || `User ${ticket.userId}`}{ticket.userStudentId && ` · ${ticket.userStudentId}`}</span>
               <span className="hero-meta-item"><CalendarDays size={12} /> {formatDateTime(ticket.createdAt)}</span>
             </div>
           </div>
@@ -654,7 +654,10 @@ export default function TicketDetailPage() {
                 </div>
                 <div className="fact-item">
                   <span className="fact-label"><UserRound size={12} /> Reporter</span>
-                  <span className="fact-value">{ticket.userName || `User ${ticket.userId}`}</span>
+                  <span className="fact-value">
+                    {ticket.userName || `User ${ticket.userId}`}
+                    {ticket.userStudentId && <span style={{ marginLeft: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.75em', color: 'var(--text-muted)' }}>({ticket.userStudentId})</span>}
+                  </span>
                 </div>
                 <div className="fact-item">
                   <span className="fact-label"><Wrench size={12} /> Assigned Technician</span>

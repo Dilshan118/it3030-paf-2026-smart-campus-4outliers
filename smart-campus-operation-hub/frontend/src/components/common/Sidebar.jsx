@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Ticket, CalendarDays, Box, Bell, Users, Settings, Briefcase, TrendingUp, Zap, Building2 } from 'lucide-react';
+import { LayoutDashboard, Ticket, CalendarDays, Box, Bell, Users, Settings, Briefcase, TrendingUp, Zap, Building2, UserCircle } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 
 export default function Sidebar() {
@@ -35,6 +35,11 @@ export default function Sidebar() {
         <NavLink to="/tickets" className={navClassName}>
           <Ticket size={20} strokeWidth={1.5} className="sidebar-icon" />
           Tickets
+        </NavLink>
+
+        <NavLink to="/profile" className={navClassName}>
+          <UserCircle size={20} strokeWidth={1.5} className="sidebar-icon" />
+          My Profile
         </NavLink>
 
         <NavLink to="/notifications" className={navClassName}>

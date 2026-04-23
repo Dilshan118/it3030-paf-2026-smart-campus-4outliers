@@ -175,7 +175,7 @@ export default function TicketManagePage() {
       ticket.category,
       ticket.priority,
       ticket.status,
-      ticket.userName,
+      ticket.userStudentId ? `${ticket.userName} (${ticket.userStudentId})` : ticket.userName,
       ticket.assignedToName || '',
       ticket.slaDeadline || '',
       ticket.createdAt || '',

@@ -160,7 +160,7 @@ export default function BookingAdminDetailPage() {
               <div>
                 <h1 className="h1" style={{ borderBottom: 'none', marginBottom: 0 }}>{booking.resourceName}</h1>
                 <p style={{ color: 'var(--text-muted)', marginTop: '6px', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>
-                  #{booking.id} • Requested by {booking.userName || `User ${booking.userId}`}
+                  #{booking.id} • Requested by {booking.userName || `User ${booking.userId}`}{booking.userStudentId && ` (${booking.userStudentId})`}
                 </p>
               </div>
               <span className={`badge status-${booking.status?.toLowerCase()}`}>{booking.status}</span>
