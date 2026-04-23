@@ -2,8 +2,10 @@ package com.example.smart_campus_operation_hub;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class SmartCampusOperationHubApplication {
 
 	public static void main(String[] args) {
