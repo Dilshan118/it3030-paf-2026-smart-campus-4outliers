@@ -1,5 +1,7 @@
 package com.example.smart_campus_operation_hub.service;
 
+import com.example.smart_campus_operation_hub.dto.request.ProfileRequest;
+import com.example.smart_campus_operation_hub.dto.response.UserResponse;
 import com.example.smart_campus_operation_hub.enums.Role;
 import com.example.smart_campus_operation_hub.exception.BadRequestException;
 import com.example.smart_campus_operation_hub.exception.ResourceNotFoundException;
@@ -12,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * MEMBER 4: User Service
@@ -27,23 +28,35 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public User getCurrentUser(Long userId) {
+    public UserResponse getCurrentUser(Long userId) {
         User user = requireUser(userId);
         if (!Boolean.TRUE.equals(user.getIsActive())) {
             throw new UnauthorizedException("Your account is inactive. Please contact an administrator");
         }
-        return user;
+        return UserResponse.from(user);
     }
 
-    public User updateProfile(Long userId, Map<String, Object> updates) {
-        User user = getCurrentUser(userId);
-        if (updates.containsKey("name")) {
-            user.setName((String) updates.get("name"));
+    public UserResponse saveProfile(Long userId, ProfileRequest request, boolean markCompleted) {
+        User user = requireUser(userId);
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new UnauthorizedException("Your account is inactive");
         }
-        if (updates.containsKey("avatarUrl")) {
-            user.setAvatarUrl((String) updates.get("avatarUrl"));
+        if (request.getName() != null && !request.getName().isBlank()) {
+            user.setName(request.getName().trim());
         }
-        return userRepository.save(user);
+        if (request.getPhone() != null)         user.setPhone(request.getPhone().trim());
+        if (request.getAddress() != null)       user.setAddress(request.getAddress().trim());
+        if (request.getStudentId() != null)     user.setStudentId(request.getStudentId().trim());
+        if (request.getFaculty() != null)       user.setFaculty(request.getFaculty().trim());
+        if (request.getSpecialization() != null) user.setSpecialization(request.getSpecialization().trim());
+        if (request.getYear() != null)          user.setYear(request.getYear());
+        if (request.getSemester() != null)      user.setSemester(request.getSemester());
+        if (request.getStaffId() != null)       user.setStaffId(request.getStaffId().trim());
+        if (request.getDepartment() != null)    user.setDepartment(request.getDepartment().trim());
+        if (markCompleted) {
+            user.setProfileCompleted(true);
+        }
+        return UserResponse.from(userRepository.save(user));
     }
 
     public Page<User> getAllUsers(Pageable pageable) {
