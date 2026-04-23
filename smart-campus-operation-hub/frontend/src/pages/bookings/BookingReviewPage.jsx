@@ -63,7 +63,7 @@ function QRModal({ booking, onClose }) {
             ['Date',         booking.date],
             ['Time',         `${booking.startTime?.slice(0, 5)} – ${booking.endTime?.slice(0, 5)}`],
             ['Booking ID',   `#${booking.id}`],
-            ['Requested by', booking.userName],
+            ['Requested by', booking.userStudentId ? `${booking.userName} (${booking.userStudentId})` : booking.userName],
           ].map(([label, value]) => (
             <div key={label} style={{ display: 'flex', gap: '8px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
               <span style={{ color: 'var(--text-muted)', minWidth: '100px', flexShrink: 0 }}>{label}</span>
@@ -619,7 +619,7 @@ export default function BookingReviewPage() {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 600 }}>{b.userName}</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>#{b.id}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>{b.userStudentId || `#${b.id}`}</span>
                     </div>
 
                     <StatusBadge status={b.status} />

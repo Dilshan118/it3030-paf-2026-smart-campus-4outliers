@@ -1,6 +1,6 @@
 package com.example.smart_campus_operation_hub.controller;
 
-import com.example.smart_campus_operation_hub.model.User;
+import com.example.smart_campus_operation_hub.dto.response.UserResponse;
 import com.example.smart_campus_operation_hub.service.UserService;
 import com.example.smart_campus_operation_hub.util.ApiResponse;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +20,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<Object>> getCurrentUser(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
-        User user = userService.getCurrentUser(userId);
+        UserResponse user = userService.getCurrentUser(userId);
         return ResponseEntity.ok(ApiResponse.success(user));
     }
 

@@ -441,6 +441,7 @@ public class BookingService {
         response.setResourceType(booking.getResource().getType().name());
         response.setUserId(booking.getUser().getId());
         response.setUserName(booking.getUser().getName());
+        response.setUserStudentId(booking.getUser().getStudentId());
         response.setDate(booking.getDate());
         response.setStartTime(booking.getStartTime());
         response.setEndTime(booking.getEndTime());

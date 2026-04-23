@@ -655,6 +655,7 @@ public class TicketService {
         response.setId(ticket.getId());
         response.setUserId(ticket.getUser().getId());
         response.setUserName(ticket.getUser().getName());
+        response.setUserStudentId(ticket.getUser().getStudentId());
         response.setCategory(ticket.getCategory().name());
         response.setDescription(ticket.getDescription());
         response.setPriority(ticket.getPriority().name());

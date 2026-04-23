@@ -12,6 +12,7 @@ public class TicketResponse {
     private Long id;
     private Long userId;
     private String userName;
+    private String userStudentId;
     private Long resourceId;
     private String resourceName;
     private String category;
@@ -41,6 +42,9 @@ public class TicketResponse {
 
     public String getUserName() { return userName; }
     public void setUserName(String userName) { this.userName = userName; }
+
+    public String getUserStudentId() { return userStudentId; }
+    public void setUserStudentId(String userStudentId) { this.userStudentId = userStudentId; }
 
     public Long getResourceId() { return resourceId; }
     public void setResourceId(Long resourceId) { this.resourceId = resourceId; }

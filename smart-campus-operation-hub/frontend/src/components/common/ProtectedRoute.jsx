@@ -15,6 +15,10 @@ export default function ProtectedRoute({ children, requiredRoles }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  if (!user.profileCompleted && location.pathname !== '/complete-profile') {
+    return <Navigate to="/complete-profile" replace />;
+  }
+
   if (requiredRoles && !requiredRoles.includes(user.role)) {
     return <Navigate to="/access-denied" replace />;
   }

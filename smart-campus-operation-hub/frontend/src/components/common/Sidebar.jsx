@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Ticket, CalendarDays, Box, Bell, Users, Settings, Briefcase, TrendingUp, Zap, Building2 } from 'lucide-react';
+import { LayoutDashboard, Ticket, CalendarDays, Box, Bell, Users, Settings, Briefcase, TrendingUp, Compass, Building2 } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 
 export default function Sidebar() {
@@ -53,7 +53,7 @@ export default function Sidebar() {
         </NavLink>
 
         <NavLink to="/resources/finder" className={navClassName}>
-          <Zap size={20} strokeWidth={1.5} className="sidebar-icon" />
+          <Compass size={20} strokeWidth={1.5} className="sidebar-icon" />
           Smart Finder
         </NavLink>
       </div>
