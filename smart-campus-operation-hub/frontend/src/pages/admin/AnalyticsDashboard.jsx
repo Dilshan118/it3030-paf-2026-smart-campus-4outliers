@@ -777,85 +777,180 @@ export default function AnalyticsDashboard() {
          </div>
        ) : (
          <>
-           {activeTab === 'OVERVIEW' && (
-             <>
-               <div className="analytics-grid-4">
-                 {summaryCards.map((card) => (
-                   <div key={card.label} className="analytics-card analytics-card-kpi">
-                     <div className="analytics-kpi-label" style={{ color: card.tone }}>
-                       {card.icon}
-                       {card.label}
+           {activeTab === 'OVERVIEW' && (() => {
+             const overviewTicketData = TICKET_STATUS_ORDER.map((s) => ({
+               name: formatEnum(s),
+               value: ticketStatusCounts[s] || 0,
+               fill: s === 'OPEN' ? '#f59e0b' : s === 'IN_PROGRESS' ? '#6366f1' : s === 'RESOLVED' ? '#22c55e' : s === 'CLOSED' ? '#64748b' : '#ef4444',
+             }));
+
+             const bookingPieData = BOOKING_STATUS_ORDER.map((s) => ({
+               name: formatEnum(s),
+               value: bookingStatusCounts[s] || 0,
+               color: s === 'APPROVED' ? '#22c55e' : s === 'PENDING' ? '#f59e0b' : s === 'REJECTED' ? '#ef4444' : '#64748b',
+             })).filter((d) => d.value > 0);
+
+             const slaHealth = totalTickets > 0
+               ? Math.round(((ticketSlaCounts.ON_TRACK || 0) + (ticketSlaCounts.COMPLETED || 0)) / totalTickets * 100)
+               : 0;
+             const slaHealthColor = slaHealth >= 70 ? '#22c55e' : slaHealth >= 40 ? '#f59e0b' : '#ef4444';
+             const bookingApprovalColor = bookingApprovalRate >= 70 ? '#22c55e' : bookingApprovalRate >= 40 ? '#f59e0b' : '#ef4444';
+             const resourceHealthColor = resourceHealth >= 70 ? '#22c55e' : resourceHealth >= 40 ? '#f59e0b' : '#ef4444';
+
+             return (
+               <div className="analytics-tab-frame">
+                 {/* KPI Hero Row */}
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border-main)' }}>
+                   {[
+                     { label: 'Tickets In System', value: totalTickets,      sub: `${activeTickets} active workload`,             color: 'var(--text-main)', icon: <Ticket size={16} /> },
+                     { label: 'Bookings In Scope', value: totalBookings,     sub: `${bookingTimeline.nextSevenDays} next 7 days`,  color: '#6366f1',          icon: <CalendarCheck size={16} /> },
+                     { label: 'Resources Indexed', value: totalResources,    sub: `${operationalResources} currently active`,      color: '#22c55e',           icon: <Box size={16} /> },
+                     { label: 'Resolution Rate',   value: `${resolutionRate}%`, sub: 'based on ticket backlog',                  color: resolutionRate >= 70 ? '#22c55e' : '#f59e0b', icon: <ShieldCheck size={16} /> },
+                   ].map(({ label, value, sub, color, icon }) => (
+                     <div key={label} style={{ background: 'var(--bg-surface)', padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                       <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>
+                         {icon} {label}
+                       </div>
+                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.8rem, 4vw, 3.8rem)', fontWeight: 900, color, lineHeight: 1 }}>
+                         {value}
+                       </div>
+                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+                         {sub}
+                       </div>
                      </div>
-                     <div className="analytics-kpi-value">{card.value}</div>
-                     <div className="analytics-kpi-hint">{card.hint}</div>
-                   </div>
-                 ))}
-               </div>
+                   ))}
+                 </div>
 
-               <div className="analytics-grid-2">
-                 <div className="analytics-card">
-                   <h2 className="analytics-section-title">Tickets Section</h2>
-                   <div className="analytics-section-subtitle">Operational queue breakdown</div>
-                   <div className="analytics-distribution">
-                     {TICKET_STATUS_ORDER.map((status) => (
-                       <DistributionRow
-                         key={status}
-                         label={formatEnum(status)}
-                         value={ticketStatusCounts[status] || 0}
-                         total={Math.max(totalTickets, 1)}
-                         color={status === 'OPEN' || status === 'IN_PROGRESS' ? 'var(--warning)' : 'var(--success)'}
-                       />
+                 {/* Ticket BarChart + Booking Donut */}
+                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1px', background: 'var(--border-main)' }}>
+                   <div style={{ background: 'var(--bg-surface)', padding: '32px' }}>
+                     <SectionLabel>Ticket Module</SectionLabel>
+                     <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '28px' }}>
+                       Ticket Status Snapshot
+                     </h2>
+                     <div style={{ height: '240px', width: '100%' }}>
+                       <ChartSectionBoundary fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>Chart unavailable.</div>}>
+                         <ResponsiveContainer width="100%" height="100%">
+                           <BarChart data={overviewTicketData} margin={{ top: 16, right: 20, left: 0, bottom: 0 }} barSize={28}>
+                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-main)" />
+                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }} />
+                             <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }} allowDecimals={false} />
+                             <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} contentStyle={{ background: '#11141b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }} itemStyle={{ color: '#fff' }} />
+                             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                               {overviewTicketData.map((entry, idx) => (
+                                 <Cell key={`ot-${idx}`} fill={entry.fill} />
+                               ))}
+                               <LabelList dataKey="value" position="top" style={{ fill: 'var(--text-muted)', fontSize: '0.7rem', fontFamily: 'var(--font-mono)' }} />
+                             </Bar>
+                           </BarChart>
+                         </ResponsiveContainer>
+                       </ChartSectionBoundary>
+                     </div>
+                     <div className="analytics-actions" style={{ marginTop: '20px' }}>
+                       <Link className="analytics-link analytics-link-primary" to="/tickets/manage">Operations Log</Link>
+                       <Link className="analytics-link analytics-link-secondary" to="/tickets/new">Create Ticket</Link>
+                     </div>
+                   </div>
+
+                   <div style={{ background: 'var(--bg-surface)', padding: '32px' }}>
+                     <SectionLabel>Booking Module</SectionLabel>
+                     <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '12px' }}>
+                       Booking Pipeline
+                     </h2>
+                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1fr) auto', gap: '20px', alignItems: 'center', marginBottom: '24px' }}>
+                       <div style={{ height: '200px', width: '100%' }}>
+                         <ChartSectionBoundary fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>Chart unavailable.</div>}>
+                           <ResponsiveContainer width="100%" height="100%">
+                             <PieChart>
+                               <Pie
+                                 data={bookingPieData.length > 0 ? bookingPieData : [{ name: 'No data', value: 1, color: 'var(--border-main)' }]}
+                                 cx="50%" cy="50%"
+                                 innerRadius={50} outerRadius={75}
+                                 paddingAngle={bookingPieData.length > 0 ? 4 : 0}
+                                 dataKey="value" stroke="none"
+                               >
+                                 {(bookingPieData.length > 0 ? bookingPieData : [{ color: 'var(--border-main)' }]).map((entry, idx) => (
+                                   <Cell key={`bp-${idx}`} fill={entry.color} />
+                                 ))}
+                               </Pie>
+                               <Tooltip contentStyle={{ background: '#11141b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', padding: '10px 16px' }} itemStyle={{ color: '#fff' }} />
+                             </PieChart>
+                           </ResponsiveContainer>
+                         </ChartSectionBoundary>
+                       </div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                         {BOOKING_STATUS_ORDER.map((s) => (
+                           <div key={s} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                               <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: s === 'APPROVED' ? '#22c55e' : s === 'PENDING' ? '#f59e0b' : s === 'REJECTED' ? '#ef4444' : '#64748b' }} />
+                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-main)', textTransform: 'uppercase' }}>{formatEnum(s)}</span>
+                             </div>
+                             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--text-muted)' }}>{bookingStatusCounts[s] || 0}</span>
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                     <div style={{ paddingTop: '16px', borderTop: '1px dashed var(--border-main)' }}>
+                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px' }}>Scheduled Today</div>
+                       <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 900, color: '#6366f1', lineHeight: 1 }}>{bookingTimeline.todayCount}</div>
+                     </div>
+                     <div className="analytics-actions" style={{ marginTop: '16px' }}>
+                       <Link className="analytics-link analytics-link-primary" to="/admin/bookings">Booking Review</Link>
+                       <Link className="analytics-link analytics-link-secondary" to="/bookings/new">New Booking</Link>
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* Platform health strip */}
+                 <div style={{ background: 'var(--bg-surface)', padding: '32px' }}>
+                   <SectionLabel>Platform Health</SectionLabel>
+                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '24px' }}>
+                     System Overview
+                   </h2>
+                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                     {[
+                       {
+                         label: 'SLA Compliance',
+                         value: slaHealth,
+                         sub: `${ticketSlaCounts.BREACHED || 0} breached · ${ticketSlaCounts.DUE_SOON || 0} due soon`,
+                         color: slaHealthColor,
+                         onClick: () => setActiveTab('TICKETS'),
+                         action: 'View Tickets →',
+                       },
+                       {
+                         label: 'Booking Approval Rate',
+                         value: bookingApprovalRate,
+                         sub: `${approvedBookings} approved · ${rejectedBookings} rejected`,
+                         color: bookingApprovalColor,
+                         onClick: () => setActiveTab('BOOKINGS'),
+                         action: 'View Bookings →',
+                       },
+                       {
+                         label: 'Resource Operational',
+                         value: resourceHealth,
+                         sub: `${operationalResources} active · ${resourceAnalytics.outOfServiceResources} out of service`,
+                         color: resourceHealthColor,
+                         onClick: () => setActiveTab('RESOURCES'),
+                         action: 'View Resources →',
+                       },
+                     ].map(({ label, value, sub, color, onClick, action }) => (
+                       <div key={label} style={{ background: 'var(--bg-primary)', borderRadius: 'var(--radius)', padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-muted)' }}>{label}</div>
+                         <div style={{ fontFamily: 'var(--font-display)', fontSize: '3rem', fontWeight: 900, lineHeight: 1, color }}>{value}%</div>
+                         <div style={{ height: '5px', background: 'var(--bg-surface-elevated)', borderRadius: '99px', overflow: 'hidden' }}>
+                           <div style={{ height: '100%', width: `${Math.min(value, 100)}%`, background: color, borderRadius: '99px', transition: 'width 0.9s cubic-bezier(0.16,1,0.3,1)' }} />
+                         </div>
+                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--text-muted)' }}>{sub}</div>
+                         <button onClick={onClick} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color, textAlign: 'left', fontWeight: 700, letterSpacing: '0.04em' }}>
+                           {action}
+                         </button>
+                       </div>
                      ))}
                    </div>
-                   <div className="analytics-actions">
-                     <Link className="analytics-link analytics-link-primary" to="/tickets/manage">Open Operations Log</Link>
-                     <Link className="analytics-link analytics-link-secondary" to="/tickets/new">Create Ticket</Link>
-                   </div>
-                 </div>
-
-                 <div className="analytics-card">
-                   <h2 className="analytics-section-title">Bookings Section</h2>
-                   <div className="analytics-section-subtitle">Reservation workflow status</div>
-                   <div className="analytics-distribution">
-                     {BOOKING_STATUS_ORDER.map((status) => (
-                       <DistributionRow
-                         key={status}
-                         label={formatEnum(status)}
-                         value={bookingStatusCounts[status] || 0}
-                         total={Math.max(totalBookings, 1)}
-                         color={status === 'APPROVED' ? 'var(--success)' : status === 'PENDING' ? 'var(--warning)' : 'var(--text-muted)'}
-                       />
-                     ))}
-                   </div>
-                   <div className="analytics-actions">
-                     <Link className="analytics-link analytics-link-primary" to="/admin/bookings">Open Booking Review</Link>
-                     <Link className="analytics-link analytics-link-secondary" to="/bookings/new">Create Booking</Link>
-                   </div>
                  </div>
                </div>
-
-               <div className="analytics-card" style={{ marginTop: '16px' }}>
-                 <h2 className="analytics-section-title">Resources Bridge</h2>
-                 <div className="analytics-section-subtitle">Mapped from this dashboard into dedicated analytics</div>
-                 <div className="analytics-grid-2" style={{ gap: '12px' }}>
-                   <div className="analytics-card" style={{ boxShadow: 'none', background: 'var(--bg-primary)', padding: '16px' }}>
-                     <div className="analytics-list-label">Resource Health</div>
-                     <div className="analytics-kpi-value" style={{ fontSize: '2.1rem', marginTop: '10px' }}>{resourceHealth}%</div>
-                     <div className="analytics-kpi-hint">{operationalResources} active of {totalResources} resources</div>
-                   </div>
-                   <div className="analytics-card" style={{ boxShadow: 'none', background: 'var(--bg-primary)', padding: '16px' }}>
-                     <div className="analytics-list-label">Monthly Growth</div>
-                     <div className="analytics-kpi-value" style={{ fontSize: '2.1rem', marginTop: '10px' }}>+{resourceAnalytics.addedThisMonth}</div>
-                     <div className="analytics-kpi-hint">Resources added in the current month</div>
-                   </div>
-                 </div>
-                 <div className="analytics-actions" style={{ marginTop: '14px' }}>
-                   <button className="analytics-link analytics-link-primary" style={{ border: 'none', cursor: 'pointer' }} onClick={() => setActiveTab('RESOURCES')}>Open Resource Analytics</button>
-                   <Link className="analytics-link analytics-link-secondary" to="/admin/resources">Manage Resources</Link>
-                 </div>
-               </div>
-             </>
-           )}
+             );
+           })()}
 
            {activeTab === 'TICKETS' && (() => {
              const statusChartData = TICKET_STATUS_ORDER.map((s) => ({
