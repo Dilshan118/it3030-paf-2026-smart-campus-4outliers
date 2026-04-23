@@ -19,8 +19,8 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList,
 } from 'recharts';
 
 const TYPE_META = {
@@ -857,84 +857,213 @@ export default function AnalyticsDashboard() {
              </>
            )}
 
-           {activeTab === 'TICKETS' && (
-             <div className="analytics-grid-2">
-               <div className="analytics-card">
-                 <h2 className="analytics-section-title">Ticket Throughput</h2>
-                 <div className="analytics-section-subtitle">Status and SLA alignment</div>
-                 <div className="analytics-distribution" style={{ marginBottom: '16px' }}>
-                   {TICKET_STATUS_ORDER.map((status) => (
-                     <DistributionRow
-                       key={status}
-                       label={formatEnum(status)}
-                       value={ticketStatusCounts[status] || 0}
-                       total={Math.max(totalTickets, 1)}
-                       color={status === 'RESOLVED' || status === 'CLOSED' ? 'var(--success)' : 'var(--accent-base)'}
-                     />
+           {activeTab === 'TICKETS' && (() => {
+             const statusChartData = TICKET_STATUS_ORDER.map((s) => ({
+               name: formatEnum(s),
+               value: ticketStatusCounts[s] || 0,
+               fill: s === 'OPEN' ? '#f59e0b' : s === 'IN_PROGRESS' ? '#6366f1' : s === 'RESOLVED' ? '#22c55e' : s === 'CLOSED' ? '#64748b' : '#ef4444',
+             }));
+
+             const priorityPieData = [
+               { name: 'Critical', value: ticketPriorityCounts.CRITICAL || 0, color: '#ef4444' },
+               { name: 'High',     value: ticketPriorityCounts.HIGH || 0,     color: '#f59e0b' },
+               { name: 'Medium',   value: ticketPriorityCounts.MEDIUM || 0,   color: '#6366f1' },
+               { name: 'Low',      value: ticketPriorityCounts.LOW || 0,      color: '#22c55e' },
+             ].filter((d) => d.value > 0);
+
+             const categoryChartData = ticketCategoryCounts.map((e) => ({
+               name: formatEnum(e.name),
+               value: e.value,
+             }));
+
+             const slaStates = [
+               { key: 'ON_TRACK',  label: 'On Track',  color: '#22c55e', icon: <CheckCircle size={14} /> },
+               { key: 'DUE_SOON',  label: 'Due Soon',  color: '#f59e0b', icon: <Clock size={14} /> },
+               { key: 'BREACHED',  label: 'Breached',  color: '#ef4444', icon: <AlertTriangle size={14} /> },
+               { key: 'COMPLETED', label: 'Completed', color: '#64748b', icon: <CheckCircle size={14} /> },
+               { key: 'UNTRACKED', label: 'Untracked', color: '#94a3b8', icon: <Clock size={14} /> },
+             ];
+
+             return (
+               <div className="analytics-tab-frame">
+                 {/* KPI hero row */}
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border-main)' }}>
+                   {[
+                     { label: 'Total Tickets',   value: totalTickets,                        color: 'var(--text-main)', icon: <Ticket size={16} /> },
+                     { label: 'Active Workload', value: activeTickets,                       color: '#f59e0b',           icon: <Activity size={16} /> },
+                     { label: 'Resolved',        value: resolvedTickets,                     color: '#22c55e',           icon: <CheckCircle size={16} /> },
+                     { label: 'SLA Breached',    value: ticketSlaCounts.BREACHED || 0,       color: '#ef4444',           icon: <AlertTriangle size={16} /> },
+                   ].map(({ label, value, color, icon }) => (
+                     <div key={label} style={{ background: 'var(--bg-surface)', padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                       <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>
+                         {icon} {label}
+                       </div>
+                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.8rem, 4vw, 3.8rem)', fontWeight: 900, color, lineHeight: 1 }}>
+                         {value}
+                       </div>
+                     </div>
                    ))}
                  </div>
 
-                 <div className="analytics-section-subtitle">SLA state (active and historical)</div>
-                 <div className="analytics-distribution">
-                   {['ON_TRACK', 'DUE_SOON', 'BREACHED', 'UNTRACKED', 'COMPLETED'].map((state) => (
-                     <DistributionRow
-                       key={state}
-                       label={formatEnum(state)}
-                       value={ticketSlaCounts[state] || 0}
-                       total={Math.max(totalTickets, 1)}
-                       color={
-                         state === 'BREACHED'
-                           ? 'var(--danger)'
-                           : state === 'DUE_SOON'
-                             ? 'var(--warning)'
-                             : state === 'ON_TRACK'
-                               ? 'var(--success)'
-                               : 'var(--text-muted)'
-                       }
-                     />
-                   ))}
+                 {/* Status BarChart + Priority Donut */}
+                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1px', background: 'var(--border-main)' }}>
+                   <div style={{ background: 'var(--bg-surface)', padding: '32px' }}>
+                     <SectionLabel>Workflow State</SectionLabel>
+                     <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '28px' }}>
+                       Status Distribution
+                     </h2>
+                     <div style={{ height: '280px', width: '100%' }}>
+                       <ChartSectionBoundary fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>Chart unavailable.</div>}>
+                         <ResponsiveContainer width="100%" height="100%">
+                           <BarChart data={statusChartData} margin={{ top: 16, right: 20, left: 0, bottom: 0 }} barSize={32}>
+                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-main)" />
+                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }} />
+                             <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }} allowDecimals={false} />
+                             <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} contentStyle={{ background: '#11141b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }} itemStyle={{ color: '#fff' }} />
+                             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                               {statusChartData.map((entry, idx) => (
+                                 <Cell key={`sc-${idx}`} fill={entry.fill} />
+                               ))}
+                               <LabelList dataKey="value" position="top" style={{ fill: 'var(--text-muted)', fontSize: '0.7rem', fontFamily: 'var(--font-mono)' }} />
+                             </Bar>
+                           </BarChart>
+                         </ResponsiveContainer>
+                       </ChartSectionBoundary>
+                     </div>
+                   </div>
+
+                   <div style={{ background: 'var(--bg-surface)', padding: '32px' }}>
+                     <SectionLabel>Urgency Profile</SectionLabel>
+                     <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '12px' }}>
+                       Priority Breakdown
+                     </h2>
+                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(160px, 1fr) auto', gap: '20px', alignItems: 'center' }}>
+                       <div style={{ height: '240px', width: '100%', position: 'relative' }}>
+                         <ChartSectionBoundary fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>Chart unavailable.</div>}>
+                           <ResponsiveContainer width="100%" height="100%">
+                             <PieChart>
+                               <Pie
+                                 data={priorityPieData.length > 0 ? priorityPieData : [{ name: 'No data', value: 1, color: 'var(--border-main)' }]}
+                                 cx="50%" cy="50%"
+                                 innerRadius={60} outerRadius={90}
+                                 paddingAngle={priorityPieData.length > 0 ? 4 : 0}
+                                 dataKey="value" stroke="none"
+                               >
+                                 {(priorityPieData.length > 0 ? priorityPieData : [{ color: 'var(--border-main)' }]).map((entry, idx) => (
+                                   <Cell key={`pc-${idx}`} fill={entry.color} />
+                                 ))}
+                               </Pie>
+                               <Tooltip contentStyle={{ background: '#11141b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', padding: '10px 16px' }} itemStyle={{ color: '#fff' }} />
+                             </PieChart>
+                           </ResponsiveContainer>
+                         </ChartSectionBoundary>
+                       </div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                         {[
+                           { key: 'CRITICAL', label: 'Critical', color: '#ef4444' },
+                           { key: 'HIGH',     label: 'High',     color: '#f59e0b' },
+                           { key: 'MEDIUM',   label: 'Medium',   color: '#6366f1' },
+                           { key: 'LOW',      label: 'Low',      color: '#22c55e' },
+                         ].map(({ key, label, color }) => (
+                           <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
+                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)', textTransform: 'uppercase' }}>{label}</span>
+                             </div>
+                             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{ticketPriorityCounts[key] || 0}</span>
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* SLA health panel */}
+                 <div style={{ background: 'var(--bg-surface)', padding: '32px' }}>
+                   <SectionLabel>SLA Compliance</SectionLabel>
+                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '24px' }}>
+                     Service Level Agreement Status
+                   </h2>
+                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
+                     {slaStates.map(({ key, label, color, icon }) => {
+                       const count = ticketSlaCounts[key] || 0;
+                       const pct = totalTickets > 0 ? Math.round((count / totalTickets) * 100) : 0;
+                       return (
+                         <div key={key} style={{ background: 'var(--bg-primary)', borderRadius: 'var(--radius)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', borderTop: `3px solid ${color}` }}>
+                           <div style={{ color, display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.66rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                             {icon} {label}
+                           </div>
+                           <div style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', fontWeight: 900, lineHeight: 1, color: 'var(--text-main)' }}>
+                             {count}
+                           </div>
+                           <div style={{ height: '4px', background: 'var(--bg-surface-elevated)', borderRadius: '99px', overflow: 'hidden' }}>
+                             <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '99px', transition: 'width 0.9s cubic-bezier(0.16,1,0.3,1)' }} />
+                           </div>
+                           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                             {pct}% of total
+                           </div>
+                         </div>
+                       );
+                     })}
+                   </div>
+                 </div>
+
+                 {/* Category BarChart + Operational Metrics */}
+                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1px', background: 'var(--border-main)' }}>
+                   <div style={{ background: 'var(--bg-surface)', padding: '32px' }}>
+                     <SectionLabel>Issue Taxonomy</SectionLabel>
+                     <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '28px' }}>
+                       Top Issue Categories
+                     </h2>
+                     {categoryChartData.length === 0 ? (
+                       <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No category data yet.</p>
+                     ) : (
+                       <div style={{ height: '260px', width: '100%' }}>
+                         <ChartSectionBoundary fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>Chart unavailable.</div>}>
+                           <ResponsiveContainer width="100%" height="100%">
+                             <BarChart data={categoryChartData} layout="vertical" margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
+                               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-main)" />
+                               <XAxis type="number" hide allowDecimals={false} />
+                               <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }} />
+                               <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} contentStyle={{ background: '#11141b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }} itemStyle={{ color: '#fff' }} />
+                               <Bar dataKey="value" fill="var(--accent-base)" radius={[0, 4, 4, 0]} barSize={20}>
+                                 <LabelList dataKey="value" position="right" style={{ fill: 'var(--text-muted)', fontSize: '0.7rem', fontFamily: 'var(--font-mono)' }} />
+                               </Bar>
+                             </BarChart>
+                           </ResponsiveContainer>
+                         </ChartSectionBoundary>
+                       </div>
+                     )}
+                   </div>
+
+                   <div style={{ background: 'var(--bg-surface)', padding: '32px' }}>
+                     <SectionLabel>Quick Stats</SectionLabel>
+                     <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '24px' }}>
+                       Operational Metrics
+                     </h2>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                       {[
+                         { label: 'Resolution Rate',    value: `${resolutionRate}%`,                    color: resolutionRate >= 70 ? '#22c55e' : resolutionRate >= 40 ? '#f59e0b' : '#ef4444' },
+                         { label: 'Unassigned Tickets', value: unassignedTickets,                       color: unassignedTickets > 0 ? '#f59e0b' : '#22c55e' },
+                         { label: 'In Progress',        value: inProgressTickets,                       color: '#6366f1' },
+                         { label: 'SLA Due Soon',       value: ticketSlaCounts.DUE_SOON || 0,           color: '#f59e0b' },
+                         { label: 'Open Queue',         value: ticketStatusCounts.OPEN || 0,            color: 'var(--text-main)' },
+                       ].map(({ label, value, color }) => (
+                         <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px dashed var(--border-main)' }}>
+                           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+                           <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 800, color, lineHeight: 1 }}>{value}</span>
+                         </div>
+                       ))}
+                     </div>
+                     <div className="analytics-actions" style={{ marginTop: '20px' }}>
+                       <Link className="analytics-link analytics-link-primary" to="/tickets/manage">Review Ticket Queue</Link>
+                       <Link className="analytics-link analytics-link-secondary" to="/tickets">Open Ticket Center</Link>
+                     </div>
+                   </div>
                  </div>
                </div>
-
-               <div className="analytics-card">
-                 <h2 className="analytics-section-title">Ticket Quality Signals</h2>
-                 <div className="analytics-section-subtitle">Priority load and top categories</div>
-
-                 <div className="analytics-distribution" style={{ marginBottom: '16px' }}>
-                   {TICKET_PRIORITY_ORDER.map((priority) => (
-                     <DistributionRow
-                       key={priority}
-                       label={formatEnum(priority)}
-                       value={ticketPriorityCounts[priority] || 0}
-                       total={Math.max(totalTickets, 1)}
-                       color={priority === 'CRITICAL' ? 'var(--danger)' : priority === 'HIGH' ? 'var(--warning)' : 'var(--accent-base)'}
-                     />
-                   ))}
-                 </div>
-
-                 <div className="analytics-section-subtitle">Top issue categories</div>
-                 <ul className="analytics-list">
-                   {ticketCategoryCounts.length === 0 && (
-                     <li>
-                       <span className="analytics-list-label">No category data</span>
-                       <span>0</span>
-                     </li>
-                   )}
-                   {ticketCategoryCounts.map((entry) => (
-                     <li key={entry.name}>
-                       <span className="analytics-list-label">{formatEnum(entry.name)}</span>
-                       <span>{entry.value}</span>
-                     </li>
-                   ))}
-                 </ul>
-
-                 <div className="analytics-actions">
-                   <Link className="analytics-link analytics-link-primary" to="/tickets/manage">Review Ticket Queue</Link>
-                   <Link className="analytics-link analytics-link-secondary" to="/tickets">Open Ticket Center</Link>
-                 </div>
-               </div>
-             </div>
-           )}
+             );
+           })()}
 
            {activeTab === 'BOOKINGS' && (
              <div className="analytics-grid-2">
