@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { Search, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import NotificationBell from '../notifications/NotificationBell';
 
 export default function Navbar() {
@@ -27,32 +27,6 @@ export default function Navbar() {
       transform: 'translateZ(0)'
     }}>
       <style>{`
-        .top-navbar .search-pill {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          background: rgba(42, 20, 180, 0.04);
-          padding: 10px 16px;
-          border-radius: 999px;
-          width: 100%;
-          max-width: 560px;
-          min-width: 260px;
-          border: 1px solid rgba(42, 20, 180, 0.06);
-          transition: all 0.3s ease;
-          cursor: text;
-        }
-
-        .top-navbar .search-pill:focus-within {
-          background: rgba(255, 255, 255, 1);
-          box-shadow: 0 8px 24px rgba(42, 20, 180, 0.08);
-          border-color: rgba(42, 20, 180, 0.2);
-        }
-
-        .top-navbar .search-input::placeholder {
-          color: var(--text-muted);
-          font-weight: 400;
-        }
-
         .top-navbar .user-profile-pill {
           display: flex;
           align-items: center;
@@ -101,68 +75,18 @@ export default function Navbar() {
             gap: 12px !important;
           }
 
-          .top-navbar .search-pill {
-            max-width: 460px;
-          }
-
           .top-navbar .user-name {
             max-width: 110px;
           }
         }
-
-        @media (max-width: 980px) {
-          .top-navbar {
-            flex-wrap: wrap;
-            align-items: stretch;
-          }
-
-          .top-navbar .top-navbar-search-zone,
-          .top-navbar .top-navbar-actions {
-            width: 100%;
-          }
-
-          .top-navbar .top-navbar-actions {
-            justify-content: flex-end;
-          }
-
-          .top-navbar .search-pill {
-            max-width: 100%;
-          }
-        }
       `}</style>
-
-      <div className="top-navbar-search-zone" style={{
-        flex: '1 1 420px',
-        display: 'flex',
-        alignItems: 'center',
-        minWidth: 0
-      }}>
-        <div className="search-pill">
-          <Search size={18} color="var(--accent-base)" style={{ opacity: 0.7 }} />
-          <input
-            className="search-input"
-            type="text"
-            placeholder="Search tickets, assets, or users..."
-            style={{
-              border: 'none',
-              background: 'transparent',
-              outline: 'none',
-              width: '100%',
-              fontFamily: 'var(--font-body)',
-              fontSize: '0.92rem',
-              fontWeight: 500,
-              color: 'var(--text-main)'
-            }}
-          />
-        </div>
-      </div>
 
       <div className="top-navbar-actions" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-end',
         gap: '12px',
-        flex: '0 0 auto',
+        marginLeft: 'auto',
         minWidth: 0
       }}>
 
@@ -185,7 +109,7 @@ export default function Navbar() {
         </button>
 
         {/* User Profile Pill */}
-        <div className="user-profile-pill" onClick={() => navigate('/profile')} style={{ cursor: 'pointer', position: 'relative' }} title="View profile">
+        <div className="user-profile-pill" style={{ cursor: 'pointer', position: 'relative' }} onClick={() => navigate('/profile')}>
           <div style={{
             width: '34px', height: '34px', borderRadius: '50%',
             background: 'var(--accent-gradient)', overflow: 'hidden',
