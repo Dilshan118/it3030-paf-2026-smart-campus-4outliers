@@ -20,3 +20,4 @@ export const uploadAttachment = (ticketId, formData) => api.post(`/tickets/${tic
     headers: { 'Content-Type': 'multipart/form-data' }
 }).then(res => res.data);
 export const deleteAttachment = (ticketId, attachmentId) => api.delete(`/tickets/${ticketId}/attachments/${attachmentId}`).then(res => res.data);
+export const triageTicket = (description) => api.post('/tickets/triage', { description }).then(res => res.data);
