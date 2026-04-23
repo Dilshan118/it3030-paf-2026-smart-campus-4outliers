@@ -86,7 +86,7 @@ export default function Navbar() {
         alignItems: 'center',
         justifyContent: 'flex-end',
         gap: '12px',
-        flex: '0 0 auto',
+        marginLeft: 'auto',
         minWidth: 0
       }}>
 
