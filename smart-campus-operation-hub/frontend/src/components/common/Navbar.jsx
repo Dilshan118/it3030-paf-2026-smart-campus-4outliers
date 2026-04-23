@@ -1,10 +1,12 @@
 import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { Search, LogOut } from 'lucide-react';
 import NotificationBell from '../notifications/NotificationBell';
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   return (
     <header className="top-navbar" style={{
@@ -183,7 +185,7 @@ export default function Navbar() {
         </button>
 
         {/* User Profile Pill */}
-        <div className="user-profile-pill" style={{ cursor: 'pointer', position: 'relative' }}>
+        <div className="user-profile-pill" style={{ cursor: 'pointer', position: 'relative' }} onClick={() => navigate('/profile')}>
           <div style={{
             width: '34px', height: '34px', borderRadius: '50%',
             background: 'var(--accent-gradient)',
