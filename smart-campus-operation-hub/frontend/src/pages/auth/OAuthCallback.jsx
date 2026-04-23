@@ -16,10 +16,14 @@ export default function OAuthCallback() {
     }
     
     login(token)
-      .then(() => {
+      .then((userData) => {
+        if (!userData?.profileCompleted) {
+          navigate('/complete-profile', { replace: true });
+          return;
+        }
         const redirectUrl = localStorage.getItem('auth_redirect') || '/';
         localStorage.removeItem('auth_redirect');
-        navigate(redirectUrl);
+        navigate(redirectUrl, { replace: true });
       })
       .catch(() => {
         localStorage.removeItem('token');
