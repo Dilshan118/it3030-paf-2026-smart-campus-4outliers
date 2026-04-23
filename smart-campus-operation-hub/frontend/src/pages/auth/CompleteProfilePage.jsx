@@ -1,12 +1,65 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, User, Phone, MapPin, BookOpen, GraduationCap, Layers, Briefcase, Hash } from 'lucide-react';
+import { Building2, User, Phone, MapPin, BookOpen, GraduationCap, Layers, Briefcase, Lock } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import { completeProfile } from '../../api/profileApi';
 
 const FACULTIES = ['Computing', 'Engineering', 'Business', 'Architecture', 'Humanities & Sciences'];
+
+const PROGRAMS_BY_FACULTY = {
+  Computing: [
+    'BSc (Hons) in Information Technology',
+    'BSc (Hons) in Computer Science',
+    'BSc (Hons) in Software Engineering',
+    'BSc (Hons) in Cyber Security',
+    'BSc (Hons) in Data Science',
+    'BSc (Hons) in Artificial Intelligence & Machine Learning',
+  ],
+  Engineering: [
+    'BEng (Hons) in Computer Systems & Networking',
+    'BEng (Hons) in Electrical & Electronic Engineering',
+    'BEng (Hons) in Mechanical Engineering',
+    'BEng (Hons) in Civil Engineering',
+    'BEng (Hons) in Mechatronics Engineering',
+  ],
+  Business: [
+    'BSc (Hons) in Business Information Systems',
+    'BSc (Hons) in Business Management',
+    'BSc (Hons) in Marketing Management',
+    'BSc (Hons) in Human Resource Management',
+    'BSc (Hons) in Finance & Accounting',
+  ],
+  Architecture: [
+    'BSc (Hons) in Architecture & Design',
+  ],
+  'Humanities & Sciences': [
+    'BSc (Hons) in Quantity Surveying',
+    'BSc (Hons) in Science',
+  ],
+};
+
+const DEPARTMENTS = [
+  'Information Technology', 'Computing', 'Engineering', 'Business',
+  'Architecture', 'Humanities & Sciences', 'Administration', 'Finance',
+  'Human Resources', 'Library Services', 'Facilities Management', 'Security',
+];
+
 const YEARS = [1, 2, 3, 4];
 const SEMESTERS = [1, 2];
+
+const inputStyle = {
+  width: '100%', padding: '11px 14px', border: '1px solid var(--border-main)',
+  borderRadius: 'var(--radius)', fontFamily: 'var(--font-body)', fontSize: '0.9rem',
+  color: 'var(--text-main)', background: 'var(--bg-primary)', outline: 'none',
+  boxSizing: 'border-box', transition: 'border-color 0.2s',
+};
+
+const readonlyStyle = {
+  ...inputStyle,
+  background: 'var(--bg-surface-elevated)',
+  color: 'var(--text-muted)',
+  cursor: 'not-allowed',
+};
 
 function Field({ label, icon, error, children }) {
   return (
@@ -20,14 +73,21 @@ function Field({ label, icon, error, children }) {
   );
 }
 
-const inputStyle = {
-  width: '100%', padding: '11px 14px', border: '1px solid var(--border-main)',
-  borderRadius: 'var(--radius)', fontFamily: 'var(--font-body)', fontSize: '0.9rem',
-  color: 'var(--text-main)', background: 'var(--bg-primary)', outline: 'none',
-  boxSizing: 'border-box', transition: 'border-color 0.2s',
-};
-
-const readonlyStyle = { ...inputStyle, background: 'var(--bg-surface-elevated)', color: 'var(--text-muted)', cursor: 'not-allowed' };
+function AutoIdBadge({ label, icon }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <label style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {icon} {label}
+      </label>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 14px', background: '#f3f4f6', border: '1px dashed #d1d5db', borderRadius: 'var(--radius)', boxSizing: 'border-box' }}>
+        <Lock size={13} color="#9ca3af" />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: '#9ca3af', letterSpacing: '0.05em' }}>
+          Will be assigned automatically
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default function CompleteProfilePage() {
   const { user, refreshUser } = useContext(AuthContext);
@@ -40,33 +100,35 @@ export default function CompleteProfilePage() {
     name: user?.name || '',
     phone: '',
     address: '',
-    studentId: '',
     faculty: '',
     specialization: '',
     year: '',
     semester: '',
-    staffId: '',
     department: '',
   });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [serverError, setServerError] = useState('');
 
-  const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
+  const set = (field) => (e) => {
+    const value = e.target.value;
+    setForm(f => {
+      const next = { ...f, [field]: value };
+      if (field === 'faculty') next.specialization = '';
+      return next;
+    });
+  };
 
   const validate = () => {
     const e = {};
     if (!form.phone.trim()) e.phone = 'Phone number is required';
     if (isStudent) {
-      if (!form.studentId.trim()) e.studentId = 'Student ID is required';
-      if (!form.faculty) e.faculty = 'Faculty is required';
-      if (!form.specialization.trim()) e.specialization = 'Specialization is required';
-      if (!form.year) e.year = 'Year is required';
-      if (!form.semester) e.semester = 'Semester is required';
+      if (!form.faculty)              e.faculty = 'Faculty is required';
+      if (!form.specialization)       e.specialization = 'Degree programme is required';
+      if (!form.year)                 e.year = 'Year is required';
+      if (!form.semester)             e.semester = 'Semester is required';
     }
-    if (isStaff) {
-      if (!form.department.trim()) e.department = 'Department is required';
-    }
+    if (isStaff && !form.department)  e.department = 'Department is required';
     return e;
   };
 
@@ -81,13 +143,11 @@ export default function CompleteProfilePage() {
         name: form.name,
         phone: form.phone,
         address: form.address,
-        studentId: isStudent ? form.studentId : undefined,
-        faculty: isStudent ? form.faculty : undefined,
-        specialization: isStudent ? form.specialization : undefined,
-        year: isStudent ? Number(form.year) : undefined,
-        semester: isStudent ? Number(form.semester) : undefined,
-        staffId: isStaff ? form.staffId : undefined,
-        department: isStaff ? form.department : undefined,
+        faculty:         isStudent ? form.faculty         : undefined,
+        specialization:  isStudent ? form.specialization  : undefined,
+        year:            isStudent ? Number(form.year)    : undefined,
+        semester:        isStudent ? Number(form.semester): undefined,
+        department:      isStaff   ? form.department      : undefined,
       });
       await refreshUser();
       navigate('/', { replace: true });
@@ -98,7 +158,12 @@ export default function CompleteProfilePage() {
     }
   };
 
-  const roleLabel = user?.role === 'TECHNICIAN' ? 'Technician' : user?.role === 'MANAGER' ? 'Manager' : user?.role === 'ADMIN' ? 'Administrator' : 'Student';
+  const roleLabel = user?.role === 'TECHNICIAN' ? 'Technician'
+    : user?.role === 'MANAGER' ? 'Manager'
+    : user?.role === 'ADMIN'   ? 'Administrator'
+    : 'Student';
+
+  const availablePrograms = PROGRAMS_BY_FACULTY[form.faculty] || [];
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
@@ -129,7 +194,7 @@ export default function CompleteProfilePage() {
               </div>
             )}
 
-            {/* Auto-filled read-only */}
+            {/* Basic info */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <Field label="Full Name" icon={<User size={12} />}>
                 <input style={inputStyle} value={form.name} onChange={set('name')} placeholder="Your full name" />
@@ -148,7 +213,7 @@ export default function CompleteProfilePage() {
               </Field>
             </div>
 
-            {/* Student-specific fields */}
+            {/* Student fields */}
             {isStudent && (
               <>
                 <div style={{ height: '1px', background: 'var(--border-main)' }} />
@@ -157,9 +222,7 @@ export default function CompleteProfilePage() {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <Field label="Student ID" icon={<Hash size={12} />} error={errors.studentId}>
-                    <input style={{ ...inputStyle, borderColor: errors.studentId ? 'var(--danger)' : undefined }} value={form.studentId} onChange={set('studentId')} placeholder="IT22XXXXXX" />
-                  </Field>
+                  <AutoIdBadge label="Student ID" icon={<Lock size={12} />} />
                   <Field label="Faculty" icon={<BookOpen size={12} />} error={errors.faculty}>
                     <select style={{ ...inputStyle, borderColor: errors.faculty ? 'var(--danger)' : undefined }} value={form.faculty} onChange={set('faculty')}>
                       <option value="">Select faculty</option>
@@ -168,8 +231,16 @@ export default function CompleteProfilePage() {
                   </Field>
                 </div>
 
-                <Field label="Specialization / Degree Programme" icon={<GraduationCap size={12} />} error={errors.specialization}>
-                  <input style={{ ...inputStyle, borderColor: errors.specialization ? 'var(--danger)' : undefined }} value={form.specialization} onChange={set('specialization')} placeholder="e.g. Software Engineering" />
+                <Field label="Degree Programme" icon={<GraduationCap size={12} />} error={errors.specialization}>
+                  <select
+                    style={{ ...inputStyle, borderColor: errors.specialization ? 'var(--danger)' : undefined }}
+                    value={form.specialization}
+                    onChange={set('specialization')}
+                    disabled={!form.faculty}
+                  >
+                    <option value="">{form.faculty ? 'Select degree programme' : 'Select a faculty first'}</option>
+                    {availablePrograms.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
                 </Field>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -189,7 +260,7 @@ export default function CompleteProfilePage() {
               </>
             )}
 
-            {/* Staff-specific fields */}
+            {/* Staff fields */}
             {isStaff && (
               <>
                 <div style={{ height: '1px', background: 'var(--border-main)' }} />
@@ -197,11 +268,12 @@ export default function CompleteProfilePage() {
                   Staff Information
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <Field label="Staff / Employee ID" icon={<Hash size={12} />}>
-                    <input style={inputStyle} value={form.staffId} onChange={set('staffId')} placeholder="EMP-XXXXX" />
-                  </Field>
+                  <AutoIdBadge label="Employee ID" icon={<Lock size={12} />} />
                   <Field label="Department" icon={<Briefcase size={12} />} error={errors.department}>
-                    <input style={{ ...inputStyle, borderColor: errors.department ? 'var(--danger)' : undefined }} value={form.department} onChange={set('department')} placeholder="e.g. IT Department" />
+                    <select style={{ ...inputStyle, borderColor: errors.department ? 'var(--danger)' : undefined }} value={form.department} onChange={set('department')}>
+                      <option value="">Select department</option>
+                      {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
                   </Field>
                 </div>
               </>
@@ -210,7 +282,7 @@ export default function CompleteProfilePage() {
             <button
               type="submit"
               disabled={saving}
-              style={{ marginTop: '8px', padding: '14px', borderRadius: 'var(--radius)', border: 'none', background: saving ? 'var(--text-muted)' : 'var(--accent-gradient)', color: 'white', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: saving ? 'not-allowed' : 'pointer', transition: 'opacity 0.2s' }}
+              style={{ marginTop: '8px', padding: '14px', borderRadius: 'var(--radius)', border: 'none', background: saving ? 'var(--text-muted)' : 'var(--accent-gradient)', color: 'white', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: saving ? 'not-allowed' : 'pointer' }}
             >
               {saving ? 'Saving...' : 'Complete Profile & Continue →'}
             </button>

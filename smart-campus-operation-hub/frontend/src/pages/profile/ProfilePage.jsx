@@ -1,9 +1,43 @@
 import { useState, useContext, useEffect } from 'react';
-import { User, Phone, MapPin, BookOpen, GraduationCap, Layers, Briefcase, Hash, CheckCircle } from 'lucide-react';
+import { User, Phone, MapPin, BookOpen, GraduationCap, Layers, Briefcase, Lock, CheckCircle } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import { updateProfile } from '../../api/profileApi';
 
 const FACULTIES = ['Computing', 'Engineering', 'Business', 'Architecture', 'Humanities & Sciences'];
+
+const PROGRAMS_BY_FACULTY = {
+  Computing: [
+    'BSc (Hons) in Information Technology',
+    'BSc (Hons) in Computer Science',
+    'BSc (Hons) in Software Engineering',
+    'BSc (Hons) in Cyber Security',
+    'BSc (Hons) in Data Science',
+    'BSc (Hons) in Artificial Intelligence & Machine Learning',
+  ],
+  Engineering: [
+    'BEng (Hons) in Computer Systems & Networking',
+    'BEng (Hons) in Electrical & Electronic Engineering',
+    'BEng (Hons) in Mechanical Engineering',
+    'BEng (Hons) in Civil Engineering',
+    'BEng (Hons) in Mechatronics Engineering',
+  ],
+  Business: [
+    'BSc (Hons) in Business Information Systems',
+    'BSc (Hons) in Business Management',
+    'BSc (Hons) in Marketing Management',
+    'BSc (Hons) in Human Resource Management',
+    'BSc (Hons) in Finance & Accounting',
+  ],
+  Architecture: ['BSc (Hons) in Architecture & Design'],
+  'Humanities & Sciences': ['BSc (Hons) in Quantity Surveying', 'BSc (Hons) in Science'],
+};
+
+const DEPARTMENTS = [
+  'Information Technology', 'Computing', 'Engineering', 'Business',
+  'Architecture', 'Humanities & Sciences', 'Administration', 'Finance',
+  'Human Resources', 'Library Services', 'Facilities Management', 'Security',
+];
+
 const YEARS = [1, 2, 3, 4];
 const SEMESTERS = [1, 2];
 
@@ -14,6 +48,22 @@ const inputStyle = {
   boxSizing: 'border-box',
 };
 const readonlyStyle = { ...inputStyle, background: 'var(--bg-surface-elevated)', color: 'var(--text-muted)', cursor: 'not-allowed' };
+
+function AutoIdBadge({ label, icon, value }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <label style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {icon} {label}
+      </label>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 14px', background: '#f3f4f6', border: '1px dashed #d1d5db', borderRadius: 'var(--radius)', boxSizing: 'border-box' }}>
+        <Lock size={13} color="#9ca3af" />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: value ? '#374151' : '#9ca3af', letterSpacing: '0.05em', fontWeight: value ? 700 : 400 }}>
+          {value || 'Auto-generated'}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 function Field({ label, icon, children }) {
   return (
@@ -56,7 +106,16 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
+  const set = (field) => (e) => {
+    const value = e.target.value;
+    setForm(f => {
+      const next = { ...f, [field]: value };
+      if (field === 'faculty') next.specialization = '';
+      return next;
+    });
+  };
+
+  const availablePrograms = PROGRAMS_BY_FACULTY[form.faculty] || [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,12 +127,10 @@ export default function ProfilePage() {
         name: form.name,
         phone: form.phone,
         address: form.address,
-        studentId: isStudent ? form.studentId : undefined,
         faculty: isStudent ? form.faculty : undefined,
         specialization: isStudent ? form.specialization : undefined,
         year: isStudent && form.year ? Number(form.year) : undefined,
         semester: isStudent && form.semester ? Number(form.semester) : undefined,
-        staffId: isStaff ? form.staffId : undefined,
         department: isStaff ? form.department : undefined,
       });
       await refreshUser();
@@ -143,9 +200,7 @@ export default function ProfilePage() {
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-base)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Academic Information</div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <Field label="Student ID" icon={<Hash size={12} />}>
-                  <input style={inputStyle} value={form.studentId} onChange={set('studentId')} placeholder="IT22XXXXXX" />
-                </Field>
+                <AutoIdBadge label="Student ID" icon={<Lock size={12} />} value={user?.studentId} />
                 <Field label="Faculty" icon={<BookOpen size={12} />}>
                   <select style={inputStyle} value={form.faculty} onChange={set('faculty')}>
                     <option value="">Select faculty</option>
@@ -154,8 +209,11 @@ export default function ProfilePage() {
                 </Field>
               </div>
 
-              <Field label="Specialization / Degree Programme" icon={<GraduationCap size={12} />}>
-                <input style={inputStyle} value={form.specialization} onChange={set('specialization')} placeholder="e.g. Software Engineering" />
+              <Field label="Degree Programme" icon={<GraduationCap size={12} />}>
+                <select style={inputStyle} value={form.specialization} onChange={set('specialization')} disabled={!form.faculty}>
+                  <option value="">{form.faculty ? 'Select degree programme' : 'Select a faculty first'}</option>
+                  {availablePrograms.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
               </Field>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -180,11 +238,12 @@ export default function ProfilePage() {
               <div style={{ height: '1px', background: 'var(--border-main)' }} />
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-base)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Staff Information</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <Field label="Staff / Employee ID" icon={<Hash size={12} />}>
-                  <input style={inputStyle} value={form.staffId} onChange={set('staffId')} placeholder="EMP-XXXXX" />
-                </Field>
+                <AutoIdBadge label="Employee ID" icon={<Lock size={12} />} value={user?.staffId} />
                 <Field label="Department" icon={<Briefcase size={12} />}>
-                  <input style={inputStyle} value={form.department} onChange={set('department')} placeholder="e.g. IT Department" />
+                  <select style={inputStyle} value={form.department} onChange={set('department')}>
+                    <option value="">Select department</option>
+                    {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
                 </Field>
               </div>
             </>
