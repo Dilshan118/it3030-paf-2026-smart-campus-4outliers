@@ -16,15 +16,33 @@ public class TicketController {
     private final com.example.smart_campus_operation_hub.service.FileStorageService fileStorageService;
     private final com.example.smart_campus_operation_hub.repository.TicketRepository ticketRepository;
     private final com.example.smart_campus_operation_hub.repository.AttachmentRepository attachmentRepository;
+    private final com.example.smart_campus_operation_hub.service.TicketTriageService ticketTriageService;
 
     public TicketController(TicketService ticketService,
                             com.example.smart_campus_operation_hub.service.FileStorageService fileStorageService,
                             com.example.smart_campus_operation_hub.repository.TicketRepository ticketRepository,
-                            com.example.smart_campus_operation_hub.repository.AttachmentRepository attachmentRepository) {
+                            com.example.smart_campus_operation_hub.repository.AttachmentRepository attachmentRepository,
+                            com.example.smart_campus_operation_hub.service.TicketTriageService ticketTriageService) {
         this.ticketService = ticketService;
         this.fileStorageService = fileStorageService;
         this.ticketRepository = ticketRepository;
         this.attachmentRepository = attachmentRepository;
+        this.ticketTriageService = ticketTriageService;
+    }
+
+    @PostMapping("/triage")
+    public ResponseEntity<ApiResponse<Object>> triageTicket(
+            @RequestBody com.example.smart_campus_operation_hub.dto.request.TriageRequest request) {
+
+        com.example.smart_campus_operation_hub.service.TicketTriageService.TriageResult result =
+                ticketTriageService.analyze(request.getDescription());
+
+        if (result == null) {
+            throw new com.example.smart_campus_operation_hub.exception.BadRequestException(
+                    "Description is too short for triage analysis");
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @GetMapping
