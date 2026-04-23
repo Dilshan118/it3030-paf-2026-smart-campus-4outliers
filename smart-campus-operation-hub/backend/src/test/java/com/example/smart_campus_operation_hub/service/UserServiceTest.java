@@ -3,6 +3,7 @@ package com.example.smart_campus_operation_hub.service;
 import com.example.smart_campus_operation_hub.enums.Role;
 import com.example.smart_campus_operation_hub.exception.BadRequestException;
 import com.example.smart_campus_operation_hub.exception.UnauthorizedException;
+import com.example.smart_campus_operation_hub.dto.response.UserResponse;
 import com.example.smart_campus_operation_hub.model.User;
 import com.example.smart_campus_operation_hub.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -111,7 +112,7 @@ class UserServiceTest {
     void getCurrentUser_Active_ReturnsUser() {
         when(userRepository.findById(2L)).thenReturn(Optional.of(regularUser));
 
-        User result = userService.getCurrentUser(2L);
+        UserResponse result = userService.getCurrentUser(2L);
 
         assertEquals(2L, result.getId());
     }
