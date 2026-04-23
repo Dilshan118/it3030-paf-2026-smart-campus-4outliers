@@ -88,7 +88,7 @@ export default function Sidebar() {
 
           <NavLink to="/tickets/manage" className={navClassName}>
             <Briefcase size={20} strokeWidth={1.5} className="sidebar-icon" />
-            Operations Log
+            Ticket Review
           </NavLink>
         </div>
       )}
