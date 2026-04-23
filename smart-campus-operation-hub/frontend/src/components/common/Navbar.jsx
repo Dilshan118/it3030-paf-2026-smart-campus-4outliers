@@ -1,10 +1,12 @@
 import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { Search, LogOut } from 'lucide-react';
 import NotificationBell from '../notifications/NotificationBell';
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   return (
     <header className="top-navbar" style={{
@@ -183,23 +185,21 @@ export default function Navbar() {
         </button>
 
         {/* User Profile Pill */}
-        <div className="user-profile-pill" style={{ cursor: 'pointer', position: 'relative' }}>
+        <div className="user-profile-pill" onClick={() => navigate('/profile')} style={{ cursor: 'pointer', position: 'relative' }} title="View profile">
           <div style={{
             width: '34px', height: '34px', borderRadius: '50%',
-            background: 'var(--accent-gradient)',
+            background: 'var(--accent-gradient)', overflow: 'hidden',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'white', fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '0.95rem',
-            boxShadow: '0 4px 12px rgba(42, 20, 180, 0.3)'
+            boxShadow: '0 4px 12px rgba(42, 20, 180, 0.3)', flexShrink: 0
           }}>
-            {user?.name?.charAt(0) || 'U'}
+            {user?.avatarUrl
+              ? <img src={user.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : user?.name?.charAt(0) || 'U'}
           </div>
           <div className="user-meta">
-            <span className="user-name">
-              {user?.name || 'Authorized User'}
-            </span>
-            <span className="user-role">
-              {user?.role || 'Operator'}
-            </span>
+            <span className="user-name">{user?.name || 'Authorized User'}</span>
+            <span className="user-role">{user?.role || 'Operator'}</span>
           </div>
         </div>
       </div>
