@@ -9,6 +9,8 @@ import LoginPage from './pages/auth/LoginPage';
 import OAuthCallback from './pages/auth/OAuthCallback';
 import AccessDeniedPage from './pages/auth/AccessDeniedPage';
 import PendingApprovalPage from './pages/auth/PendingApprovalPage';
+import CompleteProfilePage from './pages/auth/CompleteProfilePage';
+import ProfilePage from './pages/profile/ProfilePage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import NotificationHistoryPage from './pages/notifications/NotificationHistoryPage';
 import TicketListPage from './pages/tickets/TicketListPage';
@@ -57,9 +59,11 @@ function App() {
             <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/access-denied" element={<AccessDeniedPage />} />
             <Route path="/pending-approval" element={<PendingApprovalPage />} />
+            <Route path="/complete-profile" element={<ProtectedRoute><CompleteProfilePage /></ProtectedRoute>} />
 
             {/* Protected Main Routes */}
             <Route path="/" element={<ProtectedRoute><DashboardLayout><DashboardPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><DashboardLayout><ProfilePage /></DashboardLayout></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><NotificationHistoryPage /></DashboardLayout></ProtectedRoute>} />
 
             {/* Ticket Routes */}
